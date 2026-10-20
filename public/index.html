@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Council Forms | Maaungoodhoo Council</title>
 <style>
+/* Dhivehi fonts: uses the installed font if present, otherwise fonts/ (not bundled, add the files there). */
+@font-face{font-family:"Mv Eamaan XP";src:local("Mv Eamaan XP"),url("fonts/MvEamaanXP.ttf") format("truetype")}
+@font-face{font-family:"Faruma";src:local("Faruma"),url("fonts/Faruma.ttf") format("truetype")}
+
 :root{
   --teal-900:#063a3c;
   --teal-800:#0a4f51;
@@ -26,16 +30,21 @@ body{
 input,textarea,select{font:inherit;color:inherit}
 h1{font-size:24px;margin:0}
 
+/* Dhivehi (Thaana) text: right to left, Faruma. Form headers use Mv Eamaan XP. */
+.dv{font-family:Faruma,system-ui,sans-serif;direction:rtl;unicode-bidi:isolate}
+.dv.head{font-family:"Mv Eamaan XP",Faruma,system-ui,sans-serif;font-weight:400}
+
 /* Brand banner, mirrors the council letterhead */
 .brand-card{
   background:#fff;width:min(560px,calc(100% - 32px));margin:0 auto;
   border-radius:0 0 40px 40px;padding:18px 24px 26px;text-align:center;
   box-shadow:0 6px 20px rgba(0,0,0,.25);
 }
-.brand-card img{display:block;margin:0 auto;height:104px}
-.brand-card .thaana{height:30px;margin-top:10px}
-.org{font-size:21px;font-weight:700;color:var(--teal-900);margin-top:6px}
-.org-sub{font-size:16px;color:var(--teal-800)}
+.brand-card img{display:block;margin:0 auto;height:88px}
+.org-names{display:grid;gap:6px;margin-top:8px}
+.org{font-size:21px;font-weight:700;color:var(--teal-900);text-align:justify;text-align-last:justify}
+.org.dv{font-size:26px;line-height:1.6;color:var(--teal-900)}
+.org-sub{font-size:16px;color:var(--teal-800);margin-top:4px}
 
 /* Top bar */
 .topbar{
@@ -66,6 +75,26 @@ main{width:min(760px,calc(100% - 32px));margin:24px auto;flex:1}
 .icon{background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;font-size:13px}
 .icon:hover{background:var(--teal-100);color:var(--teal-800)}
 
+/* Form controls: rounded, with custom checkboxes, radios and dropdown arrows */
+select{
+  appearance:none;-webkit-appearance:none;border:1px solid var(--line);border-radius:12px;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center/12px;
+  padding:10px 38px 10px 14px;cursor:pointer;
+}
+select.dv{background-position:left 14px center;padding:10px 14px 10px 38px}
+select:focus,input[type=text]:focus,input[type=date]:focus,textarea:focus{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
+input[type=checkbox],input[type=radio]{
+  appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin:0;
+  border:2px solid var(--muted);background:#fff;cursor:pointer;
+}
+input[type=radio]{border-radius:50%}
+input[type=checkbox]{border-radius:6px}
+input[type=radio]:checked{border-color:var(--teal-700);background:radial-gradient(circle,var(--teal-700) 0 40%,#fff 46%)}
+input[type=checkbox]:checked{
+  border-color:var(--teal-700);background:var(--teal-700) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-6.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;
+}
+input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px solid var(--teal-100);outline-offset:2px}
+
 /* Cards */
 .card{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:22px 24px;margin-bottom:14px}
 .card.empty{text-align:center;color:var(--muted)}
@@ -77,27 +106,38 @@ main{width:min(760px,calc(100% - 32px));margin:24px auto;flex:1}
 .meta{color:var(--muted);font-size:13px}
 .actions{display:flex;gap:6px;margin-top:auto;flex-wrap:wrap}
 
+/* Language picker, opened by "+ New form" */
+.lang-dialog{border:0;border-radius:24px;padding:26px;width:min(420px,calc(100% - 32px));box-shadow:0 20px 50px rgba(0,0,0,.35);color:var(--ink)}
+.lang-dialog::backdrop{background:rgba(6,58,60,.55)}
+.lang-dialog h2{margin:0 0 4px;color:var(--teal-800);font-size:20px}
+.lang-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:10px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#fff;font:inherit;text-align:start;cursor:pointer}
+.lang-opt strong{font-size:16px}
+.lang-opt span{color:var(--muted);font-size:13px}
+.lang-opt:hover{border-color:var(--teal-700);background:var(--teal-100)}
+.lang-foot{display:flex;justify-content:flex-end;margin-top:14px}
+
 /* Editor */
 .form-head{border-top:10px solid var(--teal-700)}
 .title-input{width:100%;border:0;border-bottom:1px solid var(--line);font-size:28px;font-weight:700;color:var(--teal-800);padding:6px 0;outline:none}
 .title-input:focus{border-bottom-color:var(--teal-700)}
+.title-input.dv{font-size:30px}
 .desc-input{width:100%;border:0;resize:vertical;padding:8px 0;color:var(--muted);outline:none;font-size:14px}
 .question{border-left:6px solid transparent}
 .question:focus-within{border-left-color:var(--teal-700)}
 .q-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.q-text{flex:1 1 260px;border:0;background:var(--teal-100);border-radius:8px;padding:12px 14px;font-size:16px;outline:none}
+.q-text{flex:1 1 260px;border:0;background:var(--teal-100);border-radius:12px;padding:12px 14px;font-size:16px;outline:none}
+.q-text.wide{display:block;width:100%;margin-top:10px}
 .q-text:focus{box-shadow:inset 0 -2px 0 var(--teal-700)}
-.q-type{padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.q-type{padding:10px 38px 10px 14px}
 .q-body{margin-top:14px}
 .opt-row{display:flex;align-items:center;gap:10px;margin:6px 0}
-.opt-row input{flex:1;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
+.opt-row input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
 .opt-row input:focus{border-bottom-color:var(--teal-700)}
-.marker{width:16px;height:16px;border:2px solid var(--muted);border-radius:50%;flex:none}
-.marker.sq{border-radius:3px}
+.marker{width:18px;height:18px;border:2px solid var(--muted);border-radius:50%;flex:none}
+.marker.sq{border-radius:5px}
 .faux{border-bottom:1px dotted #9fbdb8;padding:8px 2px;color:var(--muted)}
 .q-foot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);margin-top:16px;padding-top:10px}
-.switch{margin-left:auto;font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer}
-.switch input,.choice input,.answer input[type=radio],.answer input[type=checkbox]{accent-color:var(--teal-700);width:18px;height:18px}
+.switch{margin-left:auto;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer}
 #app > main > .btn.ghost{margin-top:4px}
 
 /* Respondent view */
@@ -105,12 +145,11 @@ main{width:min(760px,calc(100% - 32px));margin:24px auto;flex:1}
 .fill-head p{color:var(--muted);margin:8px 0 0}
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
 .req{color:var(--danger)}
-.answer input[type=text],.answer input[type=date],.answer textarea,.answer select{
-  width:100%;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none;background:transparent;
-}
-.answer input:focus,.answer textarea:focus,.answer select:focus{border-bottom-color:var(--teal-700)}
+.answer input[type=text],.answer input[type=date],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
+.answer input[type=text],.answer input[type=date],.answer textarea{padding:10px 14px}
 .answer textarea{resize:vertical}
 .choice{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
+.choice > span{display:flex;flex-direction:column}
 .scale{display:flex;gap:22px;flex-wrap:wrap}
 .scale label{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px;color:var(--muted);cursor:pointer}
 .invalid{box-shadow:inset 5px 0 0 var(--danger)}
@@ -134,13 +173,14 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 
 .toast{
   position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--teal-900);color:#fff;
-  padding:12px 18px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;
+  padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:600px){
-  .brand-card img{height:84px}
+  .brand-card img{height:72px}
   .org{font-size:17px}
+  .org.dv{font-size:21px}
   .tabs{margin-left:0;width:100%}
   .title-input{font-size:22px}
   .q-type{width:100%}
@@ -150,6 +190,15 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 <body>
 <div id="app"></div>
 <div id="toast" class="toast" role="status"></div>
+
+<dialog id="lang-dialog" class="lang-dialog">
+  <h2>Form language</h2>
+  <p class="meta">Choose the language the form will be written in.</p>
+  <button class="lang-opt" data-lang="en"><strong>English</strong><span>Questions and answers in English</span></button>
+  <button class="lang-opt" data-lang="dv"><strong class="dv">ދިވެހި</strong><span>Dhivehi, written right to left</span></button>
+  <button class="lang-opt" data-lang="dual"><strong>Dhivehi and English</strong><span>Each question in both languages</span></button>
+  <div class="lang-foot"><button class="btn ghost small" data-close>Cancel</button></div>
+</dialog>
 
 <script>
 const TYPES = {
@@ -166,7 +215,9 @@ const hasOptions = t => ['radio', 'checkbox', 'dropdown'].includes(t);
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const show = v => Array.isArray(v) ? v.join(', ') : (v ?? '');
+const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: false, options: ['Option 1'], optionsDv: [] });
 const app = document.getElementById('app');
+const langDialog = document.getElementById('lang-dialog');
 
 let current = null; // form open in the editor or respondent view
 let saveTimer = null;
@@ -227,6 +278,17 @@ const topbar = (extra = '') => `
     ${extra}
   </nav>`;
 
+// Text in a form's language(s). Dhivehi forms keep their main text in Thaana;
+// dual forms show the English text, then the Dhivehi text (alt) below it.
+function localized(f, tag, main, alt = '', cls = '', extra = '') {
+  const dv = text => `<${tag} class="dv ${cls}" dir="rtl">${esc(text)}</${tag}>`;
+  if (f.lang === 'dv') return `<${tag} class="dv ${cls}" dir="rtl">${esc(main)}${extra}</${tag}>`;
+  if (f.lang === 'dual') return `<${tag} class="${cls}">${esc(main)}${extra}</${tag}>${alt ? dv(alt) : ''}`;
+  return `<${tag} class="${cls}">${esc(main)}${extra}</${tag}>`;
+}
+const qLabel = q => [q.text, q.textDv].filter(Boolean).join(' / ') || 'Untitled question';
+const optLabel = (q, j) => [q.options[j], q.optionsDv?.[j]].filter(Boolean).join(' / ');
+
 /* ---------- home ---------- */
 
 async function renderHome() {
@@ -234,13 +296,15 @@ async function renderHome() {
   const brand = `
     <header class="brand-card">
       <img src="emblem.png" alt="Emblem of the Maldives">
-      <img class="thaana" src="dhivehi.png" alt="Maaungoodhoo Council in Dhivehi">
-      <div class="org">Secretariat of the Maaungoodhoo Council</div>
+      <div class="org-names">
+        <div class="org dv head" dir="rtl">މިލަދުންމަޑުލު އުތުރުބުރީ މާއުނގޫދޫ ކައުންސިލްގެ އިދާރާ</div>
+        <div class="org">Secretariat of the Maaungoodhoo Council</div>
+      </div>
       <div class="org-sub">North Milandhunmadulu</div>
     </header>`;
   const tile = f => `
     <article class="tile">
-      <a class="tile-name" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
+      <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
       <div class="meta">${f.questions.length} questions · ${f.responseCount} responses</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
@@ -259,12 +323,24 @@ async function renderHome() {
     brand);
 }
 
-async function newForm() {
+langDialog.addEventListener('click', e => {
+  const pick = e.target.closest('[data-lang]');
+  if (pick) {
+    langDialog.close();
+    return newForm(pick.dataset.lang);
+  }
+  if (e.target.closest('[data-close]')) langDialog.close();
+});
+
+async function newForm(lang) {
   const f = {
     id: uid(),
-    title: 'Untitled form',
+    lang,
+    title: lang === 'dv' ? '' : 'Untitled form',
+    titleDv: '',
     description: '',
-    questions: [{ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] }],
+    descriptionDv: '',
+    questions: [newQ()],
     responses: [],
   };
   await api(`forms/${f.id}`, { method: 'PUT', body: f }).catch(failed);
@@ -275,10 +351,13 @@ async function newForm() {
 
 async function renderEditor(tab) {
   const f = current;
+  const dual = f.lang === 'dual';
   const body = tab === 'responses' ? await responsesHTML() : `
     <section class="card form-head">
-      <input class="title-input" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
-      <textarea class="desc-input" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
+      <input class="title-input ${f.lang === 'dv' ? 'dv head' : ''}" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
+      ${dual ? `<input class="title-input dv head" data-field="titleDv" value="${esc(f.titleDv)}" placeholder="Title (Dhivehi)">` : ''}
+      <textarea class="desc-input ${f.lang === 'dv' ? 'dv' : ''}" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
+      ${dual ? `<textarea class="desc-input dv" dir="rtl" data-field="descriptionDv" rows="1" placeholder="Description (Dhivehi)">${esc(f.descriptionDv)}</textarea>` : ''}
     </section>
     <div class="questions">${f.questions.map(questionHTML).join('')}</div>
     <button class="btn ghost" data-act="add-q">+ Add question</button>`;
@@ -292,24 +371,29 @@ async function renderEditor(tab) {
 }
 
 function questionHTML(q, i) {
+  const f = current;
+  const dual = f.lang === 'dual';
+  const pc = f.lang === 'dv' ? 'dv' : '';
   const opts = q.options.map((o, j) => `
     <div class="opt-row">
       <span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>
-      <input data-field="option" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}">
+      <input class="${pc}" data-field="option" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}">
+      ${dual ? `<input class="dv" dir="rtl" data-field="optionDv" data-idx="${j}" value="${esc(q.optionsDv?.[j])}" placeholder="Option ${j + 1} (Dhivehi)">` : ''}
       <button class="icon" data-act="del-opt" data-idx="${j}" title="Remove option">×</button>
     </div>`).join('');
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
-        <input class="q-text" data-field="text" value="${esc(q.text)}" placeholder="Question ${i + 1}">
+        <input class="q-text ${pc}" data-field="text" value="${esc(q.text)}" placeholder="Question ${i + 1}">
         <select class="q-type" data-field="type">
           ${Object.entries(TYPES).map(([v, l]) => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
+      ${dual ? `<input class="q-text wide dv" dir="rtl" data-field="textDv" value="${esc(q.textDv)}" placeholder="Question ${i + 1} (Dhivehi)">` : ''}
       <div class="q-body">
         ${hasOptions(q.type)
           ? `${opts}<button class="link" data-act="add-opt">+ Add option</button>`
-          : `<div class="faux">${FAUX[q.type]}</div>`}
+          : `<div class="faux ${pc}">${FAUX[q.type]}</div>`}
       </div>
       <div class="q-foot">
         <button class="icon" data-act="dup-q">Duplicate</button>
@@ -327,7 +411,9 @@ function onFieldEdit(el) {
     current[field] = val;
   } else {
     const q = current.questions.find(x => x.id === qEl.dataset.qid);
-    if (field === 'option') q.options[+el.dataset.idx] = val;
+    const idx = +el.dataset.idx;
+    if (field === 'option') q.options[idx] = val;
+    else if (field === 'optionDv') (q.optionsDv ||= [])[idx] = val;
     else if (field === 'type') {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
@@ -355,15 +441,15 @@ app.addEventListener('click', e => {
   const refresh = () => { saveForms(); renderEditor('questions'); };
 
   switch (btn.dataset.act) {
-    case 'new': return newForm();
+    case 'new': return langDialog.showModal();
     case 'del-form':
       if (!confirm('Delete this form and all its responses?')) return;
       return api(`forms/${btn.dataset.id}`, { method: 'DELETE' }).then(renderHome).catch(failed);
     case 'add-q':
-      current.questions.push({ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] });
+      current.questions.push(newQ());
       return refresh();
     case 'dup-q':
-      current.questions.splice(idx + 1, 0, { ...q, id: uid(), options: [...q.options] });
+      current.questions.splice(idx + 1, 0, { ...q, id: uid(), options: [...q.options], optionsDv: [...(q.optionsDv ?? [])] });
       return refresh();
     case 'del-q':
       current.questions.splice(idx, 1);
@@ -373,6 +459,7 @@ app.addEventListener('click', e => {
       return refresh();
     case 'del-opt':
       q.options.splice(+btn.dataset.idx, 1);
+      q.optionsDv?.splice(+btn.dataset.idx, 1);
       return refresh();
     case 'share': return copyLink();
     case 'csv': return downloadCSV();
@@ -388,22 +475,25 @@ async function copyLink() {
 
 /* ---------- respondent view ---------- */
 
-const choice = (type, name, o) =>
-  `<label class="choice"><input type="${type}" name="${name}" value="${esc(o)}"><span>${esc(o)}</span></label>`;
+const choice = (f, q, type, o, j) =>
+  `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}"><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
 
 function answerHTML(q) {
+  const f = current;
+  const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl"' : '';
   const inputs = {
-    short: '<input type="text">',
-    paragraph: '<textarea rows="3"></textarea>',
+    short: `<input type="text"${dvAttr}>`,
+    paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: '<input type="date">',
-    dropdown: `<select><option value="">Choose</option>${q.options.map(o => `<option>${esc(o)}</option>`).join('')}</select>`,
-    radio: q.options.map(o => choice('radio', q.id, o)).join(''),
-    checkbox: q.options.map(o => choice('checkbox', q.id, o)).join(''),
+    dropdown: `<select${dvAttr}><option value="">Choose</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
+    radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
+    checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
   }[q.type];
+  const req = q.required ? ' <span class="req">*</span>' : '';
   return `
     <section class="card question answer" data-qid="${q.id}">
-      <div class="q-label">${esc(q.text || 'Untitled question')}${q.required ? ' <span class="req">*</span>' : ''}</div>
+      ${localized(f, 'div', q.text || 'Untitled question', q.textDv, 'q-label', req)}
       ${inputs}
     </section>`;
 }
@@ -421,8 +511,8 @@ function renderFill(done = false) {
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
-        <h1>${esc(f.title)}</h1>
-        ${f.description ? `<p>${esc(f.description)}</p>` : ''}
+        ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head')}
+        ${f.description || f.descriptionDv ? localized(f, 'p', f.description, f.descriptionDv) : ''}
       </section>
       <div class="fill-body">${f.questions.map(answerHTML).join('')}</div>
       <div class="field-error" hidden>Please answer the highlighted questions.</div>
@@ -465,7 +555,7 @@ async function responsesHTML() {
   if (!responses.length) {
     return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
   }
-  const cols = f.questions.map(q => `<th>${esc(q.text || 'Untitled question')}</th>`).join('');
+  const cols = f.questions.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
   const rows = responses.map(r => `
     <tr><td>${new Date(r.at).toLocaleString()}</td>${f.questions.map(q => `<td>${esc(show(r.answers[q.id]))}</td>`).join('')}</tr>`).join('');
   return `
@@ -483,7 +573,7 @@ async function downloadCSV() {
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return null; });
   if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
-  const lines = [['Timestamp', ...f.questions.map(q => q.text)].map(cell).join(',')];
+  const lines = [['Timestamp', ...f.questions.map(qLabel)].map(cell).join(',')];
   responses.forEach(r => lines.push(
     [new Date(r.at).toLocaleString(), ...f.questions.map(q => r.answers[q.id])].map(cell).join(',')
   ));

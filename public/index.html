@@ -152,7 +152,6 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 <div id="toast" class="toast" role="status"></div>
 
 <script>
-const KEY = 'council-forms-v1';
 const TYPES = {
   short: 'Short answer',
   paragraph: 'Paragraph',
@@ -169,15 +168,26 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const show = v => Array.isArray(v) ? v.join(', ') : (v ?? '');
 const app = document.getElementById('app');
 
-let forms = loadForms();
 let current = null; // form open in the editor or respondent view
+let saveTimer = null;
 
-function loadForms() {
-  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
-}
-function saveForms() {
-  try { localStorage.setItem(KEY, JSON.stringify(forms)); }
-  catch { toast('Browser storage is blocked; changes may not be kept.'); }
+const api = async (path, opts = {}) => {
+  const res = await fetch(`/api/${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+};
+const failed = () => toast('Could not reach the server. Check your connection and try again.');
+
+// Saves the open form. Debounced so typing doesn't send a request per keystroke.
+function saveForms(now = false) {
+  clearTimeout(saveTimer);
+  const send = () => api(`forms/${current.id}`, { method: 'PUT', body: current }).catch(failed);
+  if (now) return send();
+  saveTimer = setTimeout(send, 400);
 }
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -189,13 +199,12 @@ function toast(msg) {
 
 /* ---------- routing ---------- */
 
-function route() {
+async function route() {
   const [view, id] = location.hash.replace(/^#\/?/, '').split('/');
-  current = forms.find(f => f.id === id) || null;
+  current = id ? await api(`forms/${id}`).catch(() => null) : null;
   if (view === 'edit' && current) return renderEditor('questions');
   if (view === 'responses' && current) return renderEditor('responses');
   if (view === 'fill' && current) return renderFill();
-  current = null;
   renderHome();
 }
 window.addEventListener('hashchange', route);
@@ -220,7 +229,8 @@ const topbar = (extra = '') => `
 
 /* ---------- home ---------- */
 
-function renderHome() {
+async function renderHome() {
+  const forms = await api('forms').catch(() => { failed(); return []; });
   const brand = `
     <header class="brand-card">
       <img src="emblem.png" alt="Emblem of the Maldives">
@@ -231,7 +241,7 @@ function renderHome() {
   const tile = f => `
     <article class="tile">
       <a class="tile-name" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
-      <div class="meta">${f.questions.length} questions · ${f.responses.length} responses</div>
+      <div class="meta">${f.questions.length} questions · ${f.responseCount} responses</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
         <a class="btn ghost small" href="#/fill/${f.id}">Preview</a>
@@ -249,7 +259,7 @@ function renderHome() {
     brand);
 }
 
-function newForm() {
+async function newForm() {
   const f = {
     id: uid(),
     title: 'Untitled form',
@@ -257,16 +267,15 @@ function newForm() {
     questions: [{ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] }],
     responses: [],
   };
-  forms.unshift(f);
-  saveForms();
+  await api(`forms/${f.id}`, { method: 'PUT', body: f }).catch(failed);
   location.hash = `#/edit/${f.id}`;
 }
 
 /* ---------- editor ---------- */
 
-function renderEditor(tab) {
+async function renderEditor(tab) {
   const f = current;
-  const body = tab === 'responses' ? responsesHTML() : `
+  const body = tab === 'responses' ? await responsesHTML() : `
     <section class="card form-head">
       <input class="title-input" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
       <textarea class="desc-input" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
@@ -276,7 +285,7 @@ function renderEditor(tab) {
   shell(body, topbar(`
     <div class="tabs">
       <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
-      <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responses.length})</a>
+      <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responseCount})</a>
     </div>
     <button class="btn ghost small" data-act="share">Copy link</button>
     <a class="btn primary small" href="#/fill/${f.id}">Preview</a>`));
@@ -349,9 +358,7 @@ app.addEventListener('click', e => {
     case 'new': return newForm();
     case 'del-form':
       if (!confirm('Delete this form and all its responses?')) return;
-      forms = forms.filter(f => f.id !== btn.dataset.id);
-      saveForms();
-      return renderHome();
+      return api(`forms/${btn.dataset.id}`, { method: 'DELETE' }).then(renderHome).catch(failed);
     case 'add-q':
       current.questions.push({ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] });
       return refresh();
@@ -445,24 +452,25 @@ app.addEventListener('submit', e => {
   });
   form.querySelector('.field-error').hidden = !firstBad;
   if (firstBad) return firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  current.responses.push({ id: uid(), at: new Date().toISOString(), answers });
-  saveForms();
-  renderFill(true);
+  api(`forms/${current.id}/responses`, { method: 'POST', body: { answers } })
+    .then(() => renderFill(true))
+    .catch(failed);
 });
 
 /* ---------- responses ---------- */
 
-function responsesHTML() {
+async function responsesHTML() {
   const f = current;
-  if (!f.responses.length) {
+  const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return []; });
+  if (!responses.length) {
     return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
   }
   const cols = f.questions.map(q => `<th>${esc(q.text || 'Untitled question')}</th>`).join('');
-  const rows = f.responses.map(r => `
+  const rows = responses.map(r => `
     <tr><td>${new Date(r.at).toLocaleString()}</td>${f.questions.map(q => `<td>${esc(show(r.answers[q.id]))}</td>`).join('')}</tr>`).join('');
   return `
     <div class="resp-bar">
-      <span>${f.responses.length} response${f.responses.length === 1 ? '' : 's'}</span>
+      <span>${responses.length} response${responses.length === 1 ? '' : 's'}</span>
       <button class="btn light small" data-act="csv">Download CSV</button>
     </div>
     <section class="card table-wrap">
@@ -470,11 +478,13 @@ function responsesHTML() {
     </section>`;
 }
 
-function downloadCSV() {
+async function downloadCSV() {
   const f = current;
+  const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return null; });
+  if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
   const lines = [['Timestamp', ...f.questions.map(q => q.text)].map(cell).join(',')];
-  f.responses.forEach(r => lines.push(
+  responses.forEach(r => lines.push(
     [new Date(r.at).toLocaleString(), ...f.questions.map(q => r.answers[q.id])].map(cell).join(',')
   ));
   const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));

@@ -142,6 +142,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 
 /* Respondent view */
 .fill{border-top:10px solid var(--teal-700)}
+.fill-head{margin-bottom:18px}
 .fill-head p{color:var(--muted);margin:8px 0 0}
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
 .req{color:var(--danger)}
@@ -178,12 +179,18 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:600px){
+  .brand-card{padding:14px 16px 20px}
   .brand-card img{height:72px}
-  .org{font-size:17px}
-  .org.dv{font-size:21px}
+  .org{font-size:17px;text-align:center;text-align-last:center}
+  .org.dv{font-size:18px;line-height:1.5}
+  .org-sub{font-size:14px}
   .tabs{margin-left:0;width:100%}
+  .topbar .btn{flex:1;text-align:center}
   .title-input{font-size:22px}
   .q-type{width:100%}
+  .fill-foot .btn{flex:1}
+  .card{padding:18px 18px}
+  .page-head h1{font-size:20px}
 }
 </style>
 </head>
@@ -305,7 +312,7 @@ async function renderHome() {
   const tile = f => `
     <article class="tile">
       <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
-      <div class="meta">${f.questions.length} questions · ${f.responseCount} responses</div>
+      <div class="meta">${f.questions.length} question${f.questions.length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
         <a class="btn ghost small" href="#/fill/${f.id}">Preview</a>

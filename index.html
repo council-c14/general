@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Council Forms | Maaungoodhoo Council</title>
+<style>
+:root{
+  --teal-900:#063a3c;
+  --teal-800:#0a4f51;
+  --teal-700:#0d6666;
+  --teal-100:#e6f3f1;
+  --ink:#0d2b2c;
+  --muted:#5d7a79;
+  --line:#cfe2de;
+  --danger:#b3261e;
+}
+*{box-sizing:border-box}
+html{background:var(--teal-900)}
+body{
+  margin:0;min-height:100vh;display:flex;flex-direction:column;
+  font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;color:var(--ink);
+  background:linear-gradient(170deg,#0f6b68 0%,var(--teal-800) 50%,var(--teal-900) 100%) fixed;
+}
+#app{flex:1;display:flex;flex-direction:column}
+input,textarea,select{font:inherit;color:inherit}
+h1{font-size:24px;margin:0}
+
+/* Brand banner, mirrors the council letterhead */
+.brand-card{
+  background:#fff;width:min(560px,calc(100% - 32px));margin:0 auto;
+  border-radius:0 0 40px 40px;padding:18px 24px 26px;text-align:center;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);
+}
+.brand-card img{display:block;margin:0 auto;height:104px}
+.brand-card .thaana{height:30px;margin-top:10px}
+.org{font-size:21px;font-weight:700;color:var(--teal-900);margin-top:6px}
+.org-sub{font-size:16px;color:var(--teal-800)}
+
+/* Top bar */
+.topbar{
+  position:sticky;top:0;z-index:5;background:#fff;display:flex;align-items:center;
+  flex-wrap:wrap;gap:12px 16px;padding:10px 20px;box-shadow:0 2px 10px rgba(0,0,0,.2);
+}
+.brand-mini{display:flex;align-items:center;gap:8px;text-decoration:none}
+.brand-mini img{height:34px}
+.brand-mini span{font-weight:700;color:var(--teal-800)}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tab{padding:8px 14px;border-radius:999px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
+.tab.on{background:var(--teal-100);color:var(--teal-800)}
+
+main{width:min(760px,calc(100% - 32px));margin:24px auto;flex:1}
+
+/* Buttons */
+.btn{
+  display:inline-block;text-decoration:none;border:0;border-radius:999px;padding:10px 20px;
+  font-weight:600;font-size:14px;cursor:pointer;
+}
+.btn.small{padding:7px 14px;font-size:13px}
+.btn.primary{background:var(--teal-700);color:#fff}
+.btn.primary:hover{background:var(--teal-800)}
+.btn.ghost{background:#fff;color:var(--teal-700);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--teal-700)}
+.btn.light{background:#fff;color:var(--teal-800)}
+.link{background:none;border:0;color:var(--teal-700);font-weight:600;cursor:pointer;padding:8px 2px;font-size:14px}
+.icon{background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;font-size:13px}
+.icon:hover{background:var(--teal-100);color:var(--teal-800)}
+
+/* Cards */
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:22px 24px;margin-bottom:14px}
+.card.empty{text-align:center;color:var(--muted)}
+.page-head{display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.tile{background:#fff;border-radius:14px;border-top:8px solid var(--teal-700);padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tile-name{color:var(--ink);font-weight:700;text-decoration:none;font-size:16px;word-break:break-word}
+.tile-name:hover{color:var(--teal-700)}
+.meta{color:var(--muted);font-size:13px}
+.actions{display:flex;gap:6px;margin-top:auto;flex-wrap:wrap}
+
+/* Editor */
+.form-head{border-top:10px solid var(--teal-700)}
+.title-input{width:100%;border:0;border-bottom:1px solid var(--line);font-size:28px;font-weight:700;color:var(--teal-800);padding:6px 0;outline:none}
+.title-input:focus{border-bottom-color:var(--teal-700)}
+.desc-input{width:100%;border:0;resize:vertical;padding:8px 0;color:var(--muted);outline:none;font-size:14px}
+.question{border-left:6px solid transparent}
+.question:focus-within{border-left-color:var(--teal-700)}
+.q-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.q-text{flex:1 1 260px;border:0;background:var(--teal-100);border-radius:8px;padding:12px 14px;font-size:16px;outline:none}
+.q-text:focus{box-shadow:inset 0 -2px 0 var(--teal-700)}
+.q-type{padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.q-body{margin-top:14px}
+.opt-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.opt-row input{flex:1;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
+.opt-row input:focus{border-bottom-color:var(--teal-700)}
+.marker{width:16px;height:16px;border:2px solid var(--muted);border-radius:50%;flex:none}
+.marker.sq{border-radius:3px}
+.faux{border-bottom:1px dotted #9fbdb8;padding:8px 2px;color:var(--muted)}
+.q-foot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);margin-top:16px;padding-top:10px}
+.switch{margin-left:auto;font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.switch input,.choice input,.answer input[type=radio],.answer input[type=checkbox]{accent-color:var(--teal-700);width:18px;height:18px}
+#app > main > .btn.ghost{margin-top:4px}
+
+/* Respondent view */
+.fill{border-top:10px solid var(--teal-700)}
+.fill-head p{color:var(--muted);margin:8px 0 0}
+.answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
+.req{color:var(--danger)}
+.answer input[type=text],.answer input[type=date],.answer textarea,.answer select{
+  width:100%;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none;background:transparent;
+}
+.answer input:focus,.answer textarea:focus,.answer select:focus{border-bottom-color:var(--teal-700)}
+.answer textarea{resize:vertical}
+.choice{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
+.scale{display:flex;gap:22px;flex-wrap:wrap}
+.scale label{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px;color:var(--muted);cursor:pointer}
+.invalid{box-shadow:inset 5px 0 0 var(--danger)}
+.field-error{color:var(--danger);font-size:14px;margin-top:10px}
+.fill-foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+.thanks{text-align:center;padding:40px 24px}
+.thanks h2{color:var(--teal-800);margin-top:0}
+
+/* Responses */
+.resp-bar{display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.table-wrap{overflow-x:auto;padding:0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
+
+/* Footer, mirrors the letterhead strip */
+.foot{
+  background:var(--teal-900);color:#d4efeb;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:8px 28px;padding:16px;font-size:14px;margin-top:auto;
+}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--teal-900);color:#fff;
+  padding:12px 18px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:600px){
+  .brand-card img{height:84px}
+  .org{font-size:17px}
+  .tabs{margin-left:0;width:100%}
+  .title-input{font-size:22px}
+  .q-type{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+const KEY = 'council-forms-v1';
+const TYPES = {
+  short: 'Short answer',
+  paragraph: 'Paragraph',
+  radio: 'Multiple choice',
+  checkbox: 'Checkboxes',
+  dropdown: 'Dropdown',
+  date: 'Date',
+  scale: 'Linear scale (1–5)',
+};
+const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', scale: '1 to 5' };
+const hasOptions = t => ['radio', 'checkbox', 'dropdown'].includes(t);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const show = v => Array.isArray(v) ? v.join(', ') : (v ?? '');
+const app = document.getElementById('app');
+
+let forms = loadForms();
+let current = null; // form open in the editor or respondent view
+
+function loadForms() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+}
+function saveForms() {
+  try { localStorage.setItem(KEY, JSON.stringify(forms)); }
+  catch { toast('Browser storage is blocked; changes may not be kept.'); }
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ---------- routing ---------- */
+
+function route() {
+  const [view, id] = location.hash.replace(/^#\/?/, '').split('/');
+  current = forms.find(f => f.id === id) || null;
+  if (view === 'edit' && current) return renderEditor('questions');
+  if (view === 'responses' && current) return renderEditor('responses');
+  if (view === 'fill' && current) return renderFill();
+  current = null;
+  renderHome();
+}
+window.addEventListener('hashchange', route);
+
+function shell(inner, head = '') {
+  app.innerHTML = `
+    ${head}
+    <main>${inner}</main>
+    <footer class="foot">
+      <span>Karankaa Magu, Sh.Maaungoodhoo (03140)</span>
+      <span>654-0056</span>
+      <span>info@maaungoodhoo.gov.mv</span>
+      <span>maaungoodhoo.gov.mv</span>
+    </footer>`;
+}
+
+const topbar = (extra = '') => `
+  <nav class="topbar">
+    <a class="brand-mini" href="#/"><img src="emblem.png" alt="Emblem of the Maldives"><span>Council Forms</span></a>
+    ${extra}
+  </nav>`;
+
+/* ---------- home ---------- */
+
+function renderHome() {
+  const brand = `
+    <header class="brand-card">
+      <img src="emblem.png" alt="Emblem of the Maldives">
+      <img class="thaana" src="dhivehi.png" alt="Maaungoodhoo Council in Dhivehi">
+      <div class="org">Secretariat of the Maaungoodhoo Council</div>
+      <div class="org-sub">North Milandhunmadulu</div>
+    </header>`;
+  const tile = f => `
+    <article class="tile">
+      <a class="tile-name" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
+      <div class="meta">${f.questions.length} questions · ${f.responses.length} responses</div>
+      <div class="actions">
+        <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
+        <a class="btn ghost small" href="#/fill/${f.id}">Preview</a>
+        <button class="btn ghost small" data-act="del-form" data-id="${f.id}">Delete</button>
+      </div>
+    </article>`;
+  shell(`
+    <div class="page-head">
+      <h1>My forms</h1>
+      <button class="btn light" data-act="new">+ New form</button>
+    </div>
+    ${forms.length
+      ? `<div class="grid">${forms.map(tile).join('')}</div>`
+      : `<section class="card empty">No forms yet. Create one to start collecting responses.</section>`}`,
+    brand);
+}
+
+function newForm() {
+  const f = {
+    id: uid(),
+    title: 'Untitled form',
+    description: '',
+    questions: [{ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] }],
+    responses: [],
+  };
+  forms.unshift(f);
+  saveForms();
+  location.hash = `#/edit/${f.id}`;
+}
+
+/* ---------- editor ---------- */
+
+function renderEditor(tab) {
+  const f = current;
+  const body = tab === 'responses' ? responsesHTML() : `
+    <section class="card form-head">
+      <input class="title-input" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
+      <textarea class="desc-input" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
+    </section>
+    <div class="questions">${f.questions.map(questionHTML).join('')}</div>
+    <button class="btn ghost" data-act="add-q">+ Add question</button>`;
+  shell(body, topbar(`
+    <div class="tabs">
+      <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
+      <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responses.length})</a>
+    </div>
+    <button class="btn ghost small" data-act="share">Copy link</button>
+    <a class="btn primary small" href="#/fill/${f.id}">Preview</a>`));
+}
+
+function questionHTML(q, i) {
+  const opts = q.options.map((o, j) => `
+    <div class="opt-row">
+      <span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>
+      <input data-field="option" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}">
+      <button class="icon" data-act="del-opt" data-idx="${j}" title="Remove option">×</button>
+    </div>`).join('');
+  return `
+    <section class="card question" data-qid="${q.id}">
+      <div class="q-top">
+        <input class="q-text" data-field="text" value="${esc(q.text)}" placeholder="Question ${i + 1}">
+        <select class="q-type" data-field="type">
+          ${Object.entries(TYPES).map(([v, l]) => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="q-body">
+        ${hasOptions(q.type)
+          ? `${opts}<button class="link" data-act="add-opt">+ Add option</button>`
+          : `<div class="faux">${FAUX[q.type]}</div>`}
+      </div>
+      <div class="q-foot">
+        <button class="icon" data-act="dup-q">Duplicate</button>
+        <button class="icon" data-act="del-q">Delete</button>
+        <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> Required</label>
+      </div>
+    </section>`;
+}
+
+function onFieldEdit(el) {
+  const field = el.dataset.field;
+  const val = el.type === 'checkbox' ? el.checked : el.value;
+  const qEl = el.closest('[data-qid]');
+  if (!qEl) {
+    current[field] = val;
+  } else {
+    const q = current.questions.find(x => x.id === qEl.dataset.qid);
+    if (field === 'option') q.options[+el.dataset.idx] = val;
+    else if (field === 'type') {
+      q.type = val;
+      if (!hasOptions(val)) q.options = [];
+      else if (!q.options.length) q.options = ['Option 1'];
+    } else q[field] = val;
+  }
+  saveForms();
+}
+
+app.addEventListener('input', e => {
+  if (e.target.matches('[data-field]') && e.target.tagName !== 'SELECT') onFieldEdit(e.target);
+});
+app.addEventListener('change', e => {
+  if (!e.target.matches('[data-field]')) return;
+  onFieldEdit(e.target);
+  if (e.target.dataset.field === 'type') renderEditor('questions');
+});
+
+app.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const qEl = btn.closest('[data-qid]');
+  const idx = qEl ? current.questions.findIndex(q => q.id === qEl.dataset.qid) : -1;
+  const q = current?.questions[idx];
+  const refresh = () => { saveForms(); renderEditor('questions'); };
+
+  switch (btn.dataset.act) {
+    case 'new': return newForm();
+    case 'del-form':
+      if (!confirm('Delete this form and all its responses?')) return;
+      forms = forms.filter(f => f.id !== btn.dataset.id);
+      saveForms();
+      return renderHome();
+    case 'add-q':
+      current.questions.push({ id: uid(), type: 'radio', text: '', required: false, options: ['Option 1'] });
+      return refresh();
+    case 'dup-q':
+      current.questions.splice(idx + 1, 0, { ...q, id: uid(), options: [...q.options] });
+      return refresh();
+    case 'del-q':
+      current.questions.splice(idx, 1);
+      return refresh();
+    case 'add-opt':
+      q.options.push(`Option ${q.options.length + 1}`);
+      return refresh();
+    case 'del-opt':
+      q.options.splice(+btn.dataset.idx, 1);
+      return refresh();
+    case 'share': return copyLink();
+    case 'csv': return downloadCSV();
+    case 'again': return renderFill();
+  }
+});
+
+async function copyLink() {
+  const url = `${location.href.split('#')[0]}#/fill/${current.id}`;
+  try { await navigator.clipboard.writeText(url); toast('Link copied'); }
+  catch { toast(url); }
+}
+
+/* ---------- respondent view ---------- */
+
+const choice = (type, name, o) =>
+  `<label class="choice"><input type="${type}" name="${name}" value="${esc(o)}"><span>${esc(o)}</span></label>`;
+
+function answerHTML(q) {
+  const inputs = {
+    short: '<input type="text">',
+    paragraph: '<textarea rows="3"></textarea>',
+    date: '<input type="date">',
+    dropdown: `<select><option value="">Choose</option>${q.options.map(o => `<option>${esc(o)}</option>`).join('')}</select>`,
+    radio: q.options.map(o => choice('radio', q.id, o)).join(''),
+    checkbox: q.options.map(o => choice('checkbox', q.id, o)).join(''),
+    scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
+  }[q.type];
+  return `
+    <section class="card question answer" data-qid="${q.id}">
+      <div class="q-label">${esc(q.text || 'Untitled question')}${q.required ? ' <span class="req">*</span>' : ''}</div>
+      ${inputs}
+    </section>`;
+}
+
+function renderFill(done = false) {
+  const f = current;
+  if (done) {
+    return shell(`
+      <section class="card thanks">
+        <h2>Thank you</h2>
+        <p>Your response has been recorded.</p>
+        <button class="btn ghost" data-act="again">Submit another response</button>
+      </section>`, topbar());
+  }
+  shell(`
+    <form class="card fill" novalidate>
+      <section class="fill-head">
+        <h1>${esc(f.title)}</h1>
+        ${f.description ? `<p>${esc(f.description)}</p>` : ''}
+      </section>
+      <div class="fill-body">${f.questions.map(answerHTML).join('')}</div>
+      <div class="field-error" hidden>Please answer the highlighted questions.</div>
+      <div class="fill-foot">
+        <button class="btn ghost" type="reset">Clear form</button>
+        <button class="btn primary" type="submit">Submit</button>
+      </div>
+    </form>`, topbar());
+}
+
+app.addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+  const answers = {};
+  let firstBad = null;
+  current.questions.forEach(q => {
+    const wrap = form.querySelector(`[data-qid="${q.id}"]`);
+    let v;
+    if (q.type === 'checkbox') v = [...wrap.querySelectorAll('input:checked')].map(i => i.value);
+    else if (q.type === 'radio' || q.type === 'scale') v = wrap.querySelector('input:checked')?.value ?? '';
+    else v = wrap.querySelector('input, textarea, select').value.trim();
+    const empty = Array.isArray(v) ? !v.length : v === '';
+    const bad = q.required && empty;
+    wrap.classList.toggle('invalid', bad);
+    if (bad && !firstBad) firstBad = wrap;
+    answers[q.id] = v;
+  });
+  form.querySelector('.field-error').hidden = !firstBad;
+  if (firstBad) return firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  current.responses.push({ id: uid(), at: new Date().toISOString(), answers });
+  saveForms();
+  renderFill(true);
+});
+
+/* ---------- responses ---------- */
+
+function responsesHTML() {
+  const f = current;
+  if (!f.responses.length) {
+    return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
+  }
+  const cols = f.questions.map(q => `<th>${esc(q.text || 'Untitled question')}</th>`).join('');
+  const rows = f.responses.map(r => `
+    <tr><td>${new Date(r.at).toLocaleString()}</td>${f.questions.map(q => `<td>${esc(show(r.answers[q.id]))}</td>`).join('')}</tr>`).join('');
+  return `
+    <div class="resp-bar">
+      <span>${f.responses.length} response${f.responses.length === 1 ? '' : 's'}</span>
+      <button class="btn light small" data-act="csv">Download CSV</button>
+    </div>
+    <section class="card table-wrap">
+      <table><thead><tr><th>Timestamp</th>${cols}</tr></thead><tbody>${rows}</tbody></table>
+    </section>`;
+}
+
+function downloadCSV() {
+  const f = current;
+  const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
+  const lines = [['Timestamp', ...f.questions.map(q => q.text)].map(cell).join(',')];
+  f.responses.forEach(r => lines.push(
+    [new Date(r.at).toLocaleString(), ...f.questions.map(q => r.answers[q.id])].map(cell).join(',')
+  ));
+  const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  Object.assign(document.createElement('a'), { href: url, download: `${f.title || 'responses'}.csv` }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+route();
+</script>
+</body>
+</html>

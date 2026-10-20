@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "council-forms"
-database_id = "REPLACE_AFTER_CREATE"
+database_id = "1fec2368-e465-46e7-8dee-39fc88389c72"

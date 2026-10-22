@@ -361,10 +361,10 @@ async function renderEditor(tab) {
   const dual = f.lang === 'dual';
   const body = tab === 'responses' ? await responsesHTML() : `
     <section class="card form-head">
-      <input class="title-input ${f.lang === 'dv' ? 'dv head' : ''}" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
-      ${dual ? `<input class="title-input dv head" data-field="titleDv" value="${esc(f.titleDv)}" placeholder="Title (Dhivehi)">` : ''}
-      <textarea class="desc-input ${f.lang === 'dv' ? 'dv' : ''}" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
-      ${dual ? `<textarea class="desc-input dv" dir="rtl" data-field="descriptionDv" rows="1" placeholder="Description (Dhivehi)">${esc(f.descriptionDv)}</textarea>` : ''}
+      <input class="title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
+      ${dual ? `<input class="title-input dv head" lang="dv" data-field="titleDv" value="${esc(f.titleDv)}" placeholder="Title (Dhivehi)">` : ''}
+      <textarea class="desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
+      ${dual ? `<textarea class="desc-input dv" dir="rtl" lang="dv" data-field="descriptionDv" rows="1" placeholder="Description (Dhivehi)">${esc(f.descriptionDv)}</textarea>` : ''}
     </section>
     <div class="questions">${f.questions.map(questionHTML).join('')}</div>
     <button class="btn ghost" data-act="add-q">+ Add question</button>`;
@@ -380,12 +380,12 @@ async function renderEditor(tab) {
 function questionHTML(q, i) {
   const f = current;
   const dual = f.lang === 'dual';
-  const pc = f.lang === 'dv' ? 'dv' : '';
+  const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
   const opts = q.options.map((o, j) => `
     <div class="opt-row">
       <span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>
       <input class="${pc}" data-field="option" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}">
-      ${dual ? `<input class="dv" dir="rtl" data-field="optionDv" data-idx="${j}" value="${esc(q.optionsDv?.[j])}" placeholder="Option ${j + 1} (Dhivehi)">` : ''}
+      ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-idx="${j}" value="${esc(q.optionsDv?.[j])}" placeholder="Option ${j + 1} (Dhivehi)">` : ''}
       <button class="icon" data-act="del-opt" data-idx="${j}" title="Remove option">×</button>
     </div>`).join('');
   return `
@@ -396,7 +396,7 @@ function questionHTML(q, i) {
           ${Object.entries(TYPES).map(([v, l]) => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
-      ${dual ? `<input class="q-text wide dv" dir="rtl" data-field="textDv" value="${esc(q.textDv)}" placeholder="Question ${i + 1} (Dhivehi)">` : ''}
+      ${dual ? `<input class="q-text wide dv" dir="rtl" lang="dv" data-field="textDv" value="${esc(q.textDv)}" placeholder="Question ${i + 1} (Dhivehi)">` : ''}
       <div class="q-body">
         ${hasOptions(q.type)
           ? `${opts}<button class="link" data-act="add-opt">+ Add option</button>`
@@ -487,7 +487,7 @@ const choice = (f, q, type, o, j) =>
 
 function answerHTML(q) {
   const f = current;
-  const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl"' : '';
+  const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl" lang="dv"' : '';
   const inputs = {
     short: `<input type="text"${dvAttr}>`,
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,

@@ -54,6 +54,7 @@ h1{font-size:24px;margin:0}
 .brand-mini{display:flex;align-items:center;gap:8px;text-decoration:none}
 .brand-mini img{height:34px}
 .brand-mini span{font-weight:700;color:var(--teal-800)}
+.topbar .exit{margin-left:auto}
 .tabs{display:flex;gap:4px;margin-left:auto}
 .tab{padding:8px 14px;border-radius:999px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
 .tab.on{background:var(--teal-100);color:var(--teal-800)}
@@ -310,7 +311,7 @@ async function route() {
   current = id ? await api(`forms/${id}`).catch(() => null) : null;
   if (view === 'edit' && current) return renderEditor('questions');
   if (view === 'responses' && current) return renderEditor('responses');
-  if (view === 'fill' && current) return renderFill();
+  if ((view === 'fill' || view === 'preview') && current) return renderFill();
   renderHome();
 }
 window.addEventListener('hashchange', route);
@@ -363,7 +364,7 @@ async function renderHome() {
       <div class="meta">${f.questions.length} question${f.questions.length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
-        <a class="btn ghost small" href="#/fill/${f.id}">Preview</a>
+        <a class="btn ghost small" href="#/preview/${f.id}">Preview</a>
         <button class="btn ghost small" data-act="del-form" data-id="${f.id}">Delete</button>
       </div>
     </article>`;
@@ -422,7 +423,7 @@ async function renderEditor(tab) {
       <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responseCount})</a>
     </div>
     <button class="btn ghost small" data-act="share">Copy link</button>
-    <a class="btn primary small" href="#/fill/${f.id}">Preview</a>`));
+    <a class="btn primary small" href="#/preview/${f.id}">Preview</a>`));
 }
 
 function questionHTML(q, i) {
@@ -576,6 +577,10 @@ function answerHTML(q) {
     </section>`;
 }
 
+// Respondents open #/fill/; the editor's Preview opens #/preview/ and gets a way back.
+const fillBar = () => topbar(location.hash.startsWith('#/preview/')
+  ? `<a class="btn primary small exit" href="#/edit/${current.id}">Exit preview</a>` : '');
+
 function renderFill(done = false) {
   const f = current;
   if (done) {
@@ -584,7 +589,7 @@ function renderFill(done = false) {
         <h2>Thank you</h2>
         <p>Your response has been recorded.</p>
         <button class="btn ghost" data-act="again">Submit another response</button>
-      </section>`, topbar());
+      </section>`, fillBar());
   }
   shell(`
     <form class="card fill" novalidate>
@@ -598,7 +603,7 @@ function renderFill(done = false) {
         <button class="btn ghost" type="reset">Clear form</button>
         <button class="btn primary" type="submit">Submit</button>
       </div>
-    </form>`, topbar());
+    </form>`, fillBar());
 }
 
 app.addEventListener('submit', e => {

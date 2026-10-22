@@ -119,7 +119,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 
 /* Editor */
 .form-head{border-top:10px solid var(--teal-700)}
-.title-input{width:100%;border:0;border-bottom:1px solid var(--line);font-size:28px;font-weight:700;color:var(--teal-800);padding:6px 0;outline:none;text-align:center}
+.title-input{width:100%;border:0;border-bottom:1px solid var(--line);font-size:28px;font-weight:400;color:var(--teal-800);padding:6px 0;outline:none;text-align:center}
+.fill-head h1{font-weight:400}
 .title-input:focus{border-bottom-color:var(--teal-700)}
 .title-input.dv{font-size:30px}
 .desc-input{width:100%;border:0;resize:vertical;padding:8px 0;color:var(--muted);outline:none;font-size:14px;text-align:center}
@@ -360,7 +361,7 @@ async function renderHome() {
     </header>`;
   const tile = f => `
     <article class="tile">
-      <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(f.title || 'Untitled form')}</a>
+      <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(plain(f.title) || 'Untitled form')}</a>
       <div class="meta">${f.questions.length} question${f.questions.length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
@@ -410,8 +411,8 @@ async function renderEditor(tab) {
   const dual = f.lang === 'dual';
   const body = tab === 'responses' ? await responsesHTML() : `
     <section class="card form-head">
-      <input class="title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
-      ${dual ? `<input class="title-input dv head" lang="dv" data-field="titleDv" value="${esc(f.titleDv)}" placeholder="Title (Dhivehi)">` : ''}
+      ${richField('title', f.title, 'Untitled form', `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
+      ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', 'title-input dv head" dir="rtl" lang="dv') : ''}
       ${richField('description', f.description, 'Form description', `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
       ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
     </section>
@@ -594,7 +595,7 @@ function renderFill(done = false) {
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
-        ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head')}
+        ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
       <div class="fill-body">${f.questions.map(answerHTML).join('')}</div>
@@ -661,7 +662,7 @@ async function downloadCSV() {
     [new Date(r.at).toLocaleString(), ...f.questions.map(q => r.answers[q.id])].map(cell).join(',')
   ));
   const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-  Object.assign(document.createElement('a'), { href: url, download: `${f.title || 'responses'}.csv` }).click();
+  Object.assign(document.createElement('a'), { href: url, download: `${plain(f.title) || 'responses'}.csv` }).click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 

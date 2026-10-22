@@ -277,8 +277,6 @@ function shell(inner, head = '') {
       <span>info@maaungoodhoo.gov.mv</span>
       <span>maaungoodhoo.gov.mv</span>
     </footer>`;
-  // Chrome's autofill restarts the Android keyboard on focus changes, which closes Gboard's language menu.
-  app.querySelectorAll('input, textarea').forEach(el => el.autocomplete = 'off');
 }
 
 const topbar = (extra = '') => `

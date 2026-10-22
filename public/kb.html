@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard test</title>
+<style id="base">
+body{margin:0;padding:16px;font:16px system-ui,sans-serif}
+nav a{display:block;padding:10px 0;font-size:18px}
+input{display:block;width:100%;box-sizing:border-box;font-size:18px;padding:10px;margin:12px 0}
+</style>
+</head>
+<body>
+<h3 id="name"></h3>
+<input placeholder="Hold space here">
+<input dir="rtl" placeholder="ދިވެހި">
+<nav>
+  <a href="?v=1">1. Plain page</a>
+  <a href="?v=2">2. Fixed gradient background</a>
+  <a href="?v=3">3. Full-height page with sticky top bar</a>
+  <a href="?v=4">4. Thaana fonts</a>
+  <a href="?v=5">5. All of the app's styles</a>
+  <a href="?v=6">6. App styles, no fonts</a>
+</nav>
+<script>
+// Temporary: bisects why Gboard's long-press language menu closes on this site.
+const v = new URLSearchParams(location.search).get('v') || '1';
+document.getElementById('name').textContent = document.querySelector(`a[href="?v=${v}"]`).textContent;
+const css = s => document.head.insertAdjacentHTML('beforeend', `<style>${s}</style>`);
+const appCSS = async () => (await (await fetch('/')).text()).match(/<style>([\s\S]*?)<\/style>/)[1];
+if (v === '2') css('html{background:#063a3c}body{min-height:100vh;background:linear-gradient(170deg,#0f6b68 0%,#0a4f51 50%,#063a3c 100%) fixed;color:#fff}');
+if (v === '3') {
+  css('body{min-height:100vh;display:flex;flex-direction:column;padding:0}.bar{position:sticky;top:0;z-index:5;background:#ddd;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.2)}');
+  document.body.insertAdjacentHTML('afterbegin', '<div class="bar">Top bar</div>');
+}
+if (v === '4') {
+  css('@font-face{font-family:"Faruma";src:local("Faruma"),url("fonts/Faruma.ttf") format("truetype")}input{font-family:Faruma,system-ui}');
+}
+if (v === '5' || v === '6') appCSS().then(s => {
+  if (v === '6') s = s.replace(/@font-face\{[^}]*\}/g, '');
+  document.getElementById('base').remove();
+  css(s + 'input{display:block;width:100%;margin:12px 0}nav a{display:block;padding:10px 0;color:#fff}');
+});
+</script>
+</body>
+</html>

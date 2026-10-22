@@ -557,6 +557,8 @@ const ICONS = {
   image: svg('M5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm0-2h14V5H5v14Zm1-2h12l-3.75-5-3 4L9 13l-3 4Z'),
   video: svg('M9.5 16.5l7-4.5-7-4.5v9ZM4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.588 1.413T20 20H4Zm0-2h16V6H4v12Z'),
   section: svg('M5 11q-.825 0-1.413-.588T3 9V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v4q0 .825-.588 1.413T19 11H5Zm0-2h14V5H5v4Zm0 12q-.825 0-1.413-.588T3 19v-4q0-.825.588-1.413T5 13h14q.825 0 1.413.588T21 15v4q0 .825-.588 1.413T19 21H5Zm0-2h14v-4H5v4Z'),
+  copy: svg('M9 18q-.825 0-1.413-.588T7 16V4q0-.825.588-1.413T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.588 1.413T18 18H9Zm0-2h9V4H9v12Zm-4 6q-.825 0-1.413-.588T3 20V6h2v14h11v2H5Z'),
+  del: svg('M7 21q-.825 0-1.413-.588T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.588 1.413T17 21H7ZM17 6H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z'),
   more: svg('M12 20q-.825 0-1.413-.588T10 18q0-.825.588-1.413T12 16q.825 0 1.413.588T14 18q0 .825-.588 1.413T12 20Zm0-6q-.825 0-1.413-.588T10 12q0-.825.588-1.413T12 10q.825 0 1.413.588T14 12q0 .825-.588 1.413T12 14Zm0-6q-.825 0-1.413-.588T10 6q0-.825.588-1.413T12 4q.825 0 1.413.588T14 6q0 .825-.588 1.413T12 8Z'),
 };
 
@@ -587,8 +589,8 @@ function questionHTML(q, i) {
       ${dual ? richField('textDv', q.textDv, `Question ${i + 1} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
       <div class="q-body">${body}</div>
       <div class="q-foot">
-        <button class="icon" data-act="dup-q">Duplicate</button>
-        <button class="icon" data-act="del-q">Delete</button>
+        ${btn('dup-q', 'Duplicate', ICONS.copy)}
+        ${btn('del-q', 'Delete', ICONS.del)}
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> Required</label>
       </div>
     </section>`;
@@ -614,8 +616,8 @@ function blockHTML(q) {
       ${hasDesc ? richField('desc', q.desc, 'Description (optional)', `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
       <div class="q-body">${media}</div>
       <div class="q-foot">
-        <button class="icon" data-act="dup-q">Duplicate</button>
-        <button class="icon" data-act="del-q">Delete</button>
+        ${btn('dup-q', 'Duplicate', ICONS.copy)}
+        ${btn('del-q', 'Delete', ICONS.del)}
       </div>
     </section>`;
 }

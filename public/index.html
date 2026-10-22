@@ -122,6 +122,16 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .title-input:focus{border-bottom-color:var(--teal-700)}
 .title-input.dv{font-size:30px}
 .desc-input{width:100%;border:0;resize:vertical;padding:8px 0;color:var(--muted);outline:none;font-size:14px;text-align:center}
+/* Rich text fields: formatting bar shows while the field is focused */
+[contenteditable]{outline:none;overflow-wrap:anywhere}
+[contenteditable]:empty::before{content:attr(data-placeholder);color:#8aa5a3;pointer-events:none}
+.rt{flex:1 1 260px;min-width:0}
+.rt.wide{margin-top:10px}
+.rt-bar{display:none;gap:2px;margin-top:6px;flex-wrap:wrap}
+.rt:focus-within .rt-bar{display:flex}
+.rt-bar .icon{padding:6px}
+.rt-bar svg{display:block;width:22px;height:22px;fill:currentColor}
+.desc-input :is(ol,ul),.desc :is(ol,ul){text-align:start}
 .question{border-left:6px solid transparent}
 .question:focus-within{border-left-color:var(--teal-700)}
 .q-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -143,7 +153,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 /* Respondent view */
 .fill{border-top:10px solid var(--teal-700)}
 .fill-head{margin-bottom:18px;text-align:center}
-.fill-head p{color:var(--muted);margin:8px 0 0}
+.fill-head .desc{color:var(--muted);margin:8px 0 0}
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
 .req{color:var(--danger)}
 .answer input[type=text],.answer input[type=date],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
@@ -222,6 +232,44 @@ const hasOptions = t => ['radio', 'checkbox', 'dropdown'].includes(t);
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const show = v => Array.isArray(v) ? v.join(', ') : (v ?? '');
+
+// Rich text (description, question text) is stored as HTML. clean() keeps only the
+// formatting the toolbar makes, so stored HTML can't run scripts for respondents.
+const KEEP = ['B', 'STRONG', 'I', 'EM', 'U', 'A', 'OL', 'UL', 'LI', 'BR', 'DIV', 'P'];
+const parse = html => new DOMParser().parseFromString(html ?? '', 'text/html').body;
+const plain = html => parse(html).textContent;
+function clean(html) {
+  const body = parse(html);
+  const walk = node => [...node.children].forEach(el => {
+    if (['SCRIPT', 'STYLE', 'TEMPLATE'].includes(el.tagName)) return el.remove();
+    walk(el);
+    if (!KEEP.includes(el.tagName)) return el.replaceWith(...el.childNodes);
+    const href = el.getAttribute('href') ?? '';
+    [...el.attributes].forEach(a => el.removeAttribute(a.name));
+    if (el.tagName === 'A' && /^(https?:|mailto:)/i.test(href)) Object.assign(el, { href, target: '_blank', rel: 'noopener' });
+  });
+  walk(body);
+  return body.innerHTML;
+}
+const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+const RT_CMDS = {
+  bold: ['Bold', svg('M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z')],
+  italic: ['Italic', svg('M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z')],
+  underline: ['Underline', svg('M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z')],
+  createLink: ['Insert link', svg('M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z')],
+  insertOrderedList: ['Numbered list', svg('M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z')],
+  insertUnorderedList: ['Bulleted list', svg('M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z')],
+  removeFormat: ['Clear formatting', svg('M3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.55 5.27 3.27 5zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6z')],
+};
+// A contenteditable field with its formatting bar. Lists are only offered where `lists` is set.
+function richField(field, html, placeholder, cls, lists = false, wrap = '') {
+  const cmds = Object.keys(RT_CMDS).filter(c => lists || !c.includes('List'));
+  return `
+    <div class="rt ${wrap}">
+      <div class="${cls}" contenteditable="true" data-field="${field}" data-placeholder="${esc(placeholder)}">${clean(html)}</div>
+      <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}</div>
+    </div>`;
+}
 const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: false, options: ['Option 1'], optionsDv: [] });
 const app = document.getElementById('app');
 const langDialog = document.getElementById('lang-dialog');
@@ -287,13 +335,13 @@ const topbar = (extra = '') => `
 
 // Text in a form's language(s). Dhivehi forms keep their main text in Thaana;
 // dual forms show the English text, then the Dhivehi text (alt) below it.
-function localized(f, tag, main, alt = '', cls = '', extra = '') {
-  const dv = text => `<${tag} class="dv ${cls}" dir="rtl">${esc(text)}</${tag}>`;
-  if (f.lang === 'dv') return `<${tag} class="dv ${cls}" dir="rtl">${esc(main)}${extra}</${tag}>`;
-  if (f.lang === 'dual') return `<${tag} class="${cls}">${esc(main)}${extra}</${tag}>${alt ? dv(alt) : ''}`;
-  return `<${tag} class="${cls}">${esc(main)}${extra}</${tag}>`;
+function localized(f, tag, main, alt = '', cls = '', extra = '', fmt = esc) {
+  const dv = text => `<${tag} class="dv ${cls}" dir="rtl">${fmt(text)}</${tag}>`;
+  if (f.lang === 'dv') return `<${tag} class="dv ${cls}" dir="rtl">${fmt(main)}${extra}</${tag}>`;
+  if (f.lang === 'dual') return `<${tag} class="${cls}">${fmt(main)}${extra}</${tag}>${alt ? dv(alt) : ''}`;
+  return `<${tag} class="${cls}">${fmt(main)}${extra}</${tag}>`;
 }
-const qLabel = q => [q.text, q.textDv].filter(Boolean).join(' / ') || 'Untitled question';
+const qLabel = q => [plain(q.text), plain(q.textDv)].filter(Boolean).join(' / ') || 'Untitled question';
 const optLabel = (q, j) => [q.options[j], q.optionsDv?.[j]].filter(Boolean).join(' / ');
 
 /* ---------- home ---------- */
@@ -363,8 +411,8 @@ async function renderEditor(tab) {
     <section class="card form-head">
       <input class="title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}" data-field="title" value="${esc(f.title)}" placeholder="Untitled form">
       ${dual ? `<input class="title-input dv head" lang="dv" data-field="titleDv" value="${esc(f.titleDv)}" placeholder="Title (Dhivehi)">` : ''}
-      <textarea class="desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}" data-field="description" rows="1" placeholder="Form description">${esc(f.description)}</textarea>
-      ${dual ? `<textarea class="desc-input dv" dir="rtl" lang="dv" data-field="descriptionDv" rows="1" placeholder="Description (Dhivehi)">${esc(f.descriptionDv)}</textarea>` : ''}
+      ${richField('description', f.description, 'Form description', `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
+      ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
     </section>
     <div class="questions">${f.questions.map(questionHTML).join('')}</div>
     <button class="btn ghost" data-act="add-q">+ Add question</button>`;
@@ -391,12 +439,12 @@ function questionHTML(q, i) {
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
-        <input class="q-text ${pc}" data-field="text" value="${esc(q.text)}" placeholder="Question ${i + 1}">
+        ${richField('text', q.text, `Question ${i + 1}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
           ${Object.entries(TYPES).map(([v, l]) => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
       </div>
-      ${dual ? `<input class="q-text wide dv" dir="rtl" lang="dv" data-field="textDv" value="${esc(q.textDv)}" placeholder="Question ${i + 1} (Dhivehi)">` : ''}
+      ${dual ? richField('textDv', q.textDv, `Question ${i + 1} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
       <div class="q-body">
         ${hasOptions(q.type)
           ? `${opts}<button class="link" data-act="add-opt">+ Add option</button>`
@@ -412,7 +460,9 @@ function questionHTML(q, i) {
 
 function onFieldEdit(el) {
   const field = el.dataset.field;
-  const val = el.type === 'checkbox' ? el.checked : el.value;
+  // Emptied editors keep a stray <br>; clear it so the placeholder shows again.
+  if (el.isContentEditable && !el.textContent && !el.querySelector('li')) el.innerHTML = '';
+  const val = el.type === 'checkbox' ? el.checked : el.isContentEditable ? el.innerHTML : el.value;
   const qEl = el.closest('[data-qid]');
   if (!qEl) {
     current[field] = val;
@@ -474,6 +524,27 @@ app.addEventListener('click', e => {
   }
 });
 
+// Formatting bar: mousedown is cancelled so the editor keeps focus and selection.
+app.addEventListener('mousedown', e => { if (e.target.closest('[data-cmd]')) e.preventDefault(); });
+app.addEventListener('click', e => {
+  const btn = e.target.closest('[data-cmd]');
+  if (!btn) return;
+  const cmd = btn.dataset.cmd;
+  const editor = btn.closest('.rt').querySelector('[contenteditable]');
+  editor.focus();
+  if (cmd === 'removeFormat') document.execCommand('unlink');
+  if (cmd !== 'createLink') return document.execCommand(cmd);
+  const sel = getSelection();
+  const range = sel.rangeCount && editor.contains(sel.anchorNode) ? sel.getRangeAt(0) : null;
+  let url = prompt('Link URL', 'https://')?.trim();
+  if (!url || url === 'https://') return;
+  if (!/^[a-z]+:/i.test(url)) url = `https://${url}`;
+  editor.focus();
+  if (range) { sel.removeAllRanges(); sel.addRange(range); }
+  if (!range || range.collapsed) document.execCommand('insertHTML', false, `<a href="${esc(url)}">${esc(url)}</a>`);
+  else document.execCommand('createLink', false, url);
+});
+
 async function copyLink() {
   const url = `${location.href.split('#')[0]}#/fill/${current.id}`;
   try { await navigator.clipboard.writeText(url); toast('Link copied'); }
@@ -500,7 +571,7 @@ function answerHTML(q) {
   const req = q.required ? ' <span class="req">*</span>' : '';
   return `
     <section class="card question answer" data-qid="${q.id}">
-      ${localized(f, 'div', q.text || 'Untitled question', q.textDv, 'q-label', req)}
+      ${localized(f, 'div', q.text || 'Untitled question', q.textDv, 'q-label', req, clean)}
       ${inputs}
     </section>`;
 }
@@ -519,7 +590,7 @@ function renderFill(done = false) {
     <form class="card fill" novalidate>
       <section class="fill-head">
         ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head')}
-        ${f.description || f.descriptionDv ? localized(f, 'p', f.description, f.descriptionDv) : ''}
+        ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
       <div class="fill-body">${f.questions.map(answerHTML).join('')}</div>
       <div class="field-error" hidden>Please answer the highlighted questions.</div>

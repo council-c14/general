@@ -20,6 +20,7 @@
   --danger:#b3261e;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html{background:var(--teal-900)}
 body{
   margin:0;min-height:100vh;display:flex;flex-direction:column;
@@ -55,6 +56,48 @@ h1{font-size:24px;margin:0}
 .brand-mini img{height:34px}
 .brand-mini span{font-weight:700;color:var(--teal-800)}
 .topbar .exit{margin-left:auto}
+
+/* Editor header: icon actions, form title, tabs */
+.edit-bar{position:sticky;top:0;z-index:5;background:#fff;padding:8px 16px 0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.eb-row{display:flex;align-items:center;gap:2px}
+.eb-row .brand-mini{margin-right:auto}
+.icon-btn{background:none;border:0;color:#5f6368;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
+.icon-btn:hover{background:var(--teal-100);color:var(--teal-800)}
+.icon-btn svg{width:26px;height:26px;fill:currentColor}
+.more{position:relative}
+.more summary::-webkit-details-marker{display:none}
+.menu{position:absolute;right:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
+.menu > *{display:block;width:100%;text-align:left;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
+.menu > *:hover{background:var(--teal-100)}
+.eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edit-bar .tabs{margin:0;gap:28px}
+.edit-bar .tab{display:flex;align-items:center;gap:8px;border-radius:0;padding:10px 0;background:none;font-size:16px;border-bottom:3px solid transparent}
+.edit-bar .tab.on{background:none;color:var(--teal-700);border-bottom-color:var(--teal-700)}
+.badge{background:#3c4043;color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
+.pub-row{margin:16px 0 4px;justify-content:space-between;width:100%}
+
+/* Bottom toolbar: add question, import, text, image, video, section */
+.add-bar{position:sticky;bottom:12px;z-index:4;display:flex;justify-content:space-around;background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.25);padding:6px;margin-top:14px}
+
+/* Non-question items and the newer question types */
+.list-head{font-weight:600;font-size:14px;color:var(--teal-800);margin:12px 0 2px}
+.block-kind{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.block .desc-input{text-align:start}
+.block .desc{color:var(--muted);margin-top:6px}
+.block.section{border-top:8px solid var(--teal-700)}
+.block-img{display:block;max-width:100%;border-radius:12px;margin:10px 0}
+.video{position:relative;aspect-ratio:16/9;margin-top:10px}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:12px}
+.url-input{width:100%;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
+.tbl-wrap{overflow-x:auto}
+.gridq th,.gridq td{text-align:center;padding:8px}
+.gridq th:first-child,.gridq td:first-child{text-align:start}
+.answer .gridq input[type=text]{min-width:110px;padding:6px 10px}
+.rating{display:flex;flex-direction:row-reverse;justify-content:flex-end;gap:4px}
+.rating input{position:absolute;opacity:0;pointer-events:none}
+.rating label{font-size:34px;line-height:1;color:#cfd8d7;cursor:pointer}
+.rating input:checked ~ label,.rating label:hover,.rating label:hover ~ label{color:#f2b400}
+.rating input:focus-visible + label{outline:2px solid var(--teal-700);border-radius:4px}
 .tabs{display:flex;gap:4px;margin-left:auto}
 .tab{padding:8px 14px;border-radius:999px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
 .tab.on{background:var(--teal-100);color:var(--teal-800)}
@@ -219,6 +262,23 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
   <div class="lang-foot"><button class="btn ghost small" data-close>Cancel</button></div>
 </dialog>
 
+<dialog id="import-dialog" class="lang-dialog">
+  <h2>Import questions</h2>
+  <p class="meta">Copy every question and item from another form into this one.</p>
+  <div class="import-list"></div>
+  <div class="lang-foot"><button class="btn ghost small" data-close>Cancel</button></div>
+</dialog>
+
+<dialog id="publish-dialog" class="lang-dialog">
+  <h2>Publish options</h2>
+  <p class="meta">Anyone with the responder link can fill in the form while it is accepting responses.</p>
+  <label class="switch pub-row">Accepting responses <input type="checkbox" id="accepting"></label>
+  <div class="lang-foot">
+    <button class="btn ghost small" data-act="share">Copy responder link</button>&nbsp;
+    <button class="btn primary small" data-close>Done</button>
+  </div>
+</dialog>
+
 <script>
 const TYPES = {
   short: 'Short answer',
@@ -226,14 +286,35 @@ const TYPES = {
   radio: 'Multiple choice',
   checkbox: 'Checkboxes',
   dropdown: 'Dropdown',
-  date: 'Date',
+  file: 'File upload',
   scale: 'Linear scale (1–5)',
+  rating: 'Rating',
+  mcgrid: 'Multiple choice grid',
+  cbgrid: 'Checkbox grid',
+  table: 'Table input',
+  date: 'Date',
+  time: 'Time',
 };
-const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', scale: '1 to 5' };
-const hasOptions = t => ['radio', 'checkbox', 'dropdown'].includes(t);
+// The type menu, split into groups by dividers.
+const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
+const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
+const GRIDS = ['mcgrid', 'cbgrid'];
+const hasOptions = t => ['radio', 'checkbox', 'dropdown', ...GRIDS].includes(t); // grids keep their rows in options
+const hasCols = t => [...GRIDS, 'table'].includes(t);
+// Items that sit between questions but take no answer.
+const BLOCKS = { text: 'Title and description', image: 'Image', video: 'Video', section: 'Section' };
+const isQuestion = q => !(q.type in BLOCKS);
+const MAX_FILE = 1.5 * 1024 * 1024; // matches the server limit
+const safeSrc = s => typeof s === 'string' && s.startsWith('/api/files/') ? s : '';
+const ytId = url => url?.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/)?.[1];
+const videoHTML = url => ytId(url) ? `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${ytId(url)}" title="Video" allowfullscreen></iframe></div>` : '';
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const show = v => Array.isArray(v) ? v.join(', ') : (v ?? '');
+// Answer as text: files, lists, table rows ("a, b; c, d") and grids ("row: column; ...").
+const show = v => safeSrc(v?.url) ? `${v.name} (${location.origin}${v.url})`
+  : Array.isArray(v) ? v.map(show).join(Array.isArray(v[0]) ? '; ' : ', ')
+  : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k}: ${show(x)}`).join('; ')
+  : (v ?? '');
 
 // Rich text (description, question text) is stored as HTML. clean() keeps only the
 // formatting the toolbar makes, so stored HTML can't run scripts for respondents.
@@ -273,11 +354,17 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '') {
     </div>`;
 }
 const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: false, options: ['Option 1'], optionsDv: [] });
+const newBlock = type => ({ id: uid(), type, text: '', textDv: '', desc: '', descDv: '', options: [] });
 const app = document.getElementById('app');
 const langDialog = document.getElementById('lang-dialog');
+const publishDialog = document.getElementById('publish-dialog');
+const importDialog = document.getElementById('import-dialog');
 
 let current = null; // form open in the editor or respondent view
 let saveTimer = null;
+let saved = null;     // the open form as last saved, for undo
+let undoStack = [];   // earlier saved versions, newest last
+const snap = () => JSON.stringify({ ...current, responseCount: undefined });
 
 const api = async (path, opts = {}) => {
   const res = await fetch(`/api/${path}`, {
@@ -293,7 +380,13 @@ const failed = () => toast('Could not reach the server. Check your connection an
 // Saves the open form. Debounced so typing doesn't send a request per keystroke.
 function saveForms(now = false) {
   clearTimeout(saveTimer);
-  const send = () => api(`forms/${current.id}`, { method: 'PUT', body: current }).catch(failed);
+  const send = () => {
+    const now = snap();
+    if (now === saved) return;
+    undoStack.push(saved);
+    saved = now;
+    return api(`forms/${current.id}`, { method: 'PUT', body: current }).catch(failed);
+  };
   if (now) return send();
   saveTimer = setTimeout(send, 400);
 }
@@ -309,7 +402,9 @@ function toast(msg) {
 
 async function route() {
   const [view, id] = location.hash.replace(/^#\/?/, '').split('/');
+  if (id !== current?.id) undoStack = [];
   current = id ? await api(`forms/${id}`).catch(() => null) : null;
+  if (current) saved = snap();
   if (view === 'edit' && current) return renderEditor('questions');
   if (view === 'responses' && current) return renderEditor('responses');
   if ((view === 'fill' || view === 'preview') && current) return renderFill();
@@ -344,7 +439,7 @@ function localized(f, tag, main, alt = '', cls = '', extra = '', fmt = esc) {
   return `<${tag} class="${cls}">${fmt(main)}${extra}</${tag}>`;
 }
 const qLabel = q => [plain(q.text), plain(q.textDv)].filter(Boolean).join(' / ') || 'Untitled question';
-const optLabel = (q, j) => [q.options[j], q.optionsDv?.[j]].filter(Boolean).join(' / ');
+const optLabel = (q, j, key = 'options') => [q[key][j], q[`${key}Dv`]?.[j]].filter(Boolean).join(' / ');
 
 /* ---------- home ---------- */
 
@@ -362,7 +457,7 @@ async function renderHome() {
   const tile = f => `
     <article class="tile">
       <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(plain(f.title) || 'Untitled form')}</a>
-      <div class="meta">${f.questions.length} question${f.questions.length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
+      <div class="meta">${f.questions.filter(isQuestion).length} question${f.questions.filter(isQuestion).length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
         <a class="btn ghost small" href="#/preview/${f.id}">Preview</a>
@@ -406,6 +501,8 @@ async function newForm(lang) {
 
 /* ---------- editor ---------- */
 
+const btn = (act, label, icon) => `<button class="icon-btn" data-act="${act}" title="${label}" aria-label="${label}">${icon}</button>`;
+
 async function renderEditor(tab) {
   const f = current;
   const dual = f.lang === 'dual';
@@ -416,48 +513,163 @@ async function renderEditor(tab) {
       ${richField('description', f.description, 'Form description', `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
       ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
     </section>
-    <div class="questions">${f.questions.map(questionHTML).join('')}</div>
-    <button class="btn ghost" data-act="add-q">+ Add question</button>`;
-  shell(body, topbar(`
-    <div class="tabs">
-      <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
-      <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responseCount})</a>
-    </div>
-    <button class="btn ghost small" data-act="share">Copy link</button>
-    <a class="btn primary small" href="#/preview/${f.id}">Preview</a>`));
+    <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q) : questionHTML(q, i)).join('')}</div>
+    <div class="add-bar">
+      ${btn('add-q', 'Add question', ICONS.add)}
+      ${btn('import', 'Import questions', ICONS.import)}
+      ${btn('add-text', 'Add title and description', ICONS.text)}
+      ${btn('add-image', 'Add image', ICONS.image)}
+      ${btn('add-video', 'Add video', ICONS.video)}
+      ${btn('add-section', 'Add section', ICONS.section)}
+    </div>`;
+  shell(body, `
+    <header class="edit-bar">
+      <div class="eb-row">
+        <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"></a>
+        ${btn('undo', 'Undo', ICONS.undo)}
+        ${btn('share', 'Copy responder link', RT_CMDS.createLink[1])}
+        ${btn('collab', 'Share editor link', ICONS.share)}
+        ${btn('publish', 'Publish options', ICONS.publish)}
+        <details class="more">
+          <summary class="icon-btn" title="More" aria-label="More">${ICONS.more}</summary>
+          <div class="menu">
+            <a href="#/preview/${f.id}">Preview</a>
+            <button data-act="csv">Download responses (CSV)</button>
+            <button data-act="del-form" data-id="${f.id}">Delete form</button>
+          </div>
+        </details>
+      </div>
+      <div class="eb-title ${f.lang === 'dv' ? 'dv head' : ''}">${esc(barTitle(f))}</div>
+      <nav class="tabs">
+        <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
+        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses <span class="badge">${f.responseCount}</span></a>
+      </nav>
+    </header>`);
 }
+const barTitle = f => plain(f.title) || plain(f.titleDv) || 'Untitled form';
+const ICONS = {
+  undo: svg('M7 19v-2h7.1q1.575 0 2.738-1T18 13.5q0-1.5-1.163-2.5T14.1 10H7.8l2.6 2.6L9 14 4 9l5-5 1.4 1.4L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5q0 2.35-1.737 3.925T14.1 19H7Z'),
+  share: svg('M18 14v-3h-3V9h3V6h2v3h3v2h-3v3h-2Zm-9-2q-1.65 0-2.825-1.175T5 8q0-1.65 1.175-2.825T9 4q1.65 0 2.825 1.175T13 8q0 1.65-1.175 2.825T9 12Zm-8 8v-2.8q0-.85.438-1.563T2.6 14.55q1.55-.775 3.15-1.163T9 13q1.65 0 3.25.388t3.15 1.162q.725.375 1.163 1.088T17 17.2V20H1Zm2-2h12v-.8q0-.275-.138-.5t-.362-.35q-1.35-.675-2.725-1.012T9 15q-1.4 0-2.775.338T3.5 16.35q-.225.125-.363.35T3 17.2v.8Zm6-8q.825 0 1.413-.588T11 8q0-.825-.588-1.413T9 6q-.825 0-1.413.588T7 8q0 .825.588 1.413T9 10Z'),
+  publish: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V4l19 8-3.2 1.35a6 6 0 0 0-2.1-.35L5 7v3.5l6 1.5-6 1.5V17l7.05-2.97A6 6 0 0 0 11.5 17Z"/><path d="M17 12.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm-.7 7.3-2.3-2.3 1-1 1.3 1.3 2.9-2.9 1 1Z"/></svg>',
+  add: svg('M11 17h2v-4h4v-2h-4V7h-2v4H7v2h4v4Zm1 5q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.137 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.137T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Z'),
+  import: svg('M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3h2v3h12V9h-5V4H6v5H4V4a2 2 0 0 1 2-2Zm4 9.6V9l4 4-4 4v-2.6H2v-2.8Z'),
+  text: svg('M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z'),
+  image: svg('M5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm0-2h14V5H5v14Zm1-2h12l-3.75-5-3 4L9 13l-3 4Z'),
+  video: svg('M9.5 16.5l7-4.5-7-4.5v9ZM4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.588 1.413T20 20H4Zm0-2h16V6H4v12Z'),
+  section: svg('M5 11q-.825 0-1.413-.588T3 9V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v4q0 .825-.588 1.413T19 11H5Zm0-2h14V5H5v4Zm0 12q-.825 0-1.413-.588T3 19v-4q0-.825.588-1.413T5 13h14q.825 0 1.413.588T21 15v4q0 .825-.588 1.413T19 21H5Zm0-2h14v-4H5v4Z'),
+  more: svg('M12 20q-.825 0-1.413-.588T10 18q0-.825.588-1.413T12 16q.825 0 1.413.588T14 18q0 .825-.588 1.413T12 20Zm0-6q-.825 0-1.413-.588T10 12q0-.825.588-1.413T12 10q.825 0 1.413.588T14 12q0 .825-.588 1.413T12 14Zm0-6q-.825 0-1.413-.588T10 6q0-.825.588-1.413T12 4q.825 0 1.413.588T14 6q0 .825-.588 1.413T12 8Z'),
+};
 
 function questionHTML(q, i) {
   const f = current;
   const dual = f.lang === 'dual';
   const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
-  const opts = q.options.map((o, j) => `
+  // Editable list of options, grid rows or columns, stored in q[key] (and q[key + 'Dv']).
+  const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
     <div class="opt-row">
-      <span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>
-      <input class="${pc}" data-field="option" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}">
-      ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-idx="${j}" value="${esc(q.optionsDv?.[j])}" placeholder="Option ${j + 1} (Dhivehi)">` : ''}
-      <button class="icon" data-act="del-opt" data-idx="${j}" title="Remove option">×</button>
-    </div>`).join('');
+      ${marker}
+      <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${label} ${j + 1}">
+      ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
+      <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="Remove">×</button>
+    </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ Add ${label.toLowerCase()}</button>`;
+  const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
+    : q.type === 'table' ? `<div class="list-head">Columns</div>${list('cols', 'Column')}`
+    : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
+    : `<div class="faux ${pc}">${FAUX[q.type]}</div>`;
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
         ${richField('text', q.text, `Question ${i + 1}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
-          ${Object.entries(TYPES).map(([v, l]) => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${l}</option>`).join('')}
+          ${TYPE_GROUPS.map(g => g.map(v => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${TYPES[v]}</option>`).join('')).join('<hr>')}
         </select>
       </div>
       ${dual ? richField('textDv', q.textDv, `Question ${i + 1} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
-      <div class="q-body">
-        ${hasOptions(q.type)
-          ? `${opts}<button class="link" data-act="add-opt">+ Add option</button>`
-          : `<div class="faux ${pc}">${FAUX[q.type]}</div>`}
-      </div>
+      <div class="q-body">${body}</div>
       <div class="q-foot">
         <button class="icon" data-act="dup-q">Duplicate</button>
         <button class="icon" data-act="del-q">Delete</button>
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> Required</label>
       </div>
     </section>`;
+}
+
+// Title and description, image, video or section card in the editor.
+function blockHTML(q) {
+  const f = current;
+  const dual = f.lang === 'dual';
+  const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
+  const dv = (field, ph, cls, lists = false) => dual ? richField(`${field}Dv`, q[`${field}Dv`], `${ph} (Dhivehi)`, `${cls} dv" dir="rtl" lang="dv`, lists, 'wide') : '';
+  const hasDesc = q.type === 'text' || q.type === 'section';
+  const media = {
+    image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
+      <label class="btn ghost small">${q.src ? 'Replace image' : 'Choose image'}<input type="file" accept="image/*" data-image hidden></label>`,
+    video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
+  }[q.type] ?? '';
+  return `
+    <section class="card question block ${q.type}" data-qid="${q.id}">
+      <div class="block-kind">${BLOCKS[q.type]}</div>
+      ${richField('text', q.text, q.type === 'section' ? 'Untitled section' : 'Title', `q-text ${pc}`)}
+      ${dv('text', 'Title', 'q-text')}
+      ${hasDesc ? richField('desc', q.desc, 'Description (optional)', `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
+      <div class="q-body">${media}</div>
+      <div class="q-foot">
+        <button class="icon" data-act="dup-q">Duplicate</button>
+        <button class="icon" data-act="del-q">Delete</button>
+      </div>
+    </section>`;
+}
+
+// New items go after the item last worked on, or at the end.
+let focusQ = null;
+app.addEventListener('focusin', e => { focusQ = e.target.closest('[data-qid]')?.dataset.qid ?? focusQ; });
+function insertItems(items) {
+  const at = current.questions.findIndex(x => x.id === focusQ);
+  current.questions.splice(at < 0 ? current.questions.length : at + 1, 0, ...items);
+  focusQ = items.at(-1).id;
+  saveForms();
+  renderEditor('questions');
+  app.querySelector(`[data-qid="${items[0].id}"]`)?.scrollIntoView({ block: 'center' });
+}
+
+async function openImport() {
+  const forms = await api('forms').catch(() => { failed(); return null; });
+  if (!forms) return;
+  const others = forms.filter(f => f.id !== current.id && f.questions.length);
+  importDialog.querySelector('.import-list').innerHTML = others.length
+    ? others.map(f => `<button class="lang-opt" data-import="${f.id}"><strong class="${f.lang === 'dv' ? 'dv' : ''}">${esc(plain(f.title) || 'Untitled form')}</strong><span>${f.questions.length} item${f.questions.length === 1 ? '' : 's'}</span></button>`).join('')
+    : '<p class="meta">No other forms with questions yet.</p>';
+  importDialog.showModal();
+}
+importDialog.addEventListener('click', async e => {
+  if (e.target.closest('[data-close]')) return importDialog.close();
+  const pick = e.target.closest('[data-import]');
+  if (!pick) return;
+  importDialog.close();
+  const src = await api(`forms/${pick.dataset.import}`).catch(() => null);
+  if (!src) return failed();
+  insertItems(src.questions.map(q => ({ ...q, id: uid() })));
+  toast(`Imported ${src.questions.length} item${src.questions.length === 1 ? '' : 's'}`);
+});
+
+async function upload(file) {
+  const res = await fetch(`/api/forms/${current.id}/files`, {
+    method: 'POST',
+    body: file,
+    headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name) },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return { name: file.name, url: (await res.json()).url };
+}
+
+async function pickImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > MAX_FILE) return toast('Images must be 1.5 MB or smaller.');
+  const q = current.questions.find(x => x.id === input.closest('[data-qid]').dataset.qid);
+  try { q.src = (await upload(file)).url; } catch { return failed(); }
+  saveForms();
+  renderEditor('questions');
 }
 
 function onFieldEdit(el) {
@@ -468,15 +680,19 @@ function onFieldEdit(el) {
   const qEl = el.closest('[data-qid]');
   if (!qEl) {
     current[field] = val;
+    if (field.startsWith('title')) app.querySelector('.eb-title').textContent = barTitle(current);
   } else {
     const q = current.questions.find(x => x.id === qEl.dataset.qid);
     const idx = +el.dataset.idx;
-    if (field === 'option') q.options[idx] = val;
-    else if (field === 'optionDv') (q.optionsDv ||= [])[idx] = val;
+    const key = el.dataset.list;
+    if (field === 'option') q[key][idx] = val;
+    else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
     else if (field === 'type') {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
-      else if (!q.options.length) q.options = ['Option 1'];
+      // Fresh lists take the new type's default label ("Row 1" for grids).
+      else if (!q.options.length || /^(Option|Row) 1$/.test(q.options.join('|'))) q.options = [GRIDS.includes(val) ? 'Row 1' : 'Option 1'];
+      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['Column 1']) : [];
     } else q[field] = val;
   }
   saveForms();
@@ -486,9 +702,10 @@ app.addEventListener('input', e => {
   if (e.target.matches('[data-field]') && e.target.tagName !== 'SELECT') onFieldEdit(e.target);
 });
 app.addEventListener('change', e => {
+  if (e.target.matches('[data-image]')) return pickImage(e.target);
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
-  if (e.target.dataset.field === 'type') renderEditor('questions');
+  if (['type', 'url'].includes(e.target.dataset.field)) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -503,24 +720,42 @@ app.addEventListener('click', e => {
     case 'new': return langDialog.showModal();
     case 'del-form':
       if (!confirm('Delete this form and all its responses?')) return;
-      return api(`forms/${btn.dataset.id}`, { method: 'DELETE' }).then(renderHome).catch(failed);
-    case 'add-q':
-      current.questions.push(newQ());
-      return refresh();
+      return api(`forms/${btn.dataset.id}`, { method: 'DELETE' })
+        .then(() => { history.replaceState(null, '', '#/'); renderHome(); }).catch(failed);
+    case 'add-q': return insertItems([newQ()]);
+    case 'add-text': case 'add-image': case 'add-video': case 'add-section':
+      return insertItems([newBlock(btn.dataset.act.slice(4))]);
+    case 'import': return openImport();
     case 'dup-q':
-      current.questions.splice(idx + 1, 0, { ...q, id: uid(), options: [...q.options], optionsDv: [...(q.optionsDv ?? [])] });
+      current.questions.splice(idx + 1, 0, { ...structuredClone(q), id: uid() });
       return refresh();
     case 'del-q':
       current.questions.splice(idx, 1);
       return refresh();
-    case 'add-opt':
-      q.options.push(`Option ${q.options.length + 1}`);
+    case 'add-opt': {
+      const key = btn.dataset.list;
+      const label = key === 'cols' ? 'Column' : GRIDS.includes(q.type) ? 'Row' : 'Option';
+      (q[key] ||= []).push(`${label} ${q[key].length + 1}`);
       return refresh();
+    }
     case 'del-opt':
-      q.options.splice(+btn.dataset.idx, 1);
-      q.optionsDv?.splice(+btn.dataset.idx, 1);
+      q[btn.dataset.list].splice(+btn.dataset.idx, 1);
+      q[`${btn.dataset.list}Dv`]?.splice(+btn.dataset.idx, 1);
       return refresh();
+    case 'add-row': {
+      const tbody = qEl.querySelector('tbody');
+      const row = tbody.rows[0].cloneNode(true);
+      row.querySelectorAll('input').forEach(i => { i.value = ''; });
+      return tbody.append(row);
+    }
+    case 'next': return turnPage(btn.form, 1);
+    case 'back': return turnPage(btn.form, -1);
     case 'share': return copyLink();
+    case 'collab': return copyLink('edit', 'Editor link copied. Anyone with it can edit this form.');
+    case 'undo': return undo();
+    case 'publish':
+      document.getElementById('accepting').checked = current.accepting !== false;
+      return publishDialog.showModal();
     case 'csv': return downloadCSV();
     case 'again': return renderFill();
   }
@@ -547,9 +782,36 @@ app.addEventListener('click', e => {
   else document.execCommand('createLink', false, url);
 });
 
-async function copyLink() {
-  const url = `${location.href.split('#')[0]}#/fill/${current.id}`;
-  try { await navigator.clipboard.writeText(url); toast('Link copied'); }
+// Closes the ⋮ menu after picking an item or tapping elsewhere.
+document.addEventListener('click', e => app.querySelectorAll('.more[open]').forEach(d => {
+  if (!d.contains(e.target) || e.target.closest('.menu')) d.open = false;
+}));
+
+publishDialog.addEventListener('click', e => {
+  if (e.target.closest('[data-act=share]')) copyLink();
+  if (e.target.closest('[data-close]')) publishDialog.close();
+});
+publishDialog.addEventListener('change', e => {
+  current.accepting = e.target.checked;
+  saveForms(true);
+  toast(current.accepting ? 'Accepting responses' : 'Not accepting responses');
+});
+
+// Steps back one saved version (or drops unsaved typing) and saves that.
+function undo() {
+  clearTimeout(saveTimer);
+  const pending = snap() !== saved;
+  const prev = pending ? saved : undoStack.pop();
+  if (!prev) return toast('Nothing to undo');
+  current = { ...JSON.parse(prev), responseCount: current.responseCount };
+  saved = prev;
+  if (!pending) api(`forms/${current.id}`, { method: 'PUT', body: current }).catch(failed);
+  renderEditor(location.hash.startsWith('#/responses') ? 'responses' : 'questions');
+}
+
+async function copyLink(view = 'fill', msg = 'Responder link copied') {
+  const url = `${location.href.split('#')[0]}#/${view}/${current.id}`;
+  try { await navigator.clipboard.writeText(url); toast(msg); }
   catch { toast(url); }
 }
 
@@ -557,6 +819,26 @@ async function copyLink() {
 
 const choice = (f, q, type, o, j) =>
   `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}"><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
+
+const colHeads = q => (q.cols ?? []).map((c, k) => `<th>${esc(optLabel(q, k, 'cols'))}</th>`).join('');
+const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th></th>${colHeads(q)}</tr></thead><tbody>
+  ${q.options.map((r, j) => `<tr><td>${esc(optLabel(q, j))}</td>${(q.cols ?? []).map(c =>
+    `<td><input type="${q.type === 'mcgrid' ? 'radio' : 'checkbox'}" name="${q.id}:${j}" value="${esc(c)}" aria-label="${esc(r)}: ${esc(c)}"></td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>`;
+
+// A question, or a text / image / video / section card, as respondents see it.
+function itemHTML(q) {
+  if (isQuestion(q)) return answerHTML(q);
+  const f = current;
+  const media = q.type === 'image' && safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">`
+    : q.type === 'video' ? videoHTML(q.url) : '';
+  return `
+    <section class="card block ${q.type}">
+      ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, 'q-label', '', clean) : ''}
+      ${q.desc || q.descDv ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
+      ${media}
+    </section>`;
+}
 
 function answerHTML(q) {
   const f = current;
@@ -569,6 +851,15 @@ function answerHTML(q) {
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
+    time: '<input type="time">',
+    file: '<input type="file">',
+    // Stars in reverse so CSS can light up a star and every star before it.
+    rating: `<div class="rating">${[5, 4, 3, 2, 1].map(n => `<input type="radio" id="${q.id}-${n}" name="${q.id}" value="${n}"><label for="${q.id}-${n}" title="${n}">★</label>`).join('')}</div>`,
+    mcgrid: gridHTML(q),
+    cbgrid: gridHTML(q),
+    table: `<div class="tbl-wrap"><table class="gridq"><thead><tr>${colHeads(q)}</tr></thead>
+      <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
+      <button type="button" class="link" data-act="add-row">+ Add row</button>`,
   }[q.type];
   const req = q.required ? ' <span class="req">*</span>' : '';
   return `
@@ -592,43 +883,98 @@ function renderFill(done = false) {
         <button class="btn ghost" data-act="again">Submit another response</button>
       </section>`, fillBar());
   }
+  if (f.accepting === false && !location.hash.startsWith('#/preview/')) {
+    return shell(`
+      <section class="card thanks">
+        ${localized(f, 'h2', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
+        <p>This form is no longer accepting responses.</p>
+      </section>`, fillBar());
+  }
+  // Each section starts a new page.
+  const pages = [[]];
+  f.questions.forEach(q => { if (q.type === 'section') pages.push([]); pages.at(-1).push(q); });
+  const paged = pages.length > 1;
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
         ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
-      <div class="fill-body">${f.questions.map(answerHTML).join('')}</div>
-      <div class="field-error" hidden>Please answer the highlighted questions.</div>
+      <div class="fill-body">${pages.map((p, n) => `<div class="page" ${n ? 'hidden' : ''}>${p.map(itemHTML).join('')}</div>`).join('')}</div>
+      <div class="field-error" hidden></div>
       <div class="fill-foot">
+        <button class="btn ghost" type="button" data-act="back" hidden>Back</button>
         <button class="btn ghost" type="reset">Clear form</button>
-        <button class="btn primary" type="submit">Submit</button>
+        <button class="btn primary" type="button" data-act="next" ${paged ? '' : 'hidden'}>Next</button>
+        <button class="btn primary" type="submit" ${paged ? 'hidden' : ''}>Submit</button>
       </div>
     </form>`, fillBar());
 }
 
-app.addEventListener('submit', e => {
-  e.preventDefault();
-  const form = e.target;
+// Reads the answers inside `scope` and marks required questions left empty.
+// Returns null (and shows the error) when something needs fixing.
+const blank = v => v === '' || (Array.isArray(v) ? !v.length
+  : !!v && typeof v === 'object' && !(v instanceof File) && Object.values(v).some(blank));
+function collect(scope) {
   const answers = {};
   let firstBad = null;
-  current.questions.forEach(q => {
-    const wrap = form.querySelector(`[data-qid="${q.id}"]`);
-    let v;
-    if (q.type === 'checkbox') v = [...wrap.querySelectorAll('input:checked')].map(i => i.value);
-    else if (q.type === 'radio' || q.type === 'scale') v = wrap.querySelector('input:checked')?.value ?? '';
-    else v = wrap.querySelector('input, textarea, select').value.trim();
-    const empty = Array.isArray(v) ? !v.length : v === '';
-    const bad = q.required && empty;
+  let big = false;
+  current.questions.filter(isQuestion).forEach(q => {
+    const wrap = scope.querySelector(`[data-qid="${q.id}"]`);
+    if (!wrap) return;
+    const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
+    const row = j => picked(`[name="${q.id}:${j}"]`);
+    const one = () => picked('input')[0] ?? '';
+    const v = {
+      checkbox: () => picked('input'),
+      radio: one, scale: one, rating: one,
+      mcgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)[0] ?? ''])),
+      cbgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)])),
+      table: () => [...wrap.querySelectorAll('tbody tr')]
+        .map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean)),
+      file: () => wrap.querySelector('input').files[0] ?? '',
+    }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
+    const tooBig = v instanceof File && v.size > MAX_FILE;
+    const bad = (q.required && blank(v)) || tooBig;
+    big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;
     answers[q.id] = v;
   });
-  form.querySelector('.field-error').hidden = !firstBad;
-  if (firstBad) return firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  api(`forms/${current.id}/responses`, { method: 'POST', body: { answers } })
-    .then(() => renderFill(true))
-    .catch(failed);
+  const err = app.querySelector('.field-error');
+  err.textContent = big ? 'Files must be 1.5 MB or smaller.' : 'Please answer the highlighted questions.';
+  err.hidden = !firstBad;
+  firstBad?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return firstBad ? null : answers;
+}
+
+function turnPage(form, step) {
+  const pages = [...form.querySelectorAll('.page')];
+  const cur = pages.findIndex(p => !p.hidden);
+  if (step > 0 && !collect(pages[cur])) return;
+  const next = cur + step;
+  pages[cur].hidden = true;
+  pages[next].hidden = false;
+  form.querySelector('[data-act=back]').hidden = next === 0;
+  form.querySelector('[data-act=next]').hidden = next === pages.length - 1;
+  form.querySelector('[type=submit]').hidden = next !== pages.length - 1;
+  form.scrollIntoView({ behavior: 'smooth' });
+}
+
+app.addEventListener('submit', async e => {
+  e.preventDefault();
+  const answers = collect(e.target);
+  if (!answers) return;
+  const submit = e.target.querySelector('[type=submit]');
+  submit.disabled = true;
+  try {
+    for (const [id, v] of Object.entries(answers)) if (v instanceof File) answers[id] = await upload(v);
+    await api(`forms/${current.id}/responses`, { method: 'POST', body: { answers } });
+    renderFill(true);
+  } catch {
+    submit.disabled = false;
+    failed();
+  }
 });
 
 /* ---------- responses ---------- */
@@ -639,9 +985,11 @@ async function responsesHTML() {
   if (!responses.length) {
     return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
   }
-  const cols = f.questions.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
+  const qs = f.questions.filter(isQuestion);
+  const cell = v => safeSrc(v?.url) ? `<a href="${esc(v.url)}">${esc(v.name)}</a>` : esc(show(v));
+  const cols = qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
   const rows = responses.map(r => `
-    <tr><td>${new Date(r.at).toLocaleString()}</td>${f.questions.map(q => `<td>${esc(show(r.answers[q.id]))}</td>`).join('')}</tr>`).join('');
+    <tr><td>${new Date(r.at).toLocaleString()}</td>${qs.map(q => `<td>${cell(r.answers[q.id])}</td>`).join('')}</tr>`).join('');
   return `
     <div class="resp-bar">
       <span>${responses.length} response${responses.length === 1 ? '' : 's'}</span>
@@ -657,9 +1005,10 @@ async function downloadCSV() {
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return null; });
   if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
-  const lines = [['Timestamp', ...f.questions.map(qLabel)].map(cell).join(',')];
+  const qs = f.questions.filter(isQuestion);
+  const lines = [['Timestamp', ...qs.map(qLabel)].map(cell).join(',')];
   responses.forEach(r => lines.push(
-    [new Date(r.at).toLocaleString(), ...f.questions.map(q => r.answers[q.id])].map(cell).join(',')
+    [new Date(r.at).toLocaleString(), ...qs.map(q => r.answers[q.id])].map(cell).join(',')
   ));
   const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
   Object.assign(document.createElement('a'), { href: url, download: `${plain(f.title) || 'responses'}.csv` }).click();

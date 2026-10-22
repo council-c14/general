@@ -13,3 +13,12 @@ CREATE TABLE IF NOT EXISTS responses (
 );
 
 CREATE INDEX IF NOT EXISTS responses_form ON responses (form_id, submitted_at);
+
+-- Created on first upload by the API as well.
+CREATE TABLE IF NOT EXISTS files (
+  id TEXT PRIMARY KEY,
+  form_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  data BLOB NOT NULL
+);

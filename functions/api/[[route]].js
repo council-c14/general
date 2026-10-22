@@ -1,13 +1,33 @@
 // Shared storage for forms and responses, backed by the D1 binding `DB`.
-// Routes: GET/PUT/DELETE /api/forms/:id, GET/POST /api/forms/:id/responses, GET /api/forms
+// Routes: GET/PUT/DELETE /api/forms/:id, GET/POST /api/forms/:id/responses, GET /api/forms,
+//         POST /api/forms/:id/files (raw body), GET /api/files/:fileId
 
 const json = (data, status = 200) => Response.json(data, { status });
+// Uploaded files (answers and form images) live in D1.
+// ponytail: D1 caps a row near 2 MB, so files stop at 1.5 MB; move to an R2 bucket for bigger ones.
+const FILES = 'CREATE TABLE IF NOT EXISTS files (id TEXT PRIMARY KEY, form_id TEXT NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL, data BLOB NOT NULL)';
+const MAX_FILE = 1.5 * 1024 * 1024;
 
 export async function onRequest({ request, env, params }) {
   const [kind, id, sub] = [].concat(params.route || []);
-  if (kind !== 'forms') return json({ error: 'Not found' }, 404);
   const db = env.DB;
   const method = request.method;
+
+  if (kind === 'files' && id && method === 'GET') {
+    await db.prepare(FILES).run();
+    const file = await db.prepare('SELECT name, type, data FROM files WHERE id = ?').bind(id).first();
+    if (!file) return json({ error: 'Not found' }, 404);
+    // Images show inline; anything else downloads, so an uploaded page can't run on this site.
+    const inline = /^image\/(png|jpeg|gif|webp)$/.test(file.type);
+    return new Response(new Uint8Array(file.data), {
+      headers: {
+        'Content-Type': inline ? file.type : 'application/octet-stream',
+        'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  }
+  if (kind !== 'forms') return json({ error: 'Not found' }, 404);
 
   if (!id) {
     if (method !== 'GET') return json({ error: 'Method not allowed' }, 405);
@@ -28,8 +48,9 @@ export async function onRequest({ request, env, params }) {
     }
     if (method === 'POST') {
       const body = await request.json();
-      const form = await db.prepare('SELECT id FROM forms WHERE id = ?').bind(id).first();
+      const form = await db.prepare('SELECT data FROM forms WHERE id = ?').bind(id).first();
       if (!form) return json({ error: 'Form not found' }, 404);
+      if (JSON.parse(form.data).accepting === false) return json({ error: 'Form is not accepting responses' }, 403);
       const at = new Date().toISOString();
       const rid = crypto.randomUUID();
       await db.prepare('INSERT INTO responses (id, form_id, submitted_at, answers) VALUES (?, ?, ?, ?)')
@@ -37,6 +58,19 @@ export async function onRequest({ request, env, params }) {
       return json({ id: rid, at }, 201);
     }
     return json({ error: 'Method not allowed' }, 405);
+  }
+
+  if (sub === 'files' && method === 'POST') {
+    const form = await db.prepare('SELECT id FROM forms WHERE id = ?').bind(id).first();
+    if (!form) return json({ error: 'Form not found' }, 404);
+    const data = await request.arrayBuffer();
+    if (data.byteLength > MAX_FILE) return json({ error: 'File too large' }, 413);
+    const fid = crypto.randomUUID();
+    const name = decodeURIComponent(request.headers.get('X-File-Name') || 'file').slice(0, 200);
+    await db.prepare(FILES).run();
+    await db.prepare('INSERT INTO files (id, form_id, name, type, data) VALUES (?, ?, ?, ?, ?)')
+      .bind(fid, id, name, request.headers.get('Content-Type') || 'application/octet-stream', data).run();
+    return json({ id: fid, url: `/api/files/${fid}` }, 201);
   }
 
   if (sub) return json({ error: 'Not found' }, 404);
@@ -60,7 +94,9 @@ export async function onRequest({ request, env, params }) {
   }
 
   if (method === 'DELETE') {
+    await db.prepare(FILES).run();
     await db.batch([
+      db.prepare('DELETE FROM files WHERE form_id = ?').bind(id),
       db.prepare('DELETE FROM responses WHERE form_id = ?').bind(id),
       db.prepare('DELETE FROM forms WHERE id = ?').bind(id),
     ]);

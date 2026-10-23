@@ -235,6 +235,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .fill-head{margin-bottom:18px;text-align:center}
 .fill-head .desc{color:var(--muted);margin:8px 0 0}
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
+/* Choice questions left without text: the options take the question's place and style */
+.answer.bare :is(.choice,select){font-size:16px;font-weight:600}
 .req{color:var(--danger)}
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
@@ -1095,6 +1097,12 @@ function answerHTML(q) {
       <button type="button" class="link" data-act="add-row">+ Add row</button>`,
   }[q.type];
   const req = q.required ? ' <span class="req">*</span>' : '';
+  const bare = ['radio', 'checkbox', 'dropdown'].includes(q.type) && !plain(q.text) && !plain(q.textDv);
+  if (bare) return `
+    <section class="card question answer bare" data-qid="${q.id}">
+      ${q.required ? '<div class="q-label req">*</div>' : ''}
+      ${inputs}
+    </section>`;
   return `
     <section class="card question answer" data-qid="${q.id}">
       ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', req, clean)}

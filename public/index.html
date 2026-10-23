@@ -76,10 +76,9 @@ h1{font-size:24px;margin:0}
 .menu > *:hover{background:var(--teal-100)}
 .menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
 .eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.edit-bar .tabs{margin:0;gap:28px;justify-content:center}
+.edit-bar .tabs{margin:0;gap:28px;justify-content:center;direction:ltr} /* same order on Dhivehi forms */
 .edit-bar .tab{display:flex;align-items:center;gap:8px;border-radius:0;padding:10px 0;background:none;font-size:16px;border-bottom:3px solid transparent}
 .edit-bar .tab.on{background:none;color:var(--teal-700);border-bottom-color:var(--teal-700)}
-.badge{background:#3c4043;color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
 .pub-row{margin:16px 0 4px;justify-content:space-between;width:100%}
 
 /* Settings tab */
@@ -685,7 +684,7 @@ async function renderEditor(tab) {
       <div class="eb-title ${f.lang === 'dv' ? 'dv head' : ''}">${esc(barTitle(f))}</div>
       <nav class="tabs">
         <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
-        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses <span class="badge">${f.responseCount}</span></a>
+        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses (${f.responseCount})</a>
         <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">Settings</a>
       </nav>
     </header>`);

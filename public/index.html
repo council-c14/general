@@ -37,15 +37,15 @@ h1{font-size:24px;margin:0}
 
 /* Brand banner, mirrors the council letterhead */
 .brand-card{
-  background:#fff;width:min(560px,calc(100% - 32px));margin:0 auto;
-  border-radius:0 0 40px 40px;padding:18px 24px 26px;text-align:center;
+  background:#fff;width:min(760px,calc(100% - 32px));margin:0 auto;
+  border-radius:0 0 32px 32px;padding:12px 24px 16px;text-align:center;
   box-shadow:0 6px 20px rgba(0,0,0,.25);
 }
-.brand-card img{display:block;margin:0 auto;height:88px}
-.org-names{display:grid;gap:6px;margin-top:8px}
-.org{font-size:21px;font-weight:700;color:var(--teal-900)}
-.org.dv{font-size:26px;line-height:1.6;color:var(--teal-900)}
-.org-sub{font-size:16px;color:var(--teal-800);margin-top:4px}
+.brand-card img{display:block;margin:0 auto;height:64px}
+.org-names{display:grid;gap:2px;margin-top:6px}
+.org{font-size:18px;font-weight:700;color:var(--teal-900)}
+.org.dv{font-size:22px;line-height:1.5;color:var(--teal-900)}
+.org-sub{font-size:14px;color:var(--teal-800);margin-top:2px}
 
 /* Top bar */
 .topbar{
@@ -68,10 +68,11 @@ h1{font-size:24px;margin:0}
 .more{position:relative}
 .more summary::-webkit-details-marker{display:none}
 .menu{position:absolute;right:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
-.menu > *{display:block;width:100%;text-align:left;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
+.menu > *{display:flex;align-items:center;gap:14px;white-space:nowrap;width:100%;text-align:left;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
 .menu > *:hover{background:var(--teal-100)}
+.menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
 .eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.edit-bar .tabs{margin:0;gap:28px}
+.edit-bar .tabs{margin:0;gap:28px;justify-content:center}
 .edit-bar .tab{display:flex;align-items:center;gap:8px;border-radius:0;padding:10px 0;background:none;font-size:16px;border-bottom:3px solid transparent}
 .edit-bar .tab.on{background:none;color:var(--teal-700);border-bottom-color:var(--teal-700)}
 .badge{background:#3c4043;color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
@@ -257,8 +258,9 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:600px){
-  .brand-card{padding:14px 16px 20px}
-  .brand-card img{height:52px}
+  .brand-card{padding:10px 16px 14px}
+  .brand-card img{height:44px}
+  .edit-bar .brand-mini span{display:none}
   .org{font-size:3.7vw;white-space:nowrap;text-align:center;text-align-last:center}
   .org.dv{font-size:18px;line-height:1.5}
   .org-sub{font-size:3.3vw;white-space:nowrap}
@@ -603,17 +605,17 @@ async function renderEditor(tab) {
   shell(body, `
     <header class="edit-bar">
       <div class="eb-row">
-        <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"></a>
+        <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"><span>Council Forms</span></a>
         ${btn('undo', 'Undo', ICONS.undo)}
+        <a class="icon-btn" href="#/preview/${f.id}" title="Preview" aria-label="Preview">${ICONS.eye}</a>
         ${btn('share', 'Copy responder link', RT_CMDS.createLink[1])}
         ${btn('collab', 'Share editor link', ICONS.share)}
         ${btn('publish', 'Publish options', ICONS.publish)}
         <details class="more">
           <summary class="icon-btn" title="More" aria-label="More">${ICONS.more}</summary>
           <div class="menu">
-            <a href="#/preview/${f.id}">Preview</a>
-            <button data-act="csv">Download responses (CSV)</button>
-            <button data-act="del-form" data-id="${f.id}">Delete form</button>
+            <button data-act="csv">${ICONS.download}Download responses (CSV)</button>
+            <button data-act="del-form" data-id="${f.id}">${ICONS.del}Delete form</button>
           </div>
         </details>
       </div>
@@ -672,6 +674,8 @@ const ICONS = {
   section: svg('M5 11q-.825 0-1.413-.588T3 9V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v4q0 .825-.588 1.413T19 11H5Zm0-2h14V5H5v4Zm0 12q-.825 0-1.413-.588T3 19v-4q0-.825.588-1.413T5 13h14q.825 0 1.413.588T21 15v4q0 .825-.588 1.413T19 21H5Zm0-2h14v-4H5v4Z'),
   copy: svg('M9 18q-.825 0-1.413-.588T7 16V4q0-.825.588-1.413T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.588 1.413T18 18H9Zm0-2h9V4H9v12Zm-4 6q-.825 0-1.413-.588T3 20V6h2v14h11v2H5Z'),
   del: svg('M7 21q-.825 0-1.413-.588T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.588 1.413T17 21H7ZM17 6H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z'),
+  eye: svg('M12 16q1.875 0 3.188-1.312T16.5 11.5q0-1.875-1.312-3.187T12 7q-1.875 0-3.187 1.313T7.5 11.5q0 1.875 1.313 3.188T12 16Zm0-1.8q-1.125 0-1.912-.788T9.3 11.5q0-1.125.788-1.912T12 8.8q1.125 0 1.913.788T14.7 11.5q0 1.125-.787 1.913T12 14.2Zm0 4.8q-3.65 0-6.65-2.037T1 11.5q1.35-3.425 4.35-5.463T12 4q3.65 0 6.65 2.038T23 11.5q-1.35 3.425-4.35 5.463T12 19Zm0-2q2.825 0 5.188-1.487T20.8 11.5q-1.25-2.525-3.613-4.012T12 6Q9.175 6 6.812 7.488T3.2 11.5q1.25 2.525 3.613 4.013T12 17Z'),
+  download: svg('M12 16l-5-5 1.4-1.45 2.6 2.6V4h2v8.15l2.6-2.6L17 11l-5 5Zm-6 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
   more: svg('M12 20q-.825 0-1.413-.588T10 18q0-.825.588-1.413T12 16q.825 0 1.413.588T14 18q0 .825-.588 1.413T12 20Zm0-6q-.825 0-1.413-.588T10 12q0-.825.588-1.413T12 10q.825 0 1.413.588T14 12q0 .825-.588 1.413T12 14Zm0-6q-.825 0-1.413-.588T10 6q0-.825.588-1.413T12 4q.825 0 1.413.588T14 6q0 .825-.588 1.413T12 8Z'),
 };
 

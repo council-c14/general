@@ -113,6 +113,10 @@ h1{font-size:24px;margin:0}
 .block .desc-input{text-align:start}
 .block .desc{color:var(--muted);margin-top:6px}
 .block.section{border-top:8px solid var(--teal-700)}
+/* Section headers respondents see: dark green box, large title (Mv Eamaan XP for Dhivehi) */
+.fill .block.section{background:var(--teal-800);color:#fff;border-top:0}
+.fill .block.section .q-label{font-size:24px;line-height:1.4}
+.fill .block.section .desc{color:#d4efeb}
 /* Sections: "Section 1 of 3" tab on the card that starts each section, and where a section leads */
 .sec-tab{display:inline-block;background:var(--teal-700);color:#fff;font-size:14px;font-weight:600;padding:8px 18px;border-radius:12px 12px 0 0}
 .sec-tab + .card{border-start-start-radius:0}
@@ -1076,7 +1080,7 @@ function itemHTML(q) {
     : q.type === 'video' ? videoHTML(q.url) : '';
   return `
     <section class="card block ${q.type}" ${q.type === 'section' ? `data-sec="${q.id}"` : ''}>
-      ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, 'q-label', '', clean) : ''}
+      ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${q.type === 'section' ? 'head' : ''}`, '', clean) : ''}
       ${q.desc || q.descDv ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
       ${media}
     </section>`;

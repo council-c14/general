@@ -116,7 +116,6 @@ h1{font-size:24px;margin:0}
 /* Section headers respondents see: dark green box, large title (Mv Eamaan XP for Dhivehi) */
 .fill .block.section{background:var(--teal-800);color:#fff;border-top:0}
 .fill .block.section .q-label{font-size:20px;line-height:1.4}
-.fill .block.section .desc{color:#d4efeb}
 /* A section continuing on the same page folds away under its header */
 .sec-fold > summary{list-style:none;cursor:pointer}
 .sec-fold > summary::-webkit-details-marker{display:none}
@@ -1081,18 +1080,22 @@ const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th
   </tbody></table></div>`;
 
 // A question, or a text / image / video / section card, as respondents see it.
+// A section's description shows in its own white card under the green header.
+const secDesc = q => q.desc || q.descDv ? `<section class="card block">${localized(current, 'div', q.desc, q.descDv, 'desc', '', clean)}</section>` : '';
+
 function itemHTML(q, fold = false) {
   if (isQuestion(q)) return answerHTML(q);
   const f = current;
+  const sec = q.type === 'section';
   const media = q.type === 'image' && safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">`
     : q.type === 'video' ? videoHTML(q.url) : '';
   return `
     <section class="card block ${q.type}" ${q.type === 'section' ? `data-sec="${q.id}"` : ''}>
       ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${q.type === 'section' ? 'head' : ''}`, '', clean) : ''}
-      ${q.desc || q.descDv ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
+      ${!sec && (q.desc || q.descDv) ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
       ${media}
       ${fold ? `<span class="fold-btn" aria-hidden="true">${ICONS.fold}</span>` : ''}
-    </section>`;
+    </section>${sec && !fold ? secDesc(q) : ''}`;
 }
 
 function answerHTML(q) {
@@ -1194,7 +1197,7 @@ function renderFill(done = false, answers = null) {
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
       <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.secs.map((sec, k) => k
-        ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`
+        ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${secDesc(sec[0])}${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`
         : sec.map(q => itemHTML(q)).join('')).join('')}</div>`).join('')}</div>
       <div class="field-error" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}

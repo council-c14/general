@@ -557,8 +557,11 @@ function localized(f, tag, main, alt = '', cls = '', extra = '', fmt = esc) {
   if (f.lang === 'dual') return `<${tag} class="${cls}">${fmt(main)}${extra}</${tag}>${alt ? dv(alt) : ''}`;
   return `<${tag} class="${cls}">${fmt(main)}${extra}</${tag}>`;
 }
-const qLabel = q => [plain(q.text), plain(q.textDv)].filter(Boolean).join(' / ') || 'Untitled question';
 const optLabel = (q, j, key = 'options') => [q[key][j], q[`${key}Dv`]?.[j]].filter(Boolean).join(' / ');
+// Choice questions left without text are named by their options.
+const qLabel = q => [plain(q.text), plain(q.textDv)].filter(Boolean).join(' / ')
+  || (['radio', 'checkbox', 'dropdown'].includes(q.type) && q.options.map((o, j) => optLabel(q, j)).join(', '))
+  || 'Untitled question';
 
 /* ---------- home ---------- */
 

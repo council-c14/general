@@ -56,6 +56,7 @@ h1{font-size:24px;margin:0}
 .brand-mini img{height:34px}
 .brand-mini span{font-weight:700;color:var(--teal-800)}
 .topbar .exit{margin-left:auto}
+.preview-bar span{font-weight:700;color:var(--teal-800)}
 
 /* Editor header: icon actions, form title, tabs */
 .edit-bar{position:sticky;top:0;z-index:5;background:#fff;padding:8px 16px 0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
@@ -460,17 +461,19 @@ const optLabel = (q, j, key = 'options') => [q[key][j], q[`${key}Dv`]?.[j]].filt
 
 /* ---------- home ---------- */
 
+// Council banner, shown on the home page and on the forms respondents fill in.
+const BRAND = `
+  <header class="brand-card">
+    <img src="emblem.png" alt="Emblem of the Maldives">
+    <div class="org-names">
+      <div class="org dv head" dir="rtl">މިލަދުންމަޑުލު އުތުރުބުރީ މާއުނގޫދޫ ކައުންސިލްގެ އިދާރާ</div>
+      <div class="org">Secretariat of the Maaungoodhoo Council</div>
+    </div>
+    <div class="org-sub">North Milandhunmadulu</div>
+  </header>`;
+
 async function renderHome() {
   const forms = await api('forms').catch(() => { failed(); return []; });
-  const brand = `
-    <header class="brand-card">
-      <img src="emblem.png" alt="Emblem of the Maldives">
-      <div class="org-names">
-        <div class="org dv head" dir="rtl">މިލަދުންމަޑުލު އުތުރުބުރީ މާއުނގޫދޫ ކައުންސިލްގެ އިދާރާ</div>
-        <div class="org">Secretariat of the Maaungoodhoo Council</div>
-      </div>
-      <div class="org-sub">North Milandhunmadulu</div>
-    </header>`;
   const tile = f => `
     <article class="tile">
       <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(plain(f.title) || 'Untitled form')}</a>
@@ -489,7 +492,7 @@ async function renderHome() {
     ${forms.length
       ? `<div class="grid">${forms.map(tile).join('')}</div>`
       : `<section class="card empty">No forms yet. Create one to start collecting responses.</section>`}`,
-    brand);
+    BRAND);
 }
 
 langDialog.addEventListener('click', e => {
@@ -928,8 +931,11 @@ function answerHTML(q) {
 }
 
 // Respondents open #/fill/; the editor's Preview opens #/preview/ and gets a way back.
-const fillBar = () => topbar(location.hash.startsWith('#/preview/')
-  ? `<a class="btn primary small exit" href="#/edit/${current.id}">Exit preview</a>` : '');
+const fillBar = () => (location.hash.startsWith('#/preview/') ? `
+  <nav class="topbar preview-bar">
+    <span>Preview</span>
+    <a class="btn primary small exit" href="#/edit/${current.id}">Exit preview</a>
+  </nav>` : '') + BRAND;
 
 function renderFill(done = false) {
   const f = current;

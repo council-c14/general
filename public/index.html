@@ -249,7 +249,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
 /* Choice questions left without text: the options take the question's place and style */
 .answer.bare :is(.choice,select){font-size:16px;font-weight:600}
-.req{color:var(--danger)}
+.opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
 /* Date and time: teal icon in a soft round button; accent-color tints the browser's picker */
@@ -1123,16 +1123,17 @@ function answerHTML(q) {
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
       <button type="button" class="link" data-act="add-row">+ Add row</button>`,
   }[q.type];
-  const req = q.required ? ' <span class="req">*</span>' : '';
+  // Optional questions are marked instead of required ones.
+  const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? 'އިޚްތިޔާރީ' : 'Optional'}</span>`;
   const bare = ['radio', 'checkbox', 'dropdown'].includes(q.type) && !plain(q.text) && !plain(q.textDv);
   if (bare) return `
     <section class="card question answer bare" data-qid="${q.id}">
-      ${q.required ? '<div class="q-label req">*</div>' : ''}
+      ${tag ? `<div class="q-label">${tag}</div>` : ''}
       ${inputs}
     </section>`;
   return `
     <section class="card question answer" data-qid="${q.id}">
-      ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', req, clean)}
+      ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', tag && ` ${tag}`, clean)}
       ${inputs}
     </section>`;
 }

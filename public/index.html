@@ -55,20 +55,20 @@ h1{font-size:24px;margin:0}
 .brand-mini{display:flex;align-items:center;gap:8px;text-decoration:none}
 .brand-mini img{height:34px}
 .brand-mini span{font-weight:700;color:var(--teal-800)}
-.topbar .exit{margin-left:auto}
+.topbar .exit{margin-inline-start:auto}
 .preview-bar span{font-weight:700;color:var(--teal-800)}
 
 /* Editor header: icon actions, form title, tabs */
 .edit-bar{position:sticky;top:0;z-index:5;background:#fff;padding:8px 16px 0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 .eb-row{display:flex;align-items:center;gap:2px}
-.eb-row .brand-mini{margin-right:auto}
+.eb-row .brand-mini{margin-inline-end:auto}
 .icon-btn{background:none;border:0;color:#5f6368;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
 .icon-btn:hover{background:var(--teal-100);color:var(--teal-800)}
 .icon-btn svg{width:26px;height:26px;fill:currentColor}
 .more{position:relative}
 .more summary::-webkit-details-marker{display:none}
-.menu{position:absolute;right:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
-.menu > *{display:flex;align-items:center;gap:14px;white-space:nowrap;width:100%;text-align:left;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
+.menu{position:absolute;inset-inline-end:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
+.menu > *{display:flex;align-items:center;gap:14px;white-space:nowrap;width:100%;text-align:start;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
 .menu > *:hover{background:var(--teal-100)}
 .menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
 .eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -91,9 +91,9 @@ h1{font-size:24px;margin:0}
 .icon.key{font-weight:700}
 .icon.key.on{background:var(--teal-700);color:#fff}
 .key-text{display:block;width:100%;margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;resize:vertical}
-.pts{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.pts{margin-inline-start:auto;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
 .pts input{width:60px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-.pts + .switch{margin-left:12px}
+.pts + .switch{margin-inline-start:12px}
 .score{font-size:20px;color:var(--teal-800)}
 .results{list-style:none;padding:0;margin:16px 0;text-align:start}
 .results li{padding:8px 0;border-top:1px solid var(--line)}
@@ -122,7 +122,7 @@ h1{font-size:24px;margin:0}
 .rating label{font-size:34px;line-height:1;color:#cfd8d7;cursor:pointer}
 .rating input:checked ~ label,.rating label:hover,.rating label:hover ~ label{color:#f2b400}
 .rating input:focus-visible + label{outline:2px solid var(--teal-700);border-radius:4px}
-.tabs{display:flex;gap:4px;margin-left:auto}
+.tabs{display:flex;gap:4px;margin-inline-start:auto}
 .tab{padding:8px 14px;border-radius:999px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
 .tab.on{background:var(--teal-100);color:var(--teal-800)}
 
@@ -147,9 +147,9 @@ main{width:min(760px,calc(100% - 32px));margin:24px auto;flex:1}
 select{
   appearance:none;-webkit-appearance:none;border:1px solid var(--line);border-radius:12px;
   background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center/12px;
-  padding:10px 38px 10px 14px;cursor:pointer;
+  padding-block:10px;padding-inline:14px 38px;cursor:pointer;
 }
-select.dv{background-position:left 14px center;padding:10px 14px 10px 38px}
+[dir=rtl] select,select.dv{background-position:left 14px center}
 select:focus,input[type=text]:focus,input[type=date]:focus,textarea:focus{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
 input[type=checkbox],input[type=radio]{
   appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin:0;
@@ -201,13 +201,13 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .rt-bar .icon{padding:6px}
 .rt-bar svg{display:block;width:22px;height:22px;fill:currentColor}
 .desc-input :is(ol,ul),.desc :is(ol,ul){text-align:start}
-.question{border-left:6px solid transparent}
-.question:focus-within{border-left-color:var(--teal-700)}
+.question{border-inline-start:6px solid transparent}
+.question:focus-within{border-inline-start-color:var(--teal-700)}
 .q-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .q-text{flex:1 1 260px;border:0;background:var(--teal-100);border-radius:12px;padding:12px 14px;font-size:16px;outline:none}
 .q-text.wide{display:block;width:100%;margin-top:10px}
 .q-text:focus{box-shadow:inset 0 -2px 0 var(--teal-700)}
-.q-type{padding:10px 38px 10px 14px}
+.q-type{padding-block:10px;padding-inline:14px 38px}
 .q-body{margin-top:14px}
 .opt-row{display:flex;align-items:center;gap:10px;margin:6px 0}
 .opt-row input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
@@ -216,7 +216,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .marker.sq{border-radius:5px}
 .faux{border-bottom:1px dotted #9fbdb8;padding:8px 2px;color:var(--muted)}
 .q-foot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);margin-top:16px;padding-top:10px}
-.switch{margin-left:auto;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.switch{margin-inline-start:auto;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer}
 #app > main > .btn.ghost{margin-top:4px}
 
 /* Respondent view */
@@ -242,7 +242,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .resp-bar{display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:12px;flex-wrap:wrap;gap:10px}
 .table-wrap{overflow-x:auto;padding:0}
 table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th,td{text-align:start;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 
 /* Footer, mirrors the letterhead strip */
@@ -264,7 +264,7 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
   .org{font-size:3.7vw;white-space:nowrap;text-align:center;text-align-last:center}
   .org.dv{font-size:18px;line-height:1.5}
   .org-sub{font-size:3.3vw;white-space:nowrap}
-  .tabs{margin-left:0;width:100%}
+  .tabs{margin-inline-start:0;width:100%}
   .topbar .btn{flex:1;text-align:center}
   .title-input{font-size:22px}
   .q-type{width:100%}
@@ -491,6 +491,8 @@ async function route() {
 window.addEventListener('hashchange', route);
 
 function shell(inner, head = '') {
+  // Dhivehi forms lay out every element right to left, in the editor and for respondents.
+  document.documentElement.dir = current?.lang === 'dv' ? 'rtl' : 'ltr';
   app.innerHTML = `
     ${head}
     <main>${inner}</main>

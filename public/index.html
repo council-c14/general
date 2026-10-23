@@ -86,6 +86,19 @@ h1{font-size:24px;margin:0}
 .pager{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:16px}
 .pager progress{flex:1;accent-color:var(--teal-700)}
 
+/* Quiz: answer key in the editor, score after submitting */
+.icon.key{font-weight:700}
+.icon.key.on{background:var(--teal-700);color:#fff}
+.key-text{display:block;width:100%;margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;resize:vertical}
+.pts{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.pts input{width:60px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.pts + .switch{margin-left:12px}
+.score{font-size:20px;color:var(--teal-800)}
+.results{list-style:none;padding:0;margin:16px 0;text-align:start}
+.results li{padding:8px 0;border-top:1px solid var(--line)}
+.results .ok::before{content:"✓ ";color:var(--teal-700);font-weight:700}
+.results .bad::before{content:"✗ ";color:var(--danger);font-weight:700}
+
 /* Bottom toolbar: add question, import, text, image, video, section */
 .add-bar{position:sticky;bottom:12px;z-index:4;display:flex;justify-content:space-around;background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.25);padding:6px;margin-top:14px}
 
@@ -365,7 +378,34 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '') {
 }
 const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: ['Option 1'], optionsDv: [] });
 // Form settings with their defaults filled in.
-const opts = f => ({ another: true, confirm: '', ...f.settings });
+const opts = f => ({ another: true, confirm: '', showScore: true, ...f.settings });
+
+// Quiz marking. Choice questions keep the indexes of their correct options in q.key;
+// short answers keep accepted answers, one per line, in q.keyText (case is ignored).
+// Questions without an answer key are left out of the score.
+const GRADED = ['radio', 'checkbox', 'dropdown', 'short'];
+const optIndex = (q, v) => q.options.findIndex((o, j) => o === v || optLabel(q, j) === v);
+const accepted = q => (q.keyText ?? '').split('\n').map(a => a.trim()).filter(Boolean);
+const correctText = q => q.type === 'short' ? accepted(q).join(', ') : (q.key ?? []).map(j => optLabel(q, j)).join(', ');
+function grade(f, answers) {
+  let score = 0;
+  let total = 0;
+  const results = f.questions.filter(q => GRADED.includes(q.type) && (q.type === 'short' ? accepted(q).length : q.key?.length)).map(q => {
+    const v = answers[q.id];
+    let ok;
+    if (q.type === 'short') ok = accepted(q).some(a => a.toLowerCase() === String(v ?? '').trim().toLowerCase());
+    else {
+      const picked = (Array.isArray(v) ? v : [v]).filter(x => x).map(x => optIndex(q, x)).sort((a, b) => a - b);
+      const key = [...q.key].sort((a, b) => a - b);
+      ok = picked.length === key.length && key.every((k, i) => k === picked[i]);
+    }
+    const pts = Math.max(0, Number(q.points ?? 1) || 0);
+    total += pts;
+    if (ok) score += pts;
+    return { q, ok };
+  });
+  return { score, total, results };
+}
 // Asked first when "Collect email addresses" is on; answers are stored under its id.
 const EMAIL_Q = { id: '_email', type: 'email', text: 'Email', textDv: 'އީމެއިލް', required: true, options: [] };
 // "Limit to 1 response" is remembered per device.
@@ -591,6 +631,11 @@ function settingsHTML() {
       </label>
     </section>
     <section class="card">
+      <h2 class="set-head">Quiz</h2>
+      ${row('quiz', 'Make this a quiz', 'Mark correct answers and set points on each question. Scores are worked out automatically.', s.quiz)}
+      ${row('showScore', 'Show score after submitting', 'Respondents see their score and the correct answers for questions they missed.', s.showScore)}
+    </section>
+    <section class="card">
       <h2 class="set-head">Defaults</h2>
       ${row('requiredDefault', 'Make questions required by default', 'Applies to questions added from now on.', s.requiredDefault)}
     </section>`;
@@ -617,17 +662,21 @@ function questionHTML(q, i) {
   const dual = f.lang === 'dual';
   const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
   // Editable list of options, grid rows or columns, stored in q[key] (and q[key + 'Dv']).
+  const quiz = opts(f).quiz && GRADED.includes(q.type);
+  const mark = (key, j) => quiz && key === 'options'
+    ? `<button class="icon key ${q.key?.includes(j) ? 'on' : ''}" data-act="key" data-idx="${j}" title="Correct answer" aria-pressed="${!!q.key?.includes(j)}">✓</button>` : '';
   const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
     <div class="opt-row">
       ${marker}
       <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${label} ${j + 1}">
       ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
+      ${mark(key, j)}
       <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="Remove">×</button>
     </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ Add ${label.toLowerCase()}</button>`;
   const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : q.type === 'table' ? `<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
-    : `<div class="faux ${pc}">${FAUX[q.type]}</div>`;
+    : `<div class="faux ${pc}">${FAUX[q.type]}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
@@ -641,6 +690,7 @@ function questionHTML(q, i) {
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${btn('del-q', 'Delete', ICONS.del)}
+        ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> Required</label>
       </div>
     </section>`;
@@ -797,10 +847,20 @@ app.addEventListener('click', e => {
       (q[key] ||= []).push(`${label} ${q[key].length + 1}`);
       return refresh();
     }
-    case 'del-opt':
-      q[btn.dataset.list].splice(+btn.dataset.idx, 1);
-      q[`${btn.dataset.list}Dv`]?.splice(+btn.dataset.idx, 1);
+    case 'del-opt': {
+      const j = +btn.dataset.idx;
+      q[btn.dataset.list].splice(j, 1);
+      q[`${btn.dataset.list}Dv`]?.splice(j, 1);
+      if (btn.dataset.list === 'options' && q.key) q.key = q.key.filter(k => k !== j).map(k => k > j ? k - 1 : k);
       return refresh();
+    }
+    case 'key': {
+      const j = +btn.dataset.idx;
+      const on = q.key?.includes(j);
+      // Multiple choice and dropdown have one correct answer; checkboxes can have several.
+      q.key = q.type === 'checkbox' ? (on ? q.key.filter(k => k !== j) : [...(q.key ?? []), j]) : (on ? [] : [j]);
+      return refresh();
+    }
     case 'add-row': {
       const tbody = qEl.querySelector('tbody');
       const row = tbody.rows[0].cloneNode(true);
@@ -937,7 +997,7 @@ const fillBar = () => (location.hash.startsWith('#/preview/') ? `
     <a class="btn primary small exit" href="#/edit/${current.id}">Exit preview</a>
   </nav>` : '') + BRAND;
 
-function renderFill(done = false) {
+function renderFill(done = false, answers = null) {
   const f = current;
   const s = opts(f);
   const preview = location.hash.startsWith('#/preview/');
@@ -946,6 +1006,7 @@ function renderFill(done = false) {
       <section class="card thanks">
         <h2>Thank you</h2>
         <p>${esc(s.confirm.trim() || 'Your response has been recorded.')}</p>
+        ${s.quiz && s.showScore && answers ? scoreHTML(grade(f, answers)) : ''}
         ${s.another && (!s.once || preview) ? '<button class="btn ghost" data-act="again">Submit another response</button>' : ''}
       </section>`, fillBar());
   }
@@ -992,6 +1053,12 @@ function renderFill(done = false) {
       </div>
     </form>`, fillBar());
 }
+
+const scoreHTML = g => `
+  <p class="score">Score: <b>${g.score} / ${g.total}</b></p>
+  <ul class="results">${g.results.map(r => `
+    <li class="${r.ok ? 'ok' : 'bad'}">${esc(qLabel(r.q))}${r.ok ? '' : `<div class="meta">Correct answer: ${esc(correctText(r.q))}</div>`}</li>`).join('')}
+  </ul>`;
 
 // Reads the answers inside `scope` and marks required questions left empty.
 // Returns null (and shows the error) when something needs fixing.
@@ -1055,7 +1122,7 @@ app.addEventListener('submit', async e => {
     for (const [id, v] of Object.entries(answers)) if (v instanceof File) answers[id] = await upload(v);
     await api(`forms/${current.id}/responses`, { method: 'POST', body: { answers } });
     try { localStorage.setItem(answeredKey(current.id), '1'); } catch {}
-    renderFill(true);
+    renderFill(true, answers);
   } catch {
     submit.disabled = false;
     failed();
@@ -1076,9 +1143,11 @@ async function responsesHTML() {
   }
   const qs = answerCols(f, responses);
   const cell = v => safeSrc(v?.url) ? `<a href="${esc(v.url)}">${esc(v.name)}</a>` : esc(show(v));
-  const cols = qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
+  const quiz = opts(f).quiz;
+  const scoreOf = r => { const g = grade(f, r.answers); return `${g.score} / ${g.total}`; };
+  const cols = (quiz ? '<th>Score</th>' : '') + qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
   const rows = responses.map(r => `
-    <tr><td>${new Date(r.at).toLocaleString()}</td>${qs.map(q => `<td>${cell(r.answers[q.id])}</td>`).join('')}</tr>`).join('');
+    <tr><td>${new Date(r.at).toLocaleString()}</td>${quiz ? `<td>${scoreOf(r)}</td>` : ''}${qs.map(q => `<td>${cell(r.answers[q.id])}</td>`).join('')}</tr>`).join('');
   return `
     <div class="resp-bar">
       <span>${responses.length} response${responses.length === 1 ? '' : 's'}</span>
@@ -1095,9 +1164,11 @@ async function downloadCSV() {
   if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
   const qs = answerCols(f, responses);
-  const lines = [['Timestamp', ...qs.map(qLabel)].map(cell).join(',')];
+  const quiz = opts(f).quiz;
+  const score = r => { const g = grade(f, r.answers); return [`${g.score} / ${g.total}`]; };
+  const lines = [['Timestamp', ...(quiz ? ['Score'] : []), ...qs.map(qLabel)].map(cell).join(',')];
   responses.forEach(r => lines.push(
-    [new Date(r.at).toLocaleString(), ...qs.map(q => r.answers[q.id])].map(cell).join(',')
+    [new Date(r.at).toLocaleString(), ...(quiz ? score(r) : []), ...qs.map(q => r.answers[q.id])].map(cell).join(',')
   ));
   const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
   Object.assign(document.createElement('a'), { href: url, download: `${plain(f.title) || 'responses'}.csv` }).click();

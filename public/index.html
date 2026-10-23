@@ -173,7 +173,7 @@ select{
   padding-block:10px;padding-inline:14px 38px;cursor:pointer;
 }
 [dir=rtl] select,select.dv{background-position:left 14px center}
-select:focus,input[type=text]:focus,input[type=date]:focus,input[type=time]:focus,textarea:focus{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
+select:focus,input[type=text]:focus,input[type=email]:focus,input[type=date]:focus,input[type=time]:focus,textarea:focus{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
 input[type=checkbox],input[type=radio]{
   appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin:0;
   border:2px solid var(--muted);background:#fff;cursor:pointer;
@@ -250,8 +250,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 /* Choice questions left without text: the options take the question's place and style */
 .answer.bare :is(.choice,select){font-size:16px;font-weight:600}
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
-.answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
-.answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
+.answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
+.answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
 /* Date and time: teal icon in a soft round button; accent-color tints the browser's picker */
 .answer :is(input[type=time],.date-text){min-height:48px;accent-color:var(--teal-700);cursor:pointer;transition:border-color .15s}
 .answer :is(input[type=time],.date-text):hover{border-color:var(--teal-700)}

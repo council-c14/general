@@ -258,7 +258,7 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 
 @media (max-width:600px){
   .brand-card{padding:14px 16px 20px}
-  .brand-card img{height:72px}
+  .brand-card img{height:52px}
   .org{font-size:3.7vw;white-space:nowrap;text-align:center;text-align-last:center}
   .org.dv{font-size:18px;line-height:1.5}
   .org-sub{font-size:3.3vw;white-space:nowrap}
@@ -376,7 +376,7 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '') {
       <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}</div>
     </div>`;
 }
-const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: ['Option 1'], optionsDv: [] });
+const newQ = () => ({ id: uid(), type: 'short', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: [], optionsDv: [] });
 // Form settings with their defaults filled in.
 const opts = f => ({ another: true, confirm: '', showScore: true, ...f.settings });
 

@@ -370,6 +370,9 @@ const DV = {
   Section: 'ސެކްޝަން',
   'Untitled section': 'ސެކްޝަން ސުރުޙީ',
   'Description (optional)': 'އިތުރު ތަފްޞީލް (އިޚްތިޔާރީ)',
+  'Start on a new page': 'އައު ޞަފްޙާއަކަށް',
+  Image: 'ފޮޓޯ',
+  'Choose image': 'ފޮޓޯ ނަގާ',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -788,7 +791,7 @@ function blockHTML(q, i) {
   const hasDesc = q.type === 'text' || q.type === 'section';
   const media = {
     image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
-      <label class="btn ghost small">${q.src ? 'Replace image' : 'Choose image'}<input type="file" accept="image/*" data-image hidden></label>`,
+      <label class="btn ghost small">${q.src ? 'Replace image' : dvText('Choose image')}<input type="file" accept="image/*" data-image hidden></label>`,
     video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
   }[q.type] ?? '';
   const k = q.type === 'section' ? 2 + f.questions.slice(0, i).filter(x => x.type === 'section').length : 0;
@@ -797,7 +800,7 @@ function blockHTML(q, i) {
     ${k && newPage ? afterSection(q, k) : ''}
     ${k ? secTab(k) : ''}
     <section class="card question block ${q.type}" data-qid="${q.id}">
-      ${k ? '' : `<div class="block-kind">${BLOCKS[q.type]}</div>`}
+      ${k ? '' : `<div class="block-kind ${pc}">${dvText(BLOCKS[q.type])}</div>`}
       ${richField('text', q.text, k ? dvText('Untitled section') : 'Title', `q-text ${pc}`)}
       ${dv('text', 'Title', 'q-text')}
       ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
@@ -805,7 +808,7 @@ function blockHTML(q, i) {
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${btn('del-q', 'Delete', ICONS.del)}
-        ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> Start on a new page</label>` : ''}
+        ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> <span class="${pc}">${dvText('Start on a new page')}</span></label>` : ''}
       </div>
     </section>`;
 }

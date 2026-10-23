@@ -239,6 +239,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .fill-foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
 .thanks{text-align:center;padding:40px 24px}
 .thanks h2{color:var(--teal-800);margin-top:0}
+/* Messages may be English or Dhivehi; each runs in its own text's direction, so the full stop lands at the end. */
+.thanks p,.field-error{unicode-bidi:plaintext}
 
 /* Responses */
 .resp-bar{display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:12px;flex-wrap:wrap;gap:10px}

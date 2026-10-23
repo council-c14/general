@@ -321,6 +321,24 @@ const TYPES = {
 // The type menu, split into groups by dividers.
 const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
 const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
+// Placeholder text on Dhivehi forms. dvText() picks the Dhivehi wording when the open form is Dhivehi.
+const DV = {
+  'Untitled form': 'ފޯމުގެ ސުރުޙީ',
+  'Form description': 'ފޯމުގެ ތަފްޞީލް',
+  Question: 'ސުވާލު',
+  Required: 'މަޖުބޫރު',
+  Option: 'އިޚްތިޔާރީ ޖަވާބު',
+  Row: 'އިޚްތިޔާރީ ސުވާލު',
+  Column: 'އިޚްތިޔާރީ ޖަވާބު',
+  'Short answer text': 'ކުރު ޖަވާބު',
+  'Long answer text': 'ދިގު ޖަވާބު',
+  'File upload (up to 1.5 MB)': 'ފައިލް އަޕްލޯޑް',
+  '1 to 5': '1 އިން 5 އަށް',
+  Date: 'ތާރީޚް',
+  Time: 'ގަޑި',
+};
+const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
+const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
 const GRIDS = ['mcgrid', 'cbgrid'];
 const hasOptions = t => ['radio', 'checkbox', 'dropdown', ...GRIDS].includes(t); // grids keep their rows in options
 const hasCols = t => [...GRIDS, 'table'].includes(t);
@@ -516,7 +534,7 @@ async function renderHome() {
   const forms = await api('forms').catch(() => { failed(); return []; });
   const tile = f => `
     <article class="tile">
-      <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(plain(f.title) || 'Untitled form')}</a>
+      <a class="tile-name ${f.lang === 'dv' ? 'dv' : ''}" href="#/edit/${f.id}">${esc(plain(f.title) || untitled(f))}</a>
       <div class="meta">${f.questions.filter(isQuestion).length} question${f.questions.filter(isQuestion).length === 1 ? '' : 's'} · ${f.responseCount} response${f.responseCount === 1 ? '' : 's'}</div>
       <div class="actions">
         <a class="btn ghost small" href="#/responses/${f.id}">Responses</a>
@@ -568,9 +586,9 @@ async function renderEditor(tab) {
   const dual = f.lang === 'dual';
   const body = tab === 'responses' ? await responsesHTML() : tab === 'settings' ? settingsHTML() : `
     <section class="card form-head">
-      ${richField('title', f.title, 'Untitled form', `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
+      ${richField('title', f.title, dvText('Untitled form'), `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
       ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', 'title-input dv head" dir="rtl" lang="dv') : ''}
-      ${richField('description', f.description, 'Form description', `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
+      ${richField('description', f.description, dvText('Form description'), `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
       ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
     </section>
     <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q) : questionHTML(q, i)).join('')}</div>
@@ -641,7 +659,7 @@ function settingsHTML() {
     </section>`;
 }
 
-const barTitle = f => plain(f.title) || plain(f.titleDv) || 'Untitled form';
+const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
   undo: svg('M7 19v-2h7.1q1.575 0 2.738-1T18 13.5q0-1.5-1.163-2.5T14.1 10H7.8l2.6 2.6L9 14 4 9l5-5 1.4 1.4L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5q0 2.35-1.737 3.925T14.1 19H7Z'),
   share: svg('M18 14v-3h-3V9h3V6h2v3h3v2h-3v3h-2Zm-9-2q-1.65 0-2.825-1.175T5 8q0-1.65 1.175-2.825T9 4q1.65 0 2.825 1.175T13 8q0 1.65-1.175 2.825T9 12Zm-8 8v-2.8q0-.85.438-1.563T2.6 14.55q1.55-.775 3.15-1.163T9 13q1.65 0 3.25.388t3.15 1.162q.725.375 1.163 1.088T17 17.2V20H1Zm2-2h12v-.8q0-.275-.138-.5t-.362-.35q-1.35-.675-2.725-1.012T9 15q-1.4 0-2.775.338T3.5 16.35q-.225.125-.363.35T3 17.2v.8Zm6-8q.825 0 1.413-.588T11 8q0-.825-.588-1.413T9 6q-.825 0-1.413.588T7 8q0 .825.588 1.413T9 10Z'),
@@ -668,7 +686,7 @@ function questionHTML(q, i) {
   const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
     <div class="opt-row">
       ${marker}
-      <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${label} ${j + 1}">
+      <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${dvText(label)} ${j + 1}">
       ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
       ${mark(key, j)}
       <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="Remove">×</button>
@@ -676,11 +694,11 @@ function questionHTML(q, i) {
   const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : q.type === 'table' ? `<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
-    : `<div class="faux ${pc}">${FAUX[q.type]}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
+    : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
-        ${richField('text', q.text, `Question ${i + 1}`, `q-text ${pc}`)}
+        ${richField('text', q.text, `${dvText('Question')} ${i + 1}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
           ${TYPE_GROUPS.map(g => g.map(v => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${TYPES[v]}</option>`).join('')).join('<hr>')}
         </select>
@@ -691,7 +709,7 @@ function questionHTML(q, i) {
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${btn('del-q', 'Delete', ICONS.del)}
         ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
-        <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> Required</label>
+        <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> <span class="${pc}">${dvText('Required')}</span></label>
       </div>
     </section>`;
 }
@@ -739,7 +757,7 @@ async function openImport() {
   if (!forms) return;
   const others = forms.filter(f => f.id !== current.id && f.questions.length);
   importDialog.querySelector('.import-list').innerHTML = others.length
-    ? others.map(f => `<button class="lang-opt" data-import="${f.id}"><strong class="${f.lang === 'dv' ? 'dv' : ''}">${esc(plain(f.title) || 'Untitled form')}</strong><span>${f.questions.length} item${f.questions.length === 1 ? '' : 's'}</span></button>`).join('')
+    ? others.map(f => `<button class="lang-opt" data-import="${f.id}"><strong class="${f.lang === 'dv' ? 'dv' : ''}">${esc(plain(f.title) || untitled(f))}</strong><span>${f.questions.length} item${f.questions.length === 1 ? '' : 's'}</span></button>`).join('')
     : '<p class="meta">No other forms with questions yet.</p>';
   importDialog.showModal();
 }
@@ -793,8 +811,8 @@ function onFieldEdit(el) {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
       // Fresh lists take the new type's default label ("Row 1" for grids).
-      else if (!q.options.length || /^(Option|Row) 1$/.test(q.options.join('|'))) q.options = [GRIDS.includes(val) ? 'Row 1' : 'Option 1'];
-      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['Column 1']) : [];
+      else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [`${dvText(GRIDS.includes(val) ? 'Row' : 'Option')} 1`];
+      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : [`${dvText('Column')} 1`]) : [];
     } else q[field] = val;
   }
   saveForms();
@@ -844,7 +862,7 @@ app.addEventListener('click', e => {
     case 'add-opt': {
       const key = btn.dataset.list;
       const label = key === 'cols' ? 'Column' : GRIDS.includes(q.type) ? 'Row' : 'Option';
-      (q[key] ||= []).push(`${label} ${q[key].length + 1}`);
+      (q[key] ||= []).push(`${dvText(label)} ${q[key].length + 1}`);
       return refresh();
     }
     case 'del-opt': {
@@ -1013,14 +1031,14 @@ function renderFill(done = false, answers = null) {
   if (s.once && !preview && answered(f.id)) {
     return shell(`
       <section class="card thanks">
-        ${localized(f, 'h2', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
+        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
         <p>You have already responded to this form.</p>
       </section>`, fillBar());
   }
   if (f.accepting === false && !preview) {
     return shell(`
       <section class="card thanks">
-        ${localized(f, 'h2', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
+        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
         <p>This form is no longer accepting responses.</p>
       </section>`, fillBar());
   }
@@ -1039,7 +1057,7 @@ function renderFill(done = false, answers = null) {
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
-        ${localized(f, 'h1', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
+        ${localized(f, 'h1', f.title || untitled(f), f.titleDv, 'head', '', clean)}
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
       <div class="fill-body">${pages.map((p, n) => `<div class="page" ${n ? 'hidden' : ''}>${p.map(itemHTML).join('')}</div>`).join('')}</div>

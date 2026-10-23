@@ -252,6 +252,7 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
+.answer input[type=email]{direction:ltr}
 /* Date and time: teal icon in a soft round button; accent-color tints the browser's picker */
 .answer :is(input[type=time],.date-text){min-height:48px;accent-color:var(--teal-700);cursor:pointer;transition:border-color .15s}
 .answer :is(input[type=time],.date-text):hover{border-color:var(--teal-700)}
@@ -1182,7 +1183,7 @@ function renderFill(done = false, answers = null) {
       [p[i], p[j]] = [p[j], p[i]];
     }
   });
-  if (s.email) secs[0].unshift(EMAIL_Q);
+  if (s.email) secs[0].unshift(f.lang === 'dv' ? { ...EMAIL_Q, text: EMAIL_Q.textDv } : EMAIL_Q);
   // Pages: a section starts one unless set not to, and its goto says where the page before it leads.
   const pages = [];
   secs.forEach((sec, n) => {

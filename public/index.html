@@ -76,6 +76,15 @@ h1{font-size:24px;margin:0}
 .badge{background:#3c4043;color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
 .pub-row{margin:16px 0 4px;justify-content:space-between;width:100%}
 
+/* Settings tab */
+.set-head{font-size:18px;color:var(--teal-800);margin:0 0 6px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.set-row > span{display:flex;flex-direction:column;gap:2px}
+.set-msg{display:block;padding-top:12px;border-top:1px solid var(--line)}
+.set-msg textarea{display:block;width:100%;margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;resize:vertical}
+.pager{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:16px}
+.pager progress{flex:1;accent-color:var(--teal-700)}
+
 /* Bottom toolbar: add question, import, text, image, video, section */
 .add-bar{position:sticky;bottom:12px;z-index:4;display:flex;justify-content:space-around;background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.25);padding:6px;margin-top:14px}
 
@@ -353,7 +362,14 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '') {
       <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}</div>
     </div>`;
 }
-const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: false, options: ['Option 1'], optionsDv: [] });
+const newQ = () => ({ id: uid(), type: 'radio', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: ['Option 1'], optionsDv: [] });
+// Form settings with their defaults filled in.
+const opts = f => ({ another: true, confirm: '', ...f.settings });
+// Asked first when "Collect email addresses" is on; answers are stored under its id.
+const EMAIL_Q = { id: '_email', type: 'email', text: 'Email', textDv: 'އީމެއިލް', required: true, options: [] };
+// "Limit to 1 response" is remembered per device.
+const answeredKey = id => `answered:${id}`;
+const answered = id => { try { return localStorage.getItem(answeredKey(id)); } catch { return null; } };
 const newBlock = type => ({ id: uid(), type, text: '', textDv: '', desc: '', descDv: '', options: [] });
 const app = document.getElementById('app');
 const langDialog = document.getElementById('lang-dialog');
@@ -407,6 +423,7 @@ async function route() {
   if (current) saved = snap();
   if (view === 'edit' && current) return renderEditor('questions');
   if (view === 'responses' && current) return renderEditor('responses');
+  if (view === 'settings' && current) return renderEditor('settings');
   if ((view === 'fill' || view === 'preview') && current) return renderFill();
   renderHome();
 }
@@ -506,7 +523,7 @@ const btn = (act, label, icon) => `<button class="icon-btn" data-act="${act}" ti
 async function renderEditor(tab) {
   const f = current;
   const dual = f.lang === 'dual';
-  const body = tab === 'responses' ? await responsesHTML() : `
+  const body = tab === 'responses' ? await responsesHTML() : tab === 'settings' ? settingsHTML() : `
     <section class="card form-head">
       ${richField('title', f.title, 'Untitled form', `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
       ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', 'title-input dv head" dir="rtl" lang="dv') : ''}
@@ -543,9 +560,39 @@ async function renderEditor(tab) {
       <nav class="tabs">
         <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
         <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses <span class="badge">${f.responseCount}</span></a>
+        <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">Settings</a>
       </nav>
     </header>`);
 }
+function settingsHTML() {
+  const s = opts(current);
+  const row = (key, label, hint, on) => `
+    <label class="set-row">
+      <span><strong>${label}</strong>${hint ? `<span class="meta">${hint}</span>` : ''}</span>
+      <input type="checkbox" data-setting="${key}" ${on ? 'checked' : ''}>
+    </label>`;
+  return `
+    <section class="card">
+      <h2 class="set-head">Responses</h2>
+      ${row('accepting', 'Accepting responses', 'Turn off to close the form to new responses.', current.accepting !== false)}
+      ${row('email', 'Collect email addresses', 'Respondents must enter their email before answering.', s.email)}
+      ${row('once', 'Limit to 1 response', 'One response per phone or computer. Clearing browser data allows another.', s.once)}
+    </section>
+    <section class="card">
+      <h2 class="set-head">Presentation</h2>
+      ${row('progress', 'Show progress bar', 'Shows the page number on forms with sections.', s.progress)}
+      ${row('shuffle', 'Shuffle question order', 'Mixes the order within each section for every respondent.', s.shuffle)}
+      ${row('another', 'Show link to submit another response', '', s.another)}
+      <label class="set-msg"><strong>Confirmation message</strong>
+        <textarea data-setting="confirm" rows="2" placeholder="Your response has been recorded.">${esc(s.confirm)}</textarea>
+      </label>
+    </section>
+    <section class="card">
+      <h2 class="set-head">Defaults</h2>
+      ${row('requiredDefault', 'Make questions required by default', 'Applies to questions added from now on.', s.requiredDefault)}
+    </section>`;
+}
+
 const barTitle = f => plain(f.title) || plain(f.titleDv) || 'Untitled form';
 const ICONS = {
   undo: svg('M7 19v-2h7.1q1.575 0 2.738-1T18 13.5q0-1.5-1.163-2.5T14.1 10H7.8l2.6 2.6L9 14 4 9l5-5 1.4 1.4L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5q0 2.35-1.737 3.925T14.1 19H7Z'),
@@ -701,6 +748,13 @@ function onFieldEdit(el) {
 }
 
 app.addEventListener('input', e => {
+  if (e.target.matches('[data-setting]')) {
+    const key = e.target.dataset.setting;
+    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (key === 'accepting') current.accepting = val;
+    else (current.settings ||= {})[key] = val;
+    return saveForms();
+  }
   if (e.target.matches('[data-field]') && e.target.tagName !== 'SELECT') onFieldEdit(e.target);
 });
 app.addEventListener('change', e => {
@@ -808,7 +862,8 @@ function undo() {
   current = { ...JSON.parse(prev), responseCount: current.responseCount };
   saved = prev;
   if (!pending) api(`forms/${current.id}`, { method: 'PUT', body: current }).catch(failed);
-  renderEditor(location.hash.startsWith('#/responses') ? 'responses' : 'questions');
+  const view = location.hash.split('/')[1];
+  renderEditor(['responses', 'settings'].includes(view) ? view : 'questions');
 }
 
 async function copyLink(view = 'fill', msg = 'Responder link copied') {
@@ -847,6 +902,7 @@ function answerHTML(q) {
   const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl" lang="dv"' : '';
   const inputs = {
     short: `<input type="text"${dvAttr}>`,
+    email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: '<input type="date">',
     dropdown: `<select${dvAttr}><option value="">Choose</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
@@ -877,15 +933,24 @@ const fillBar = () => topbar(location.hash.startsWith('#/preview/')
 
 function renderFill(done = false) {
   const f = current;
+  const s = opts(f);
+  const preview = location.hash.startsWith('#/preview/');
   if (done) {
     return shell(`
       <section class="card thanks">
         <h2>Thank you</h2>
-        <p>Your response has been recorded.</p>
-        <button class="btn ghost" data-act="again">Submit another response</button>
+        <p>${esc(s.confirm.trim() || 'Your response has been recorded.')}</p>
+        ${s.another && (!s.once || preview) ? '<button class="btn ghost" data-act="again">Submit another response</button>' : ''}
       </section>`, fillBar());
   }
-  if (f.accepting === false && !location.hash.startsWith('#/preview/')) {
+  if (s.once && !preview && answered(f.id)) {
+    return shell(`
+      <section class="card thanks">
+        ${localized(f, 'h2', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
+        <p>You have already responded to this form.</p>
+      </section>`, fillBar());
+  }
+  if (f.accepting === false && !preview) {
     return shell(`
       <section class="card thanks">
         ${localized(f, 'h2', f.title || 'Untitled form', f.titleDv, 'head', '', clean)}
@@ -895,6 +960,14 @@ function renderFill(done = false) {
   // Each section starts a new page.
   const pages = [[]];
   f.questions.forEach(q => { if (q.type === 'section') pages.push([]); pages.at(-1).push(q); });
+  if (s.shuffle) pages.forEach(p => {
+    const head = p[0]?.type === 'section' ? 1 : 0; // a section's heading stays on top
+    for (let i = p.length - 1; i > head; i--) {
+      const j = head + Math.floor(Math.random() * (i - head + 1));
+      [p[i], p[j]] = [p[j], p[i]];
+    }
+  });
+  if (s.email) pages[0].unshift(EMAIL_Q);
   const paged = pages.length > 1;
   shell(`
     <form class="card fill" novalidate>
@@ -904,6 +977,7 @@ function renderFill(done = false) {
       </section>
       <div class="fill-body">${pages.map((p, n) => `<div class="page" ${n ? 'hidden' : ''}>${p.map(itemHTML).join('')}</div>`).join('')}</div>
       <div class="field-error" hidden></div>
+      ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
         <button class="btn ghost" type="button" data-act="back" hidden>Back</button>
         <button class="btn ghost" type="reset">Clear form</button>
@@ -921,7 +995,7 @@ function collect(scope) {
   const answers = {};
   let firstBad = null;
   let big = false;
-  current.questions.filter(isQuestion).forEach(q => {
+  [EMAIL_Q, ...current.questions].filter(isQuestion).forEach(q => {
     const wrap = scope.querySelector(`[data-qid="${q.id}"]`);
     if (!wrap) return;
     const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
@@ -937,7 +1011,7 @@ function collect(scope) {
       file: () => wrap.querySelector('input').files[0] ?? '',
     }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
     const tooBig = v instanceof File && v.size > MAX_FILE;
-    const bad = (q.required && blank(v)) || tooBig;
+    const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v));
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;
@@ -960,6 +1034,8 @@ function turnPage(form, step) {
   form.querySelector('[data-act=back]').hidden = next === 0;
   form.querySelector('[data-act=next]').hidden = next === pages.length - 1;
   form.querySelector('[type=submit]').hidden = next !== pages.length - 1;
+  const pager = form.querySelector('.pager');
+  if (pager) pager.querySelector('progress').value = pager.querySelector('.pg-n').textContent = next + 1;
   form.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -972,6 +1048,7 @@ app.addEventListener('submit', async e => {
   try {
     for (const [id, v] of Object.entries(answers)) if (v instanceof File) answers[id] = await upload(v);
     await api(`forms/${current.id}/responses`, { method: 'POST', body: { answers } });
+    try { localStorage.setItem(answeredKey(current.id), '1'); } catch {}
     renderFill(true);
   } catch {
     submit.disabled = false;
@@ -981,13 +1058,17 @@ app.addEventListener('submit', async e => {
 
 /* ---------- responses ---------- */
 
+// Columns in Responses and the CSV: every question, plus Email once anyone has given one.
+const answerCols = (f, responses) =>
+  [EMAIL_Q, ...f.questions].filter(q => isQuestion(q) && (q !== EMAIL_Q || responses.some(r => r.answers._email)));
+
 async function responsesHTML() {
   const f = current;
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return []; });
   if (!responses.length) {
     return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
   }
-  const qs = f.questions.filter(isQuestion);
+  const qs = answerCols(f, responses);
   const cell = v => safeSrc(v?.url) ? `<a href="${esc(v.url)}">${esc(v.name)}</a>` : esc(show(v));
   const cols = qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
   const rows = responses.map(r => `
@@ -1007,7 +1088,7 @@ async function downloadCSV() {
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return null; });
   if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;
-  const qs = f.questions.filter(isQuestion);
+  const qs = answerCols(f, responses);
   const lines = [['Timestamp', ...qs.map(qLabel)].map(cell).join(',')];
   responses.forEach(r => lines.push(
     [new Date(r.at).toLocaleString(), ...qs.map(q => r.answers[q.id])].map(cell).join(',')

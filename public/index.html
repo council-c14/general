@@ -374,6 +374,7 @@ const DV = {
   Image: 'ފޮޓޯ',
   'Choose image': 'ފޮޓޯ ނަގާ',
   'Replace image': 'ފޮޓޯ ބަދަލުކުރޭ',
+  'Remove image': 'ފޮޓޯ ފުހެލާ',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -792,7 +793,8 @@ function blockHTML(q, i) {
   const hasDesc = q.type === 'text' || q.type === 'section';
   const media = {
     image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
-      <label class="btn ghost small">${dvText(q.src ? 'Replace image' : 'Choose image')}<input type="file" accept="image/*" data-image hidden></label>`,
+      <label class="btn ghost small">${dvText(q.src ? 'Replace image' : 'Choose image')}<input type="file" accept="image/*" data-image hidden></label>
+      ${q.src ? `<button type="button" class="btn ghost small ${pc}" data-act="del-img">${dvText('Remove image')}</button>` : ''}`,
     video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
   }[q.type] ?? '';
   const k = q.type === 'section' ? 2 + f.questions.slice(0, i).filter(x => x.type === 'section').length : 0;
@@ -938,6 +940,9 @@ app.addEventListener('click', e => {
     case 'import': return openImport();
     case 'dup-q':
       current.questions.splice(idx + 1, 0, { ...structuredClone(q), id: uid() });
+      return refresh();
+    case 'del-img':
+      delete q.src;
       return refresh();
     case 'del-q':
       current.questions.splice(idx, 1);

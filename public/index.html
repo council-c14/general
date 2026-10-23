@@ -232,10 +232,16 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
 /* Date and time: teal icon in a soft round button; accent-color tints the browser's picker */
-.answer :is(input[type=date],input[type=time]){min-height:48px;accent-color:var(--teal-700);cursor:pointer;transition:border-color .15s}
-.answer :is(input[type=date],input[type=time]):hover{border-color:var(--teal-700)}
-.answer :is(input[type=date],input[type=time])::-webkit-calendar-picker-indicator{width:18px;height:18px;padding:6px;border-radius:50%;cursor:pointer;color:transparent;background:var(--teal-100) center/18px no-repeat}
-.answer input[type=date]::-webkit-calendar-picker-indicator{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E")}
+.answer :is(input[type=time],.date-text){min-height:48px;accent-color:var(--teal-700);cursor:pointer;transition:border-color .15s}
+.answer :is(input[type=time],.date-text):hover{border-color:var(--teal-700)}
+.answer input[type=time]::-webkit-calendar-picker-indicator{width:18px;height:18px;padding:6px;border-radius:50%;cursor:pointer;color:transparent;background:var(--teal-100) center/18px no-repeat}
+/* Date: typed as dd/mm/yyyy; the button opens the browser's calendar on a hidden date input */
+.date-field{position:relative;direction:ltr}
+.answer input.date-text{padding-inline-end:52px;cursor:text}
+.answer .date-pick{position:absolute;inset:auto 0 0;height:0;padding:0;border:0;opacity:0;pointer-events:none}
+.date-btn{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;cursor:pointer;background:var(--teal-100) center/18px no-repeat}
+.date-btn:hover{background-color:#cfe9e5}
+.date-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E")}
 .answer input[type=time]::-webkit-calendar-picker-indicator{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")}
 .answer textarea{resize:vertical}
 .choice{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
@@ -853,9 +859,18 @@ app.addEventListener('input', e => {
     return saveForms();
   }
   if (e.target.matches('[data-field]') && e.target.tagName !== 'SELECT') onFieldEdit(e.target);
+  // Typed dates: digits only, slashes added as dd/mm/yyyy. ponytail: caret jumps to the end on mid-field edits.
+  if (e.target.matches('.date-text')) {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+    e.target.value = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join('/');
+  }
 });
 app.addEventListener('change', e => {
   if (e.target.matches('[data-image]')) return pickImage(e.target);
+  if (e.target.matches('.date-pick')) {
+    const [y, m, d] = e.target.value.split('-');
+    return e.target.previousElementSibling.value = y ? `${d}/${m}/${y}` : '';
+  }
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
   if (['type', 'url'].includes(e.target.dataset.field)) renderEditor('questions');
@@ -904,6 +919,12 @@ app.addEventListener('click', e => {
       // Multiple choice and dropdown have one correct answer; checkboxes can have several.
       q.key = q.type === 'checkbox' ? (on ? q.key.filter(k => k !== j) : [...(q.key ?? []), j]) : (on ? [] : [j]);
       return refresh();
+    }
+    case 'pick-date': {
+      const pick = btn.previousElementSibling;
+      const [d, m, y] = pick.previousElementSibling.value.split('/');
+      pick.value = validDate(`${d}/${m}/${y}`) ? `${y}-${m}-${d}` : '';
+      try { return pick.showPicker(); } catch { return pick.previousElementSibling.focus(); }
     }
     case 'add-row': {
       const tbody = qEl.querySelector('tbody');
@@ -1011,7 +1032,7 @@ function answerHTML(q) {
     short: `<input type="text"${dvAttr}>`,
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
-    date: '<input type="date">',
+    date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" aria-label="Choose date"></button></div>`,
     dropdown: `<select${dvAttr}><option value="">Choose</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
@@ -1106,6 +1127,12 @@ const scoreHTML = g => `
 
 // Reads the answers inside `scope` and marks required questions left empty.
 // Returns null (and shows the error) when something needs fixing.
+// dd/mm/yyyy that names a real day.
+function validDate(v) {
+  const [d, m, y] = v.split('/').map(Number);
+  const t = new Date(y, m - 1, d);
+  return /^\d\d\/\d\d\/\d{4}$/.test(v) && t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d;
+}
 const blank = v => v === '' || (Array.isArray(v) ? !v.length
   : !!v && typeof v === 'object' && !(v instanceof File) && Object.values(v).some(blank));
 function collect(scope) {
@@ -1128,7 +1155,8 @@ function collect(scope) {
       file: () => wrap.querySelector('input').files[0] ?? '',
     }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
     const tooBig = v instanceof File && v.size > MAX_FILE;
-    const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v));
+    const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
+      || (q.type === 'date' && v && !validDate(v));
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;

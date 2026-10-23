@@ -720,6 +720,7 @@ const ICONS = {
 
 function questionHTML(q, i) {
   const f = current;
+  const num = 1 + f.questions.slice(0, i).filter(isQuestion).length; // sections, text, images and videos aren't counted
   const dual = f.lang === 'dual';
   const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
   // Editable list of options, grid rows or columns, stored in q[key] (and q[key + 'Dv']).
@@ -741,12 +742,12 @@ function questionHTML(q, i) {
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
-        ${richField('text', q.text, `${dvText('Question')} ${i + 1}`, `q-text ${pc}`)}
+        ${richField('text', q.text, `${dvText('Question')} ${num}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
           ${TYPE_GROUPS.map(g => g.map(v => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${TYPES[v]}</option>`).join('')).join('<hr>')}
         </select>
       </div>
-      ${dual ? richField('textDv', q.textDv, `Question ${i + 1} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
+      ${dual ? richField('textDv', q.textDv, `Question ${num} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
       <div class="q-body">${body}</div>
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}

@@ -34,7 +34,6 @@ h1{font-size:24px;margin:0}
 /* Dhivehi (Thaana) text: right to left, Faruma. Form headers use Mv Eamaan XP. */
 .dv{font-family:Faruma,system-ui,sans-serif;direction:rtl;unicode-bidi:isolate}
 .dv.head{font-family:"Mv Eamaan XP",Faruma,system-ui,sans-serif;font-weight:400}
-[dir=rtl] :is(.edit-bar,.preview-bar,main,dialog,.toast){font-family:Faruma,"Segoe UI",system-ui,sans-serif}
 
 /* Brand banner, mirrors the council letterhead */
 .brand-card{
@@ -289,19 +288,19 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 </dialog>
 
 <dialog id="import-dialog" class="lang-dialog">
-  <h2 data-t>Import questions</h2>
-  <p class="meta" data-t>Copy every question and item from another form into this one.</p>
+  <h2>Import questions</h2>
+  <p class="meta">Copy every question and item from another form into this one.</p>
   <div class="import-list"></div>
-  <div class="lang-foot"><button class="btn ghost small" data-close data-t>Cancel</button></div>
+  <div class="lang-foot"><button class="btn ghost small" data-close>Cancel</button></div>
 </dialog>
 
 <dialog id="publish-dialog" class="lang-dialog">
-  <h2 data-t>Publish options</h2>
-  <p class="meta" data-t>Anyone with the responder link can fill in the form while it is accepting responses.</p>
-  <label class="switch pub-row"><span data-t>Accepting responses</span> <input type="checkbox" id="accepting"></label>
+  <h2>Publish options</h2>
+  <p class="meta">Anyone with the responder link can fill in the form while it is accepting responses.</p>
+  <label class="switch pub-row">Accepting responses <input type="checkbox" id="accepting"></label>
   <div class="lang-foot">
-    <button class="btn ghost small" data-act="share" data-t>Copy responder link</button>&nbsp;
-    <button class="btn primary small" data-close data-t>Done</button>
+    <button class="btn ghost small" data-act="share">Copy responder link</button>&nbsp;
+    <button class="btn primary small" data-close>Done</button>
   </div>
 </dialog>
 
@@ -339,102 +338,6 @@ const DV = {
   '1 to 5': '1 އިން 5 އަށް',
   Date: 'ތާރީޚް',
   Time: 'ގަޑި',
-  // Editor interface
-  Undo: 'ފަހަތަށް',
-  Preview: 'ޕްރިވިއު',
-  'Exit preview': 'ޕްރިވިއުން ނިކުމޭ',
-  'Copy responder link': 'ޖަވާބުދޭ ލިންކް ކޮޕީކުރޭ',
-  'Share editor link': 'އެޑިޓްކުރާ ލިންކް ހިއްސާކުރޭ',
-  'Publish options': 'ޝާއިޢުކުރުމުގެ އޮޕްޝަންތައް',
-  More: 'އިތުރަށް',
-  'Download responses (CSV)': 'ޖަވާބުތައް ޑައުންލޯޑްކުރޭ (CSV)',
-  'Delete form': 'ފޯމު ފޮހެލާ',
-  Questions: 'ސުވާލުތައް',
-  Responses: 'ޖަވާބުތައް',
-  Settings: 'ސެޓިންގްސް',
-  'Add question': 'ސުވާލެއް އިތުރުކުރޭ',
-  'Import questions': 'ސުވާލުތައް އިމްޕޯޓްކުރޭ',
-  'Add title and description': 'ސުރުޚީއާއި ތަފްޞީލް އިތުރުކުރޭ',
-  'Add image': 'ފޮޓޯއެއް އިތުރުކުރޭ',
-  'Add video': 'ވީޑިއޯއެއް އިތުރުކުރޭ',
-  'Add section': 'ސެކްޝަނެއް އިތުރުކުރޭ',
-  'Short answer': 'ކުރު ޖަވާބު',
-  Paragraph: 'ދިގު ޖަވާބު',
-  'Multiple choice': 'ގިނަ އިޚްތިޔާރު',
-  Checkboxes: 'ޗެކްބޮކްސް',
-  Dropdown: 'ޑްރޮޕްޑައުން',
-  'File upload': 'ފައިލް އަޕްލޯޑް',
-  'Linear scale (1–5)': 'މިންވަރު (1–5)',
-  Rating: 'ރޭޓިންގ',
-  'Multiple choice grid': 'ގިނަ އިޚްތިޔާރުގެ ގްރިޑް',
-  'Checkbox grid': 'ޗެކްބޮކްސް ގްރިޑް',
-  'Table input': 'ޖަދުވަލު',
-  'Title and description': 'ސުރުޚީއާއި ތަފްޞީލް',
-  Image: 'ފޮޓޯ',
-  Video: 'ވީޑިއޯ',
-  Section: 'ސެކްޝަން',
-  Rows: 'ރޯތައް',
-  Columns: 'ކޮލަމްތައް',
-  'Add option': 'އިޚްތިޔާރެއް އިތުރުކުރޭ',
-  'Add row': 'ރޯއެއް އިތުރުކުރޭ',
-  'Add column': 'ކޮލަމެއް އިތުރުކުރޭ',
-  Remove: 'ނަގާލާ',
-  'Correct answer': 'ރަނގަޅު ޖަވާބު',
-  'Correct answers, one per line': 'ރަނގަޅު ޖަވާބުތައް، ކޮންމެ ލައިނެއްގައި އެއް ޖަވާބު',
-  Duplicate: 'ކޮޕީކުރޭ',
-  Delete: 'ފޮހެލާ',
-  points: 'ޕޮއިންޓް',
-  'Replace image': 'ފޮޓޯ ބަދަލުކުރޭ',
-  'Choose image': 'ފޮޓޯ އިޚްތިޔާރުކުރޭ',
-  'YouTube link': 'ޔޫޓިއުބް ލިންކް',
-  'Untitled section': 'ސެކްޝަނުގެ ސުރުޚީ',
-  Title: 'ސުރުޚީ',
-  'Description (optional)': 'ތަފްޞީލް (ލާޒިމެއް ނޫން)',
-  Bold: 'ބޯލްޑް',
-  Italic: 'އިޓެލިކް',
-  Underline: 'އަންޑަރލައިން',
-  'Insert link': 'ލިންކް ލާ',
-  'Numbered list': 'ނަންބަރު ޖަހާފައިވާ ލިސްޓް',
-  'Bulleted list': 'ބުލެޓް ލިސްޓް',
-  'Clear formatting': 'ފޯމެޓިންގ ފޮހެލާ',
-  'Link URL': 'ލިންކް',
-  'Accepting responses': 'ޖަވާބު ބަލައިގަނެވޭ',
-  'Not accepting responses': 'ޖަވާބު ބަލައެއް ނުގަނެވޭ',
-  'Turn off to close the form to new responses.': 'އައު ޖަވާބު ބަލައިނުގަތުމަށް މިއީ ނިއްވާލާ.',
-  'Collect email addresses': 'އީމެއިލް އެޑްރެސް ނަގާ',
-  'Respondents must enter their email before answering.': 'ޖަވާބު ދިނުމުގެ ކުރިން ޖަވާބުދޭ ފަރާތުގެ އީމެއިލް ލިޔުން ލާޒިމު.',
-  'Limit to 1 response': 'އެއް ޖަވާބަށް ހަނިކުރޭ',
-  'One response per phone or computer. Clearing browser data allows another.': 'އެއް ފޯނަކުން ނުވަތަ ކޮމްޕިއުޓަރަކުން އެއް ޖަވާބު. ބްރައުޒަރުގެ ޑޭޓާ ފޮހެލުމުން އަނެއްކާ ފޮނުވޭނެ.',
-  Presentation: 'ދައްކާ ގޮތް',
-  'Show progress bar': 'ކުރިއަރާ މިންވަރު ދައްކާ',
-  'Shows the page number on forms with sections.': 'ސެކްޝަންތައް ހުންނަ ފޯމުތަކުގައި ޞަފްޙާގެ ނަންބަރު ދައްކާ.',
-  'Shuffle question order': 'ސުވާލުތަކުގެ ތަރުތީބު އަޅާލާ',
-  'Mixes the order within each section for every respondent.': 'ކޮންމެ ސެކްޝަނެއްގެ ތެރޭގައި، ކޮންމެ ފަރާތަކަށް ސުވާލުތަކުގެ ތަރުތީބު ބަދަލުކުރޭ.',
-  'Show link to submit another response': 'އިތުރު ޖަވާބެއް ފޮނުވުމުގެ ލިންކް ދައްކާ',
-  'Confirmation message': 'ޖަވާބު ލިބުނުކަން ކަށަވަރުކުރާ މެސެޖް',
-  'Your response has been recorded.': 'ތިޔަ ޖަވާބު ރެކޯޑްކުރެވިއްޖެ.',
-  Quiz: 'ކުއިޒް',
-  'Make this a quiz': 'މިއީ ކުއިޒަކަށް ހަދާ',
-  'Mark correct answers and set points on each question. Scores are worked out automatically.': 'ކޮންމެ ސުވާލެއްގެ ރަނގަޅު ޖަވާބާއި ޕޮއިންޓް ކަނޑައަޅާ. ޕޮއިންޓް ހިސާބުވާނީ އަމިއްލައަށް.',
-  'Show score after submitting': 'ފޮނުވުމަށްފަހު ޕޮއިންޓް ދައްކާ',
-  'Respondents see their score and the correct answers for questions they missed.': 'ޖަވާބުދޭ ފަރާތަށް ލިބުނު ޕޮއިންޓާއި، ރަނގަޅަށް ޖަވާބު ނުދެވުނު ސުވާލުތަކުގެ ރަނގަޅު ޖަވާބު ފެންނާނެ.',
-  Defaults: 'ޑިފޯލްޓް',
-  'Make questions required by default': 'ސުވާލުތައް ޑިފޯލްޓްކޮށް މަޖުބޫރުކުރޭ',
-  'Applies to questions added from now on.': 'މިހިން ފެށިގެން އިތުރުކުރާ ސުވާލުތަކަށް.',
-  'Download CSV': 'CSV ޑައުންލޯޑްކުރޭ',
-  Timestamp: 'ވަގުތު',
-  Score: 'ޕޮއިންޓް',
-  Cancel: 'ކެންސަލް',
-  Done: 'ނިމުނީ',
-  'Copy every question and item from another form into this one.': 'އެހެން ފޯމެއްގެ ހުރިހާ ސުވާލެއް މި ފޯމަށް ކޮޕީކުރޭ.',
-  'Anyone with the responder link can fill in the form while it is accepting responses.': 'ޖަވާބު ބަލައިގަންނަ ހިނދަކު، ޖަވާބުދޭ ލިންކް ލިބޭ ކޮންމެ މީހަކަށް ފޯމު ފުރިދާނެ.',
-  'No other forms with questions yet.': 'ސުވާލު ހުރި އެހެން ފޯމެއް އަދި ނެތް.',
-  'Images must be 1.5 MB or smaller.': 'ފޮޓޯ ވާންޖެހޭނީ 1.5 MB ނުވަތަ އެއަށްވުރެ ކުޑަކޮށް.',
-  'Nothing to undo': 'ފަހަތަށް ދާނެ އެއްޗެއް ނެތް',
-  'Responder link copied': 'ޖަވާބުދޭ ލިންކް ކޮޕީކުރެވިއްޖެ',
-  'Editor link copied. Anyone with it can edit this form.': 'އެޑިޓްކުރާ ލިންކް ކޮޕީކުރެވިއްޖެ. މި ލިންކް ލިބޭ ކޮންމެ މީހަކަށް ފޯމު އެޑިޓްކުރެވޭނެ.',
-  'Delete this form and all its responses?': 'މި ފޯމާއި އޭގެ ހުރިހާ ޖަވާބެއް ފޮހެލަންތަ؟',
-  'Could not reach the server. Check your connection and try again.': 'ސާވަރާ ގުޅޭކަށް ނެތް. ކަނެކްޝަން ޗެކްކޮށް އަލުން މަސައްކަތްކުރޭ.',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -490,7 +393,7 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '') {
   return `
     <div class="rt ${wrap}">
       <div class="${cls}" contenteditable="true" data-field="${field}" data-placeholder="${esc(placeholder)}">${clean(html)}</div>
-      <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${dvText(RT_CMDS[c][0])}" aria-label="${dvText(RT_CMDS[c][0])}">${RT_CMDS[c][1]}</button>`).join('')}</div>
+      <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}</div>
     </div>`;
 }
 const newQ = () => ({ id: uid(), type: 'short', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: [], optionsDv: [] });
@@ -566,7 +469,7 @@ function saveForms(now = false) {
 }
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = dvText(msg);
+  t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => t.classList.remove('show'), 2400);
@@ -590,7 +493,6 @@ window.addEventListener('hashchange', route);
 function shell(inner, head = '') {
   // Dhivehi forms lay out every element right to left, in the editor and for respondents.
   document.documentElement.dir = current?.lang === 'dv' ? 'rtl' : 'ltr';
-  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = dvText(el.dataset.t ||= el.textContent); });
   app.innerHTML = `
     ${head}
     <main>${inner}</main>
@@ -681,7 +583,7 @@ async function newForm(lang) {
 
 /* ---------- editor ---------- */
 
-const btn = (act, en, icon, label = dvText(en)) => `<button class="icon-btn" data-act="${act}" title="${label}" aria-label="${label}">${icon}</button>`;
+const btn = (act, label, icon) => `<button class="icon-btn" data-act="${act}" title="${label}" aria-label="${label}">${icon}</button>`;
 
 async function renderEditor(tab) {
   const f = current;
@@ -707,23 +609,23 @@ async function renderEditor(tab) {
       <div class="eb-row">
         <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"><span>Council Forms</span></a>
         ${btn('undo', 'Undo', ICONS.undo)}
-        <a class="icon-btn" href="#/preview/${f.id}" title="${dvText('Preview')}" aria-label="${dvText('Preview')}">${ICONS.eye}</a>
+        <a class="icon-btn" href="#/preview/${f.id}" title="Preview" aria-label="Preview">${ICONS.eye}</a>
         ${btn('share', 'Copy responder link', RT_CMDS.createLink[1])}
         ${btn('collab', 'Share editor link', ICONS.share)}
         ${btn('publish', 'Publish options', ICONS.publish)}
         <details class="more">
-          <summary class="icon-btn" title="${dvText('More')}" aria-label="${dvText('More')}">${ICONS.more}</summary>
+          <summary class="icon-btn" title="More" aria-label="More">${ICONS.more}</summary>
           <div class="menu">
-            <button data-act="csv">${ICONS.download}${dvText('Download responses (CSV)')}</button>
-            <button data-act="del-form" data-id="${f.id}">${ICONS.del}${dvText('Delete form')}</button>
+            <button data-act="csv">${ICONS.download}Download responses (CSV)</button>
+            <button data-act="del-form" data-id="${f.id}">${ICONS.del}Delete form</button>
           </div>
         </details>
       </div>
       <div class="eb-title ${f.lang === 'dv' ? 'dv head' : ''}">${esc(barTitle(f))}</div>
       <nav class="tabs">
-        <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">${dvText('Questions')}</a>
-        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">${dvText('Responses')} <span class="badge">${f.responseCount}</span></a>
-        <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">${dvText('Settings')}</a>
+        <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
+        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses <span class="badge">${f.responseCount}</span></a>
+        <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">Settings</a>
       </nav>
     </header>`);
 }
@@ -731,32 +633,32 @@ function settingsHTML() {
   const s = opts(current);
   const row = (key, label, hint, on) => `
     <label class="set-row">
-      <span><strong>${dvText(label)}</strong>${hint ? `<span class="meta">${dvText(hint)}</span>` : ''}</span>
+      <span><strong>${label}</strong>${hint ? `<span class="meta">${hint}</span>` : ''}</span>
       <input type="checkbox" data-setting="${key}" ${on ? 'checked' : ''}>
     </label>`;
   return `
     <section class="card">
-      <h2 class="set-head">${dvText('Responses')}</h2>
+      <h2 class="set-head">Responses</h2>
       ${row('accepting', 'Accepting responses', 'Turn off to close the form to new responses.', current.accepting !== false)}
       ${row('email', 'Collect email addresses', 'Respondents must enter their email before answering.', s.email)}
       ${row('once', 'Limit to 1 response', 'One response per phone or computer. Clearing browser data allows another.', s.once)}
     </section>
     <section class="card">
-      <h2 class="set-head">${dvText('Presentation')}</h2>
+      <h2 class="set-head">Presentation</h2>
       ${row('progress', 'Show progress bar', 'Shows the page number on forms with sections.', s.progress)}
       ${row('shuffle', 'Shuffle question order', 'Mixes the order within each section for every respondent.', s.shuffle)}
       ${row('another', 'Show link to submit another response', '', s.another)}
-      <label class="set-msg"><strong>${dvText('Confirmation message')}</strong>
-        <textarea data-setting="confirm" rows="2" placeholder="${dvText('Your response has been recorded.')}">${esc(s.confirm)}</textarea>
+      <label class="set-msg"><strong>Confirmation message</strong>
+        <textarea data-setting="confirm" rows="2" placeholder="Your response has been recorded.">${esc(s.confirm)}</textarea>
       </label>
     </section>
     <section class="card">
-      <h2 class="set-head">${dvText('Quiz')}</h2>
+      <h2 class="set-head">Quiz</h2>
       ${row('quiz', 'Make this a quiz', 'Mark correct answers and set points on each question. Scores are worked out automatically.', s.quiz)}
       ${row('showScore', 'Show score after submitting', 'Respondents see their score and the correct answers for questions they missed.', s.showScore)}
     </section>
     <section class="card">
-      <h2 class="set-head">${dvText('Defaults')}</h2>
+      <h2 class="set-head">Defaults</h2>
       ${row('requiredDefault', 'Make questions required by default', 'Applies to questions added from now on.', s.requiredDefault)}
     </section>`;
 }
@@ -786,25 +688,25 @@ function questionHTML(q, i) {
   // Editable list of options, grid rows or columns, stored in q[key] (and q[key + 'Dv']).
   const quiz = opts(f).quiz && GRADED.includes(q.type);
   const mark = (key, j) => quiz && key === 'options'
-    ? `<button class="icon key ${q.key?.includes(j) ? 'on' : ''}" data-act="key" data-idx="${j}" title="${dvText('Correct answer')}" aria-pressed="${!!q.key?.includes(j)}">✓</button>` : '';
+    ? `<button class="icon key ${q.key?.includes(j) ? 'on' : ''}" data-act="key" data-idx="${j}" title="Correct answer" aria-pressed="${!!q.key?.includes(j)}">✓</button>` : '';
   const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
     <div class="opt-row">
       ${marker}
       <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${dvText(label)} ${j + 1}">
       ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
       ${mark(key, j)}
-      <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="${dvText('Remove')}">×</button>
-    </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ ${dvText(`Add ${label.toLowerCase()}`)}</button>`;
-  const body = GRIDS.includes(q.type) ? `<div class="list-head">${dvText('Rows')}</div>${list('options', 'Row')}<div class="list-head">${dvText('Columns')}</div>${list('cols', 'Column')}`
-    : q.type === 'table' ? `<div class="list-head">${dvText('Columns')}</div>${list('cols', 'Column')}`
+      <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="Remove">×</button>
+    </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ Add ${label.toLowerCase()}</button>`;
+  const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
+    : q.type === 'table' ? `<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
-    : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="${dvText('Correct answers, one per line')}">${esc(q.keyText)}</textarea>` : ''}`;
+    : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
     <section class="card question" data-qid="${q.id}">
       <div class="q-top">
         ${richField('text', q.text, `${dvText('Question')} ${i + 1}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
-          ${TYPE_GROUPS.map(g => g.map(v => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${dvText(TYPES[v])}</option>`).join('')).join('<hr>')}
+          ${TYPE_GROUPS.map(g => g.map(v => `<option value="${v}" ${v === q.type ? 'selected' : ''}>${TYPES[v]}</option>`).join('')).join('<hr>')}
         </select>
       </div>
       ${dual ? richField('textDv', q.textDv, `Question ${i + 1} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
@@ -812,7 +714,7 @@ function questionHTML(q, i) {
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${btn('del-q', 'Delete', ICONS.del)}
-        ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> ${dvText('points')}</label>` : ''}
+        ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> <span class="${pc}">${dvText('Required')}</span></label>
       </div>
     </section>`;
@@ -827,15 +729,15 @@ function blockHTML(q) {
   const hasDesc = q.type === 'text' || q.type === 'section';
   const media = {
     image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
-      <label class="btn ghost small">${dvText(q.src ? 'Replace image' : 'Choose image')}<input type="file" accept="image/*" data-image hidden></label>`,
-    video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="${dvText('YouTube link')}">${videoHTML(q.url)}`,
+      <label class="btn ghost small">${q.src ? 'Replace image' : 'Choose image'}<input type="file" accept="image/*" data-image hidden></label>`,
+    video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
   }[q.type] ?? '';
   return `
     <section class="card question block ${q.type}" data-qid="${q.id}">
-      <div class="block-kind">${dvText(BLOCKS[q.type])}</div>
-      ${richField('text', q.text, dvText(q.type === 'section' ? 'Untitled section' : 'Title'), `q-text ${pc}`)}
+      <div class="block-kind">${BLOCKS[q.type]}</div>
+      ${richField('text', q.text, q.type === 'section' ? 'Untitled section' : 'Title', `q-text ${pc}`)}
       ${dv('text', 'Title', 'q-text')}
-      ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
+      ${hasDesc ? richField('desc', q.desc, 'Description (optional)', `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
       <div class="q-body">${media}</div>
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
@@ -861,8 +763,8 @@ async function openImport() {
   if (!forms) return;
   const others = forms.filter(f => f.id !== current.id && f.questions.length);
   importDialog.querySelector('.import-list').innerHTML = others.length
-    ? others.map(f => `<button class="lang-opt" data-import="${f.id}"><strong class="${f.lang === 'dv' ? 'dv' : ''}">${esc(plain(f.title) || untitled(f))}</strong><span>${current.lang === 'dv' ? `ބައި ${f.questions.length}` : `${f.questions.length} item${f.questions.length === 1 ? '' : 's'}`}</span></button>`).join('')
-    : `<p class="meta">${dvText('No other forms with questions yet.')}</p>`;
+    ? others.map(f => `<button class="lang-opt" data-import="${f.id}"><strong class="${f.lang === 'dv' ? 'dv' : ''}">${esc(plain(f.title) || untitled(f))}</strong><span>${f.questions.length} item${f.questions.length === 1 ? '' : 's'}</span></button>`).join('')
+    : '<p class="meta">No other forms with questions yet.</p>';
   importDialog.showModal();
 }
 importDialog.addEventListener('click', async e => {
@@ -873,7 +775,7 @@ importDialog.addEventListener('click', async e => {
   const src = await api(`forms/${pick.dataset.import}`).catch(() => null);
   if (!src) return failed();
   insertItems(src.questions.map(q => ({ ...q, id: uid() })));
-  toast(current.lang === 'dv' ? `ބައި ${src.questions.length} އިމްޕޯޓްކުރެވިއްޖެ` : `Imported ${src.questions.length} item${src.questions.length === 1 ? '' : 's'}`);
+  toast(`Imported ${src.questions.length} item${src.questions.length === 1 ? '' : 's'}`);
 });
 
 async function upload(file) {
@@ -950,7 +852,7 @@ app.addEventListener('click', e => {
   switch (btn.dataset.act) {
     case 'new': return langDialog.showModal();
     case 'del-form':
-      if (!confirm(dvText('Delete this form and all its responses?'))) return;
+      if (!confirm('Delete this form and all its responses?')) return;
       return api(`forms/${btn.dataset.id}`, { method: 'DELETE' })
         .then(() => { history.replaceState(null, '', '#/'); renderHome(); }).catch(failed);
     case 'add-q': return insertItems([newQ()]);
@@ -1014,7 +916,7 @@ app.addEventListener('click', e => {
   if (cmd !== 'createLink') return document.execCommand(cmd);
   const sel = getSelection();
   const range = sel.rangeCount && editor.contains(sel.anchorNode) ? sel.getRangeAt(0) : null;
-  let url = prompt(dvText('Link URL'), 'https://')?.trim();
+  let url = prompt('Link URL', 'https://')?.trim();
   if (!url || url === 'https://') return;
   if (!/^[a-z]+:/i.test(url)) url = `https://${url}`;
   editor.focus();
@@ -1115,8 +1017,8 @@ function answerHTML(q) {
 // Respondents open #/fill/; the editor's Preview opens #/preview/ and gets a way back.
 const fillBar = () => (location.hash.startsWith('#/preview/') ? `
   <nav class="topbar preview-bar">
-    <span>${dvText('Preview')}</span>
-    <a class="btn primary small exit" href="#/edit/${current.id}">${dvText('Exit preview')}</a>
+    <span>Preview</span>
+    <a class="btn primary small exit" href="#/edit/${current.id}">Exit preview</a>
   </nav>` : '') + BRAND;
 
 function renderFill(done = false, answers = null) {
@@ -1261,24 +1163,22 @@ async function responsesHTML() {
   const f = current;
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return []; });
   if (!responses.length) {
-    return f.lang === 'dv'
-      ? '<section class="card empty">އަދި ޖަވާބެއް ނުލިބޭ. ޖަވާބު ހޯދަން ލިންކް ހިއްސާކުރޭ، ނުވަތަ <b>ޕްރިވިއު</b> ބޭނުންކުރޭ.</section>'
-      : `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
+    return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
   }
   const qs = answerCols(f, responses);
   const cell = v => safeSrc(v?.url) ? `<a href="${esc(v.url)}">${esc(v.name)}</a>` : esc(show(v));
   const quiz = opts(f).quiz;
   const scoreOf = r => { const g = grade(f, r.answers); return `${g.score} / ${g.total}`; };
-  const cols = (quiz ? `<th>${dvText('Score')}</th>` : '') + qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
+  const cols = (quiz ? '<th>Score</th>' : '') + qs.map(q => `<th>${esc(qLabel(q))}</th>`).join('');
   const rows = responses.map(r => `
     <tr><td>${new Date(r.at).toLocaleString()}</td>${quiz ? `<td>${scoreOf(r)}</td>` : ''}${qs.map(q => `<td>${cell(r.answers[q.id])}</td>`).join('')}</tr>`).join('');
   return `
     <div class="resp-bar">
-      <span>${f.lang === 'dv' ? `ޖަވާބު ${responses.length}` : `${responses.length} response${responses.length === 1 ? '' : 's'}`}</span>
-      <button class="btn light small" data-act="csv">${dvText('Download CSV')}</button>
+      <span>${responses.length} response${responses.length === 1 ? '' : 's'}</span>
+      <button class="btn light small" data-act="csv">Download CSV</button>
     </div>
     <section class="card table-wrap">
-      <table><thead><tr><th>${dvText('Timestamp')}</th>${cols}</tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Timestamp</th>${cols}</tr></thead><tbody>${rows}</tbody></table>
     </section>`;
 }
 

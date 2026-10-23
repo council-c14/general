@@ -340,14 +340,6 @@ const DV = {
   '1 to 5': '1 އިން 5 އަށް',
   Date: 'ތާރީޚް',
   Time: 'ގަޑި',
-  // Buttons respondents see
-  Back: 'ފަހަތަށް',
-  Next: 'ކުރިއަށް',
-  Submit: 'ފޮނުވާ',
-  'Clear form': 'ސާފުކުރޭ',
-  'Submit another response': 'އިތުރު ޖަވާބެއް ފޮނުވާ',
-  'Add row': 'ރޯއެއް އިތުރުކުރޭ',
-  Choose: 'އިޚްތިޔާރުކުރޭ',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -1002,7 +994,7 @@ function answerHTML(q) {
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: '<input type="date">',
-    dropdown: `<select${dvAttr}><option value="">${dvText('Choose')}</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
+    dropdown: `<select${dvAttr}><option value="">Choose</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
@@ -1014,7 +1006,7 @@ function answerHTML(q) {
     cbgrid: gridHTML(q),
     table: `<div class="tbl-wrap"><table class="gridq"><thead><tr>${colHeads(q)}</tr></thead>
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
-      <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvText('Add row')}</button>`,
+      <button type="button" class="link" data-act="add-row">+ Add row</button>`,
   }[q.type];
   const req = q.required ? ' <span class="req">*</span>' : '';
   return `
@@ -1035,14 +1027,13 @@ function renderFill(done = false, answers = null) {
   const f = current;
   const s = opts(f);
   const preview = location.hash.startsWith('#/preview/');
-  const dvb = f.lang === 'dv' ? 'dv' : ''; // Faruma on buttons of Dhivehi forms
   if (done) {
     return shell(`
       <section class="card thanks">
         <h2>Thank you</h2>
         <p>${esc(s.confirm.trim() || 'Your response has been recorded.')}</p>
         ${s.quiz && s.showScore && answers ? scoreHTML(grade(f, answers)) : ''}
-        ${s.another && (!s.once || preview) ? `<button class="btn ghost ${dvb}" data-act="again">${dvText('Submit another response')}</button>` : ''}
+        ${s.another && (!s.once || preview) ? '<button class="btn ghost" data-act="again">Submit another response</button>' : ''}
       </section>`, fillBar());
   }
   if (s.once && !preview && answered(f.id)) {
@@ -1081,10 +1072,10 @@ function renderFill(done = false, answers = null) {
       <div class="field-error" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
-        <button class="btn ghost ${dvb}" type="button" data-act="back" hidden>${dvText('Back')}</button>
-        <button class="btn ghost ${dvb}" type="reset">${dvText('Clear form')}</button>
-        <button class="btn primary ${dvb}" type="button" data-act="next" ${paged ? '' : 'hidden'}>${dvText('Next')}</button>
-        <button class="btn primary ${dvb}" type="submit" ${paged ? 'hidden' : ''}>${dvText('Submit')}</button>
+        <button class="btn ghost" type="button" data-act="back" hidden>Back</button>
+        <button class="btn ghost" type="reset">Clear form</button>
+        <button class="btn primary" type="button" data-act="next" ${paged ? '' : 'hidden'}>Next</button>
+        <button class="btn primary" type="submit" ${paged ? 'hidden' : ''}>Submit</button>
       </div>
     </form>`, fillBar());
 }

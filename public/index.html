@@ -373,6 +373,7 @@ const DV = {
   'Start on a new page': 'އައު ޞަފްޙާއަކަށް',
   Image: 'ފޮޓޯ',
   'Choose image': 'ފޮޓޯ ނަގާ',
+  'Replace image': 'ފޮޓޯ ބަދަލުކުރޭ',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -791,7 +792,7 @@ function blockHTML(q, i) {
   const hasDesc = q.type === 'text' || q.type === 'section';
   const media = {
     image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
-      <label class="btn ghost small">${q.src ? 'Replace image' : dvText('Choose image')}<input type="file" accept="image/*" data-image hidden></label>`,
+      <label class="btn ghost small">${dvText(q.src ? 'Replace image' : 'Choose image')}<input type="file" accept="image/*" data-image hidden></label>`,
     video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
   }[q.type] ?? '';
   const k = q.type === 'section' ? 2 + f.questions.slice(0, i).filter(x => x.type === 'section').length : 0;

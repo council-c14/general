@@ -1015,7 +1015,7 @@ function answerHTML(q) {
   const req = q.required ? ' <span class="req">*</span>' : '';
   return `
     <section class="card question answer" data-qid="${q.id}">
-      ${localized(f, 'div', q.text || 'Untitled question', q.textDv, 'q-label', req, clean)}
+      ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', req, clean)}
       ${inputs}
     </section>`;
 }

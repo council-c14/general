@@ -113,6 +113,11 @@ h1{font-size:24px;margin:0}
 .block .desc-input{text-align:start}
 .block .desc{color:var(--muted);margin-top:6px}
 .block.section{border-top:8px solid var(--teal-700)}
+/* Sections: "Section 1 of 3" tab on the card that starts each section, and where a section leads */
+.sec-tab{display:inline-block;background:var(--teal-700);color:#fff;font-size:14px;font-weight:600;padding:8px 18px;border-radius:12px 12px 0 0}
+.sec-tab + .card{border-start-start-radius:0}
+.after-sec{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;color:#fff;font-size:14px;margin:4px 0 18px}
+.after-sec select{flex:1 1 220px;min-width:0;max-width:100%;color:var(--ink)}
 .block-img{display:block;max-width:100%;border-radius:12px;margin:10px 0}
 .video{position:relative;aspect-ratio:16/9;margin-top:10px}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:12px}
@@ -362,6 +367,9 @@ const DV = {
   '1 to 5': '1 އިން 5 އަށް',
   Date: 'ތާރީޚް',
   Time: 'ގަޑި',
+  Section: 'ސެކްޝަން',
+  'Untitled section': 'ސެކްޝަން ސުރުޙީ',
+  'Description (optional)': 'އިތުރު ތަފްޞީލް (އިޚްތިޔާރީ)',
 };
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
@@ -613,13 +621,14 @@ async function renderEditor(tab) {
   const f = current;
   const dual = f.lang === 'dual';
   const body = tab === 'responses' ? await responsesHTML() : tab === 'settings' ? settingsHTML() : `
+    ${secCount() > 1 ? secTab(1) : ''}
     <section class="card form-head">
       ${richField('title', f.title, dvText('Untitled form'), `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
       ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', 'title-input dv head" dir="rtl" lang="dv') : ''}
       ${richField('description', f.description, dvText('Form description'), `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
       ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
     </section>
-    <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q) : questionHTML(q, i)).join('')}</div>
+    <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q, i) : questionHTML(q, i)).join('')}</div>
     <div class="add-bar">
       ${btn('add-q', 'Add question', ICONS.add)}
       ${btn('import', 'Import questions', ICONS.import)}
@@ -748,8 +757,29 @@ function questionHTML(q, i) {
     </section>`;
 }
 
+// Sections: the form's start is section 1; each section item starts the next one.
+const secCount = () => 1 + current.questions.filter(q => q.type === 'section').length;
+const secTab = k => `<div class="sec-tab ${current.lang === 'dv' ? 'dv' : ''}">${current.lang === 'dv'
+  ? `${DV.Section} <bdi dir="ltr">${k} / ${secCount()}</bdi>` : `Section ${k} of ${secCount()}`}</div>`;
+
+// Where section k - 1 leads, set on section k (shown only when k starts a new page).
+// goto: '' next section, '_start' section 1, a section item's id, or 'submit'.
+function afterSection(q, k) {
+  const secs = [{ id: '_start', text: current.title, textDv: current.titleDv }, ...current.questions.filter(x => x.type === 'section')];
+  const opt = (v, label) => `<option value="${v}" ${(q.goto ?? '') === v ? 'selected' : ''}>${esc(label)}</option>`;
+  return `
+    <div class="after-sec" data-qid="${q.id}">
+      <span>After section ${k - 1}</span>
+      <select data-field="goto">
+        ${opt('', 'Continue to next section')}
+        ${secs.map((x, j) => { const t = plain(x.text) || plain(x.textDv); return opt(x.id, `Go to section ${j + 1}${t ? ` (${t})` : ''}`); }).join('')}
+        ${opt('submit', 'Submit form')}
+      </select>
+    </div>`;
+}
+
 // Title and description, image, video or section card in the editor.
-function blockHTML(q) {
+function blockHTML(q, i) {
   const f = current;
   const dual = f.lang === 'dual';
   const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
@@ -760,16 +790,21 @@ function blockHTML(q) {
       <label class="btn ghost small">${q.src ? 'Replace image' : 'Choose image'}<input type="file" accept="image/*" data-image hidden></label>`,
     video: `<input class="url-input" data-field="url" value="${esc(q.url)}" placeholder="YouTube link">${videoHTML(q.url)}`,
   }[q.type] ?? '';
+  const k = q.type === 'section' ? 2 + f.questions.slice(0, i).filter(x => x.type === 'section').length : 0;
+  const newPage = q.newPage !== false;
   return `
+    ${k && newPage ? afterSection(q, k) : ''}
+    ${k ? secTab(k) : ''}
     <section class="card question block ${q.type}" data-qid="${q.id}">
-      <div class="block-kind">${BLOCKS[q.type]}</div>
-      ${richField('text', q.text, q.type === 'section' ? 'Untitled section' : 'Title', `q-text ${pc}`)}
+      ${k ? '' : `<div class="block-kind">${BLOCKS[q.type]}</div>`}
+      ${richField('text', q.text, k ? dvText('Untitled section') : 'Title', `q-text ${pc}`)}
       ${dv('text', 'Title', 'q-text')}
-      ${hasDesc ? richField('desc', q.desc, 'Description (optional)', `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
+      ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
       <div class="q-body">${media}</div>
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${btn('del-q', 'Delete', ICONS.del)}
+        ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> Start on a new page</label>` : ''}
       </div>
     </section>`;
 }
@@ -875,7 +910,7 @@ app.addEventListener('change', e => {
   }
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
-  if (['type', 'url'].includes(e.target.dataset.field)) renderEditor('questions');
+  if (['type', 'url', 'newPage'].includes(e.target.dataset.field)) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -1020,7 +1055,7 @@ function itemHTML(q) {
   const media = q.type === 'image' && safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">`
     : q.type === 'video' ? videoHTML(q.url) : '';
   return `
-    <section class="card block ${q.type}">
+    <section class="card block ${q.type}" ${q.type === 'section' ? `data-sec="${q.id}"` : ''}>
       ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, 'q-label', '', clean) : ''}
       ${q.desc || q.descDv ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
       ${media}
@@ -1091,34 +1126,45 @@ function renderFill(done = false, answers = null) {
         <p>This form is no longer accepting responses.</p>
       </section>`, fillBar());
   }
-  // Each section starts a new page.
-  const pages = [[]];
-  f.questions.forEach(q => { if (q.type === 'section') pages.push([]); pages.at(-1).push(q); });
-  if (s.shuffle) pages.forEach(p => {
+  // Sections: the form's start, then one per section item; a section's items stay together.
+  const secs = [[]];
+  f.questions.forEach(q => { if (q.type === 'section') secs.push([]); secs.at(-1).push(q); });
+  if (s.shuffle) secs.forEach(p => {
     const head = p[0]?.type === 'section' ? 1 : 0; // a section's heading stays on top
     for (let i = p.length - 1; i > head; i--) {
       const j = head + Math.floor(Math.random() * (i - head + 1));
       [p[i], p[j]] = [p[j], p[i]];
     }
   });
-  if (s.email) pages[0].unshift(EMAIL_Q);
+  if (s.email) secs[0].unshift(EMAIL_Q);
+  // Pages: a section starts one unless set not to, and its goto says where the page before it leads.
+  const pages = [];
+  secs.forEach((sec, n) => {
+    if (!n || sec[0].newPage !== false) {
+      pages.push({ items: [], goto: '' });
+      if (n) pages.at(-2).goto = sec[0].goto ?? '';
+    }
+    pages.at(-1).items.push(...sec);
+  });
   const paged = pages.length > 1;
+  trail = [];
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
         ${localized(f, 'h1', f.title || untitled(f), f.titleDv, 'head', '', clean)}
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
-      <div class="fill-body">${pages.map((p, n) => `<div class="page" ${n ? 'hidden' : ''}>${p.map(itemHTML).join('')}</div>`).join('')}</div>
+      <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.items.map(itemHTML).join('')}</div>`).join('')}</div>
       <div class="field-error" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
         <button class="btn ghost" type="button" data-act="back" hidden>Back</button>
         <button class="btn ghost" type="reset">Clear form</button>
-        <button class="btn primary" type="button" data-act="next" ${paged ? '' : 'hidden'}>Next</button>
-        <button class="btn primary" type="submit" ${paged ? 'hidden' : ''}>Submit</button>
+        <button class="btn primary" type="button" data-act="next">Next</button>
+        <button class="btn primary" type="submit">Submit</button>
       </div>
     </form>`, fillBar());
+  showPage(app.querySelector('.fill'), 0);
 }
 
 const scoreHTML = g => `
@@ -1143,7 +1189,7 @@ function collect(scope) {
   let big = false;
   [EMAIL_Q, ...current.questions].filter(isQuestion).forEach(q => {
     const wrap = scope.querySelector(`[data-qid="${q.id}"]`);
-    if (!wrap) return;
+    if (!wrap || wrap.closest('.page:not([data-seen])')) return; // skipped by a section jump
     const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
     const row = j => picked(`[name="${q.id}:${j}"]`);
     const one = () => picked('input')[0] ?? '';
@@ -1171,19 +1217,29 @@ function collect(scope) {
   return firstBad ? null : answers;
 }
 
+// Next goes where the page's section leads (or to the following page); Back retraces the pages visited.
+let trail = [];
 function turnPage(form, step) {
   const pages = [...form.querySelectorAll('.page')];
   const cur = pages.findIndex(p => !p.hidden);
-  if (step > 0 && !collect(pages[cur])) return;
-  const next = cur + step;
-  pages[cur].hidden = true;
-  pages[next].hidden = false;
-  form.querySelector('[data-act=back]').hidden = next === 0;
-  form.querySelector('[data-act=next]').hidden = next === pages.length - 1;
-  form.querySelector('[type=submit]').hidden = next !== pages.length - 1;
+  if (step < 0) return showPage(form, trail.pop(), true);
+  if (!collect(pages[cur])) return;
+  const to = pages[cur].dataset.goto;
+  const jump = to === '_start' ? 0 : pages.findIndex(p => p.querySelector(`[data-sec="${to}"]`));
+  trail.push(cur);
+  showPage(form, to && jump >= 0 ? jump : cur + 1, true);
+}
+function showPage(form, n, scroll = false) {
+  const pages = [...form.querySelectorAll('.page')];
+  pages.forEach((p, i) => { p.hidden = i !== n; });
+  pages[n].dataset.seen = ''; // only pages seen are checked and sent
+  const end = n === pages.length - 1 || pages[n].dataset.goto === 'submit';
+  form.querySelector('[data-act=back]').hidden = !trail.length;
+  form.querySelector('[data-act=next]').hidden = end;
+  form.querySelector('[type=submit]').hidden = !end;
   const pager = form.querySelector('.pager');
-  if (pager) pager.querySelector('progress').value = pager.querySelector('.pg-n').textContent = next + 1;
-  form.scrollIntoView({ behavior: 'smooth' });
+  if (pager) pager.querySelector('progress').value = pager.querySelector('.pg-n').textContent = n + 1;
+  if (scroll) form.scrollIntoView({ behavior: 'smooth' });
 }
 
 app.addEventListener('submit', async e => {

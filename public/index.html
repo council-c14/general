@@ -550,8 +550,9 @@ async function route() {
 window.addEventListener('hashchange', route);
 
 function shell(inner, head = '') {
-  // Dhivehi forms lay out every element right to left, in the editor and for respondents.
-  document.documentElement.dir = current?.lang === 'dv' ? 'rtl' : 'ltr';
+  // Dhivehi forms lay out right to left in the editor's Questions tab and for respondents;
+  // the Responses and Settings tabs keep the usual left-to-right layout.
+  document.documentElement.dir = current?.lang === 'dv' && !/^#\/(responses|settings)\//.test(location.hash) ? 'rtl' : 'ltr';
   app.innerHTML = `
     ${head}
     <main>${inner}</main>

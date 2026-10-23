@@ -378,6 +378,12 @@ const DV = {
   'Replace image': 'ފޮޓޯ ބަދަލުކުރޭ',
   'Remove image': 'ފޮޓޯ ފޮހެލާ',
 };
+// Options, rows and columns left empty in the editor read as their placeholder ("Option 2") everywhere else.
+function withPlaceholders(f) {
+  const name = (q, key) => key === 'cols' ? 'Column' : GRIDS.includes(q.type) ? 'Row' : 'Option';
+  const fill = (q, key) => q[key]?.map((o, j) => o || `${f.lang === 'dv' ? DV[name(q, key)] : name(q, key)} ${j + 1}`);
+  return { ...f, questions: f.questions.map(q => ({ ...q, options: fill(q, 'options') ?? [], ...(q.cols && { cols: fill(q, 'cols') }) })) };
+}
 const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
 const GRIDS = ['mcgrid', 'cbgrid'];
@@ -524,7 +530,7 @@ async function route() {
   if (view === 'edit' && current) return renderEditor('questions');
   if (view === 'responses' && current) return renderEditor('responses');
   if (view === 'settings' && current) return renderEditor('settings');
-  if ((view === 'fill' || view === 'preview') && current) return renderFill();
+  if ((view === 'fill' || view === 'preview') && current) { current = withPlaceholders(current); return renderFill(); }
   renderHome();
 }
 window.addEventListener('hashchange', route);
@@ -891,9 +897,9 @@ function onFieldEdit(el) {
     else if (field === 'type') {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
-      // Fresh lists take the new type's default label ("Row 1" for grids).
-      else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [`${dvText(GRIDS.includes(val) ? 'Row' : 'Option')} 1`];
-      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : [`${dvText('Column')} 1`]) : [];
+      // Fresh lists start with one empty entry; "Option 1" / "Row 1" is only its placeholder.
+      else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [''];
+      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['']) : [];
     } else q[field] = val;
   }
   saveForms();
@@ -954,8 +960,7 @@ app.addEventListener('click', e => {
       return refresh();
     case 'add-opt': {
       const key = btn.dataset.list;
-      const label = key === 'cols' ? 'Column' : GRIDS.includes(q.type) ? 'Row' : 'Option';
-      (q[key] ||= []).push(`${dvText(label)} ${q[key].length + 1}`);
+      (q[key] ||= []).push('');
       return refresh();
     }
     case 'del-opt': {
@@ -1287,7 +1292,7 @@ const answerCols = (f, responses) =>
   [EMAIL_Q, ...f.questions].filter(q => isQuestion(q) && (q !== EMAIL_Q || responses.some(r => r.answers._email)));
 
 async function responsesHTML() {
-  const f = current;
+  const f = withPlaceholders(current);
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return []; });
   if (!responses.length) {
     return `<section class="card empty">No responses yet. Share the link or use <b>Preview</b> to start collecting answers.</section>`;
@@ -1310,7 +1315,7 @@ async function responsesHTML() {
 }
 
 async function downloadCSV() {
-  const f = current;
+  const f = withPlaceholders(current);
   const responses = await api(`forms/${f.id}/responses`).catch(() => { failed(); return null; });
   if (!responses) return;
   const cell = v => `"${String(show(v)).replace(/"/g, '""')}"`;

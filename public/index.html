@@ -117,6 +117,13 @@ h1{font-size:24px;margin:0}
 .fill .block.section{background:var(--teal-800);color:#fff;border-top:0}
 .fill .block.section .q-label{font-size:20px;line-height:1.4}
 .fill .block.section .desc{color:#d4efeb}
+/* A section continuing on the same page folds away under its header */
+.sec-fold > summary{list-style:none;cursor:pointer}
+.sec-fold > summary::-webkit-details-marker{display:none}
+.sec-fold .block.section{position:relative;padding-inline-end:64px}
+.fold-btn{position:absolute;top:50%;inset-inline-end:16px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);display:grid;place-items:center}
+.fold-btn svg{width:24px;height:24px;fill:#fff;transition:transform .2s}
+.sec-fold:not([open]) .fold-btn svg{transform:rotate(180deg)}
 /* Sections: "Section 1 of 3" tab on the card that starts each section, and where a section leads */
 .sec-tab{display:inline-block;background:var(--teal-700);color:#fff;font-size:14px;font-weight:600;padding:8px 18px;border-radius:12px 12px 0 0}
 .sec-tab + .card{border-start-start-radius:0}
@@ -718,6 +725,7 @@ function settingsHTML() {
 
 const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
+  fold: svg('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'),
   place: svg('M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'),
   phone: svg('M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'),
   mail: svg('M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'),
@@ -1073,7 +1081,7 @@ const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th
   </tbody></table></div>`;
 
 // A question, or a text / image / video / section card, as respondents see it.
-function itemHTML(q) {
+function itemHTML(q, fold = false) {
   if (isQuestion(q)) return answerHTML(q);
   const f = current;
   const media = q.type === 'image' && safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">`
@@ -1083,6 +1091,7 @@ function itemHTML(q) {
       ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${q.type === 'section' ? 'head' : ''}`, '', clean) : ''}
       ${q.desc || q.descDv ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
       ${media}
+      ${fold ? `<span class="fold-btn" aria-hidden="true">${ICONS.fold}</span>` : ''}
     </section>`;
 }
 
@@ -1171,10 +1180,10 @@ function renderFill(done = false, answers = null) {
   const pages = [];
   secs.forEach((sec, n) => {
     if (!n || sec[0].newPage !== false) {
-      pages.push({ items: [], goto: '' });
+      pages.push({ secs: [], goto: '' });
       if (n) pages.at(-2).goto = sec[0].goto ?? '';
     }
-    pages.at(-1).items.push(...sec);
+    pages.at(-1).secs.push(sec);
   });
   const paged = pages.length > 1;
   trail = [];
@@ -1184,7 +1193,9 @@ function renderFill(done = false, answers = null) {
         ${localized(f, 'h1', f.title || untitled(f), f.titleDv, 'head', '', clean)}
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
       </section>
-      <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.items.map(itemHTML).join('')}</div>`).join('')}</div>
+      <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.secs.map((sec, k) => k
+        ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`
+        : sec.map(q => itemHTML(q)).join('')).join('')}</div>`).join('')}</div>
       <div class="field-error" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
@@ -1243,6 +1254,7 @@ function collect(scope) {
   const err = app.querySelector('.field-error');
   err.textContent = big ? 'Files must be 1.5 MB or smaller.' : 'Please answer the highlighted questions.';
   err.hidden = !firstBad;
+  firstBad?.closest('details:not([open])')?.setAttribute('open', ''); // a folded section opens to show it
   firstBad?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   return firstBad ? null : answers;
 }

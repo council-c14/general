@@ -239,6 +239,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .invalid{box-shadow:inset 5px 0 0 var(--danger)}
 .field-error{color:var(--danger);font-size:14px;margin-top:10px}
 .fill-foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+/* Dhivehi forms: Submit and Next on the right, Clear form on the left. */
+[dir=rtl] .fill-foot [type=reset]{order:1}
 .thanks{text-align:center;padding:40px 24px}
 .thanks h2{color:var(--teal-800);margin-top:0}
 /* Messages may be English or Dhivehi; each runs in its own text's direction, so the full stop lands at the end. */

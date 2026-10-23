@@ -62,6 +62,8 @@ h1{font-size:24px;margin:0}
 .edit-bar{position:sticky;top:0;z-index:5;background:#fff;padding:8px 16px 0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 .eb-row{display:flex;align-items:center;gap:2px}
 .eb-row .brand-mini{margin-inline-end:auto}
+/* Quick access buttons keep their left-to-right order on Dhivehi forms. */
+:is(.eb-row,.add-bar,.q-foot){direction:ltr}
 .icon-btn{background:none;border:0;color:#5f6368;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
 .icon-btn:hover{background:var(--teal-100);color:var(--teal-800)}
 .icon-btn svg{width:26px;height:26px;fill:currentColor}

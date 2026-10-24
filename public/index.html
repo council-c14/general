@@ -222,6 +222,10 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .rt-bar{display:none;gap:2px;margin-top:6px;flex-wrap:wrap}
 .rt:focus-within .rt-bar{display:flex}
 .rt-bar .icon{padding:6px}
+/* Font choice (Dhivehi titles) and justify (descriptions) in the formatting bar */
+.rt-bar .rt-opt{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font:13px "Segoe UI",system-ui,sans-serif;color:var(--ink);white-space:nowrap;cursor:pointer}
+.rt-bar [data-style][aria-pressed=true]{background:var(--teal-100);border-color:var(--teal-700);color:var(--teal-800)}
+.desc-input.justify,.desc.justify{text-align:justify}
 .rt-bar svg{display:block;width:22px;height:22px;fill:currentColor}
 .desc-input :is(ol,ul),.desc :is(ol,ul){text-align:start}
 .question{border-inline-start:6px solid transparent}
@@ -472,14 +476,23 @@ const RT_CMDS = {
   removeFormat: ['Clear formatting', svg('M3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.55 5.27 3.27 5zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6z')],
 };
 // A contenteditable field with its formatting bar. Lists are only offered where `lists` is set.
-function richField(field, html, placeholder, cls, lists = false, wrap = '') {
+function richField(field, html, placeholder, cls, lists = false, wrap = '', extra = '') {
   const cmds = Object.keys(RT_CMDS).filter(c => lists || !c.includes('List'));
   return `
     <div class="rt ${wrap}">
       <div class="${cls}" contenteditable="true" data-field="${field}" data-placeholder="${esc(placeholder)}">${clean(html)}</div>
-      <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}</div>
+      <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}${extra}</div>
     </div>`;
 }
+// Dhivehi titles pick Faruma or Mv Eamaan XP (stored as obj[key]); descriptions can be justified.
+// Form and section titles default to Mv Eamaan XP, other titles and image labels to Faruma.
+const fontOf = (obj, key, def) => obj[key] || def;
+const headCls = (obj, key, def) => fontOf(obj, key, def) === 'eamaan' ? 'head' : '';
+const fontOpts = (key, cur) => ['faruma', 'eamaan'].map(v =>
+  `<button type="button" class="rt-opt" data-style="${key}" data-val="${v}" aria-pressed="${cur === v}">${v === 'faruma' ? 'Faruma' : 'Mv Eamaan XP'}</button>`).join('');
+const justifyOpt = (key, on, fields) =>
+  `<button type="button" class="icon" data-style="${key}" data-fields="${fields}" title="Justify" aria-label="Justify" aria-pressed="${!!on}">${ICONS.justify}</button>`;
+const justCls = on => on ? 'justify' : '';
 const newQ = () => ({ id: uid(), type: 'short', text: '', textDv: '', required: !!current?.settings?.requiredDefault, options: [], optionsDv: [] });
 // Form settings with their defaults filled in.
 const opts = f => ({ another: true, confirm: '', showScore: true, ...f.settings });
@@ -679,10 +692,10 @@ async function renderEditor(tab) {
   const body = tab === 'responses' ? await responsesHTML() : tab === 'settings' ? settingsHTML() : `
     ${secCount() > 1 ? secTab(1) : ''}
     <section class="card form-head">
-      ${richField('title', f.title, dvText('Untitled form'), `title-input ${f.lang === 'dv' ? 'dv head" lang="dv' : ''}`)}
-      ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', 'title-input dv head" dir="rtl" lang="dv') : ''}
-      ${richField('description', f.description, dvText('Form description'), `desc-input ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true)}
-      ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', 'desc-input dv" dir="rtl" lang="dv', true) : ''}
+      ${richField('title', f.title, dvText('Untitled form'), `title-input ${f.lang === 'dv' ? `dv ${headCls(f, 'titleFont', 'eamaan')}" lang="dv` : ''}`, false, '', f.lang === 'dv' ? fontOpts('titleFont', fontOf(f, 'titleFont', 'eamaan')) : '')}
+      ${dual ? richField('titleDv', f.titleDv, 'Title (Dhivehi)', `title-input dv ${headCls(f, 'titleFont', 'eamaan')}" dir="rtl" lang="dv`, false, '', fontOpts('titleFont', fontOf(f, 'titleFont', 'eamaan'))) : ''}
+      ${richField('description', f.description, dvText('Form description'), `desc-input ${justCls(f.descJustify)} ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true, '', justifyOpt('descJustify', f.descJustify, 'description descriptionDv'))}
+      ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', `desc-input ${justCls(f.descJustify)} dv" dir="rtl" lang="dv`, true, '', justifyOpt('descJustify', f.descJustify, 'description descriptionDv')) : ''}
     </section>
     <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q, i) : questionHTML(q, i)).join('')}</div>
     <div class="add-bar">
@@ -754,6 +767,7 @@ function settingsHTML() {
 
 const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
+  justify: svg('M3 21v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4V7h18v2H3Zm0-4V3h18v2H3Z'),
   upload: svg('M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-5 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
   fold: svg('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'),
   place: svg('M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'),
@@ -842,8 +856,9 @@ function blockHTML(q, i) {
   const f = current;
   const dual = f.lang === 'dual';
   const pc = f.lang === 'dv' ? 'dv" lang="dv' : '';
-  const dv = (field, ph, cls, lists = false) => dual ? richField(`${field}Dv`, q[`${field}Dv`], `${ph} (Dhivehi)`, `${cls} dv" dir="rtl" lang="dv`, lists, 'wide') : '';
+  const dv = (field, ph, cls, lists = false, extra = '') => dual ? richField(`${field}Dv`, q[`${field}Dv`], `${ph} (Dhivehi)`, `${cls} dv" dir="rtl" lang="dv`, lists, 'wide', extra) : '';
   const hasDesc = q.type === 'text' || q.type === 'section';
+  const defFont = q.type === 'section' ? 'eamaan' : 'faruma';
   const media = {
     image: `${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="">` : ''}
       <label class="btn ghost small">${dvText(q.src ? 'Replace image' : 'Choose image')}<input type="file" accept="image/*" data-image hidden></label>
@@ -857,9 +872,10 @@ function blockHTML(q, i) {
     ${k ? secTab(k) : ''}
     <section class="card question block ${q.type}" data-qid="${q.id}">
       ${k ? '' : `<div class="block-kind ${pc}">${dvText(BLOCKS[q.type])}</div>`}
-      ${richField('text', q.text, dvText(k ? 'Untitled section' : 'Title'), `q-text ${pc}`)}
-      ${dv('text', 'Title', 'q-text')}
-      ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
+      ${richField('text', q.text, dvText(k ? 'Untitled section' : 'Title'), `q-text ${pc ? headCls(q, 'font', defFont) : ''} ${pc}`, false, '', pc ? fontOpts('font', fontOf(q, 'font', defFont)) : '')}
+      ${dv('text', 'Title', `q-text ${headCls(q, 'font', defFont)}`, false, fontOpts('font', fontOf(q, 'font', defFont)))}
+      ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${justCls(q.justify)} ${pc}`, true, 'wide', justifyOpt('justify', q.justify, 'desc descDv'))
+        + dv('desc', 'Description', `desc-input ${justCls(q.justify)}`, true, justifyOpt('justify', q.justify, 'desc descDv')) : ''}
       <div class="q-body">${media}</div>
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
@@ -1058,7 +1074,27 @@ app.addEventListener('click', e => {
 });
 
 // Formatting bar: mousedown is cancelled so the editor keeps focus and selection.
-app.addEventListener('mousedown', e => { if (e.target.closest('[data-cmd]')) e.preventDefault(); });
+app.addEventListener('mousedown', e => { if (e.target.closest('[data-cmd], [data-style]')) e.preventDefault(); });
+// Font and justify buttons: saved on the form or the item, and shown in the editor straight away.
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-style]');
+  if (!b) return;
+  const scope = b.closest('[data-qid]') ?? b.closest('.form-head');
+  const obj = scope.dataset.qid ? current.questions.find(x => x.id === scope.dataset.qid) : current;
+  const key = b.dataset.style;
+  if (b.dataset.val) {
+    obj[key] = b.dataset.val;
+    scope.querySelectorAll(`[data-style="${key}"]`).forEach(x => {
+      x.setAttribute('aria-pressed', x.dataset.val === b.dataset.val);
+      x.closest('.rt').querySelector('[contenteditable]').classList.toggle('head', b.dataset.val === 'eamaan');
+    });
+  } else {
+    obj[key] = !obj[key];
+    scope.querySelectorAll(`[data-style="${key}"]`).forEach(x => x.setAttribute('aria-pressed', obj[key]));
+    b.dataset.fields.split(' ').forEach(fl => scope.querySelector(`[data-field="${fl}"]`)?.classList.toggle('justify', obj[key]));
+  }
+  saveForms();
+});
 app.addEventListener('click', e => {
   const btn = e.target.closest('[data-cmd]');
   if (!btn) return;
@@ -1139,7 +1175,7 @@ const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th
 
 // A question, or a text / image / video / section card, as respondents see it.
 // A section's description shows in its own white card under the green header.
-const secDesc = q => q.desc || q.descDv ? `<section class="card block">${localized(current, 'div', q.desc, q.descDv, 'desc', '', clean)}</section>` : '';
+const secDesc = q => q.desc || q.descDv ? `<section class="card block">${localized(current, 'div', q.desc, q.descDv, `desc ${justCls(q.justify)}`, '', clean)}</section>` : '';
 
 function itemHTML(q, fold = false) {
   if (isQuestion(q)) return answerHTML(q);
@@ -1149,8 +1185,8 @@ function itemHTML(q, fold = false) {
     : q.type === 'video' ? videoHTML(q.url) : '';
   return `
     <section class="card block ${q.type}" ${q.type === 'section' ? `data-sec="${q.id}"` : ''}>
-      ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${q.type === 'section' ? 'head' : ''}`, '', clean) : ''}
-      ${!sec && (q.desc || q.descDv) ? localized(f, 'div', q.desc, q.descDv, 'desc', '', clean) : ''}
+      ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${headCls(q, 'font', q.type === 'section' ? 'eamaan' : 'faruma')}`, '', clean) : ''}
+      ${!sec && (q.desc || q.descDv) ? localized(f, 'div', q.desc, q.descDv, `desc ${justCls(q.justify)}`, '', clean) : ''}
       ${media}
       ${fold ? `<span class="fold-btn" aria-hidden="true">${ICONS.fold}</span>` : ''}
     </section>${sec && !fold ? secDesc(q) : ''}`;
@@ -1219,14 +1255,14 @@ function renderFill(done = false, answers = null) {
   if (s.once && !preview && answered(f.id)) {
     return shell(`
       <section class="card thanks">
-        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
+        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, headCls(f, 'titleFont', 'eamaan'), '', clean)}
         <p class="${dv}">${dv ? 'ތިޔަ ފަރާތުން ވަނީ މި ފޯމަށް ހުށަހެޅުމެއް ހުށަހަޅުއްވާފައި.' : 'You have already responded to this form.'}</p>
       </section>`, fillBar());
   }
   if (f.accepting === false && !preview) {
     return shell(`
       <section class="card thanks">
-        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
+        ${localized(f, 'h2', f.title || untitled(f), f.titleDv, headCls(f, 'titleFont', 'eamaan'), '', clean)}
         <p class="${dv}">${dv ? 'ފޯމު ހުށަހެޅުމުގެ މުއްދަތު ހަމަވެފައި' : 'This form is no longer accepting responses.'}</p>
       </section>`, fillBar());
   }
@@ -1255,8 +1291,8 @@ function renderFill(done = false, answers = null) {
   shell(`
     <form class="card fill" novalidate>
       <section class="fill-head">
-        ${localized(f, 'h1', f.title || untitled(f), f.titleDv, 'head', '', clean)}
-        ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, 'desc', '', clean) : ''}
+        ${localized(f, 'h1', f.title || untitled(f), f.titleDv, headCls(f, 'titleFont', 'eamaan'), '', clean)}
+        ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, `desc ${justCls(f.descJustify)}`, '', clean) : ''}
       </section>
       <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.secs.map((sec, k) => k
         ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${secDesc(sec[0])}${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`

@@ -75,6 +75,22 @@ h1{font-size:24px;margin:0}
 .menu > *{display:flex;align-items:center;gap:14px;white-space:nowrap;width:100%;text-align:start;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
 .menu > *:hover{background:var(--teal-100)}
 .menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
+.menu-gap{width:22px;flex:none}
+/* Card ⋮ menu: Delete, Response validation, Merge with item below */
+.q-foot .card-more{margin-inline-start:auto}
+.q-foot .switch + .card-more{margin-inline-start:0}
+.card-more .menu{top:auto;bottom:100%}
+/* Response validation row in the editor, and its error under the question */
+.valid-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.valid-row select{flex:1 1 150px;min-width:0}
+.valid-row input{flex:1 1 120px;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.valid-row input.msg{flex-basis:100%}
+.q-error{color:var(--danger);font-size:13px;margin-top:8px;unicode-bidi:plaintext}
+/* Image merged into the card of the item below it */
+.question.block.image.merged{margin-bottom:0;border-end-start-radius:0;border-end-end-radius:0;border-bottom:1px dashed var(--line)}
+.merged + .card{border-start-start-radius:0;border-start-end-radius:0}
+.merged-img{margin-bottom:14px}
+.merged-img .block-img{margin-top:0}
 .eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .edit-bar .tabs{margin:0;gap:28px;justify-content:center;direction:ltr} /* same order on Dhivehi forms */
 .count{background:var(--teal-700);color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
@@ -484,6 +500,81 @@ function richField(field, html, placeholder, cls, lists = false, wrap = '', extr
       <div class="rt-bar">${cmds.map(c => `<button type="button" class="icon" data-cmd="${c}" title="${RT_CMDS[c][0]}" aria-label="${RT_CMDS[c][0]}">${RT_CMDS[c][1]}</button>`).join('')}${extra}</div>
     </div>`;
 }
+// Response validation, as in Google Forms: rule types per question type, each with its conditions.
+// Stored on the question as validate (on/off), vType, vOp, vA, vB and vMsg (custom error text).
+const RULES = {
+  number: { gt: 'Greater than', gte: 'Greater than or equal to', lt: 'Less than', lte: 'Less than or equal to', eq: 'Equal to', neq: 'Not equal to', between: 'Between', nbetween: 'Not between', isnum: 'Is number', whole: 'Whole number' },
+  text: { contains: 'Contains', ncontains: "Doesn't contain", email: 'Email', url: 'URL' },
+  length: { max: 'Maximum character count', min: 'Minimum character count' },
+  regex: { contains: 'Contains', ncontains: "Doesn't contain", matches: 'Matches', nmatches: "Doesn't match" },
+  select: { atleast: 'Select at least', atmost: 'Select at most', exactly: 'Select exactly' },
+};
+const RULE_TYPES = { short: ['number', 'text', 'length', 'regex'], paragraph: ['length', 'regex'], checkbox: ['select'] };
+const RULE_NAMES = { number: 'Number', text: 'Text', length: 'Length', regex: 'Regular expression', select: 'Selection' };
+const NO_ARG = ['isnum', 'whole', 'email', 'url'];
+const TWO_ARGS = ['between', 'nbetween'];
+// Error text for an answer that breaks the question's rule, or '' when it passes (empty answers are left to Required).
+function ruleError(q, v) {
+  if (!q.validate || !RULE_TYPES[q.type]?.includes(q.vType) || !RULES[q.vType][q.vOp] || blank(v)) return '';
+  const a = String(q.vA ?? ''), b = String(q.vB ?? ''), A = Number(a), B = Number(b), n = Number(v);
+  const num = typeof v === 'string' && v.trim() !== '' && !isNaN(n);
+  const lo = Math.min(A, B), hi = Math.max(A, B);
+  const re = whole => { try { return new RegExp(whole ? `^(?:${a})$` : a); } catch { return null; } }; // a bad pattern lets answers through
+  const ok = {
+    'number:gt': num && n > A, 'number:gte': num && n >= A, 'number:lt': num && n < A, 'number:lte': num && n <= A,
+    'number:eq': num && n === A, 'number:neq': num && n !== A,
+    'number:between': num && n >= lo && n <= hi, 'number:nbetween': num && (n < lo || n > hi),
+    'number:isnum': num, 'number:whole': num && Number.isInteger(n),
+    'text:contains': v.includes(a), 'text:ncontains': !v.includes(a),
+    'text:email': /^\S+@\S+\.\S+$/.test(v), 'text:url': /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(v),
+    'length:max': v.length <= A, 'length:min': v.length >= A,
+    'regex:contains': re()?.test(v) ?? true, 'regex:ncontains': !(re()?.test(v) ?? false),
+    'regex:matches': re(true)?.test(v) ?? true, 'regex:nmatches': !(re(true)?.test(v) ?? false),
+    'select:atleast': v.length >= A, 'select:atmost': v.length <= A, 'select:exactly': v.length === A,
+  }[`${q.vType}:${q.vOp}`];
+  if (ok) return '';
+  const label = RULES[q.vType][q.vOp];
+  const what = { number: 'Enter a number', text: 'Enter text', length: 'Use a', regex: 'Answer must', select: '' }[q.vType];
+  return q.vMsg?.trim() || {
+    number: NO_ARG.includes(q.vOp) ? (q.vOp === 'whole' ? 'Enter a whole number' : 'Enter a number')
+      : `${what} ${label.toLowerCase()} ${a}${TWO_ARGS.includes(q.vOp) ? ` and ${b}` : ''}`,
+    text: q.vOp === 'email' ? 'Enter a valid email address' : q.vOp === 'url' ? 'Enter a valid link'
+      : `Answer ${q.vOp === 'contains' ? 'must contain' : "can't contain"} "${a}"`,
+    length: `${q.vOp === 'max' ? 'Use at most' : 'Use at least'} ${a} characters`,
+    regex: `Answer ${{ contains: 'must contain', ncontains: "can't contain", matches: 'must match', nmatches: "can't match" }[q.vOp]} the required pattern`,
+    select: `${label} ${a}`,
+  }[q.vType];
+}
+// Editor row for a question's rule.
+function ruleRow(q) {
+  const types = RULE_TYPES[q.type];
+  if (!q.validate || !types) return '';
+  const ops = RULES[q.vType] ?? {};
+  const sel = (field, entries, cur) => `<select data-field="${field}">${entries.map(([v, label]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
+  const numeric = ['number', 'length', 'select'].includes(q.vType);
+  const ph = numeric ? 'Number' : q.vType === 'regex' ? 'Pattern' : 'Text';
+  return `
+    <div class="valid-row">
+      ${types.length > 1 ? sel('vType', types.map(t => [t, RULE_NAMES[t]]), q.vType) : ''}
+      ${sel('vOp', Object.entries(ops), q.vOp)}
+      ${NO_ARG.includes(q.vOp) ? '' : `<input data-field="vA" ${numeric ? 'type="number" inputmode="decimal"' : ''} placeholder="${ph}" value="${esc(q.vA)}">`}
+      ${TWO_ARGS.includes(q.vOp) ? `<input data-field="vB" type="number" inputmode="decimal" placeholder="Number" value="${esc(q.vB)}">` : ''}
+      <input class="msg" data-field="vMsg" placeholder="Custom error text" value="${esc(q.vMsg)}">
+    </div>`;
+}
+const setRuleDefaults = q => {
+  if (!RULE_TYPES[q.type]) return;
+  if (!RULE_TYPES[q.type].includes(q.vType)) q.vType = RULE_TYPES[q.type][0];
+  if (!RULES[q.vType][q.vOp]) q.vOp = Object.keys(RULES[q.vType])[0];
+};
+// A card's ⋮ menu. Toggles show a tick when on.
+const menuToggle = (act, label, on) => `<button type="button" data-act="${act}" aria-pressed="${!!on}">${on ? ICONS.check : '<span class="menu-gap"></span>'}${label}</button>`;
+const cardMenu = items => `
+  <details class="more card-more">
+    <summary class="icon-btn" title="More options" aria-label="More options">${ICONS.more}</summary>
+    <div class="menu">${items.join('')}<button type="button" data-act="del-q">${ICONS.del}Delete</button></div>
+  </details>`;
+
 // Dhivehi titles pick Faruma or Mv Eamaan XP (stored as obj[key]); descriptions can be justified.
 // Form and section titles default to Mv Eamaan XP, other titles and image labels to Faruma.
 const fontOf = (obj, key, def) => obj[key] || def;
@@ -767,6 +858,7 @@ function settingsHTML() {
 
 const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
+  check: svg('M9.55 18l-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z'),
   justify: svg('M3 21v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4V7h18v2H3Zm0-4V3h18v2H3Z'),
   upload: svg('M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-5 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
   fold: svg('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'),
@@ -821,11 +913,12 @@ function questionHTML(q, i) {
       </div>
       ${dual ? richField('textDv', q.textDv, `Question ${num} (Dhivehi)`, 'q-text dv" dir="rtl" lang="dv', false, 'wide') : ''}
       <div class="q-body">${body}</div>
+      ${ruleRow(q)}
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
-        ${btn('del-q', 'Delete', ICONS.del)}
         ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> <span class="${pc}">${dvText('Required')}</span></label>
+        ${cardMenu(RULE_TYPES[q.type] ? [menuToggle('validate', 'Response validation', q.validate)] : [])}
       </div>
     </section>`;
 }
@@ -870,17 +963,18 @@ function blockHTML(q, i) {
   return `
     ${k && newPage ? afterSection(q, k) : ''}
     ${k ? secTab(k) : ''}
-    <section class="card question block ${q.type}" data-qid="${q.id}">
+    <section class="card question block ${q.type} ${q.type === 'image' && q.merge ? 'merged' : ''}" data-qid="${q.id}">
       ${k ? '' : `<div class="block-kind ${pc}">${dvText(BLOCKS[q.type])}</div>`}
       ${richField('text', q.text, dvText(k ? 'Untitled section' : 'Title'), `q-text ${pc ? headCls(q, 'font', defFont) : ''} ${pc}`, false, '', pc ? fontOpts('font', fontOf(q, 'font', defFont)) : '')}
       ${dv('text', 'Title', `q-text ${headCls(q, 'font', defFont)}`, false, fontOpts('font', fontOf(q, 'font', defFont)))}
       ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${justCls(q.justify)} ${pc}`, true, 'wide', justifyOpt('justify', q.justify, 'desc descDv'))
         + dv('desc', 'Description', `desc-input ${justCls(q.justify)}`, true, justifyOpt('justify', q.justify, 'desc descDv')) : ''}
       <div class="q-body">${media}</div>
+      ${q.type === 'image' && q.merge ? '<div class="meta">Shown in one card with the item below.</div>' : ''}
       <div class="q-foot">
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
-        ${btn('del-q', 'Delete', ICONS.del)}
         ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> <span class="${pc}">${dvText('Start on a new page')}</span></label>` : ''}
+        ${cardMenu(q.type === 'image' ? [menuToggle('merge', 'Merge with item below', q.merge)] : [])}
       </div>
     </section>`;
 }
@@ -950,7 +1044,8 @@ function onFieldEdit(el) {
     const q = current.questions.find(x => x.id === qEl.dataset.qid);
     const idx = +el.dataset.idx;
     const key = el.dataset.list;
-    if (field === 'option') q[key][idx] = val;
+    if (field === 'vType') { q.vType = val; q.vOp = Object.keys(RULES[val])[0]; }
+    else if (field === 'option') q[key][idx] = val;
     else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
     else if (field === 'type') {
       q.type = val;
@@ -999,7 +1094,8 @@ app.addEventListener('change', e => {
   }
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
-  if (['type', 'url', 'newPage'].includes(e.target.dataset.field)) renderEditor('questions');
+  if (e.target.dataset.field === 'type') setRuleDefaults(current.questions.find(x => x.id === e.target.closest('[data-qid]').dataset.qid));
+  if (['type', 'url', 'newPage', 'vType', 'vOp'].includes(e.target.dataset.field)) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -1022,6 +1118,13 @@ app.addEventListener('click', e => {
     case 'import': return openImport();
     case 'dup-q':
       current.questions.splice(idx + 1, 0, { ...structuredClone(q), id: uid() });
+      return refresh();
+    case 'validate':
+      q.validate = !q.validate;
+      setRuleDefaults(q);
+      return refresh();
+    case 'merge':
+      q.merge = !q.merge;
       return refresh();
     case 'del-img':
       delete q.src;
@@ -1177,14 +1280,27 @@ const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th
 // A section's description shows in its own white card under the green header.
 const secDesc = q => q.desc || q.descDv ? `<section class="card block">${localized(current, 'div', q.desc, q.descDv, `desc ${justCls(q.justify)}`, '', clean)}</section>` : '';
 
-function itemHTML(q, fold = false) {
-  if (isQuestion(q)) return answerHTML(q);
+// An image set to merge shows at the top of the next item's card instead of in its own.
+const mergedImage = q => `<div class="merged-img">${q.text || q.textDv ? localized(current, 'div', q.text, q.textDv, `q-label ${headCls(q, 'font', 'faruma')}`, '', clean) : ''}${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">` : ''}</div>`;
+function itemsHTML(list) {
+  let pre = '';
+  return list.map((q, i) => {
+    if (q.type === 'image' && q.merge && list[i + 1] && list[i + 1].type !== 'section') { pre += mergedImage(q); return ''; }
+    const html = itemHTML(q, false, pre);
+    pre = '';
+    return html;
+  }).join('');
+}
+
+function itemHTML(q, fold = false, pre = '') {
+  if (isQuestion(q)) return answerHTML(q, pre);
   const f = current;
   const sec = q.type === 'section';
   const media = q.type === 'image' && safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">`
     : q.type === 'video' ? videoHTML(q.url) : '';
   return `
     <section class="card block ${q.type}" ${q.type === 'section' ? `data-sec="${q.id}"` : ''}>
+      ${pre}
       ${q.text || q.textDv ? localized(f, 'div', q.text, q.textDv, `q-label ${headCls(q, 'font', q.type === 'section' ? 'eamaan' : 'faruma')}`, '', clean) : ''}
       ${!sec && (q.desc || q.descDv) ? localized(f, 'div', q.desc, q.descDv, `desc ${justCls(q.justify)}`, '', clean) : ''}
       ${media}
@@ -1192,7 +1308,7 @@ function itemHTML(q, fold = false) {
     </section>${sec && !fold ? secDesc(q) : ''}`;
 }
 
-function answerHTML(q) {
+function answerHTML(q, pre = '') {
   const f = current;
   const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl" lang="dv"' : '';
   const inputs = {
@@ -1221,13 +1337,17 @@ function answerHTML(q) {
   const bare = ['radio', 'checkbox', 'dropdown'].includes(q.type) && !plain(q.text) && !plain(q.textDv);
   if (bare) return `
     <section class="card question answer bare" data-qid="${q.id}">
+      ${pre}
       ${tag ? `<div class="q-label">${tag}</div>` : ''}
       ${inputs}
+      <div class="q-error" hidden></div>
     </section>`;
   return `
     <section class="card question answer" data-qid="${q.id}">
+      ${pre}
       ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', tag && ` ${tag}`, clean)}
       ${inputs}
+      <div class="q-error" hidden></div>
     </section>`;
 }
 
@@ -1269,12 +1389,15 @@ function renderFill(done = false, answers = null) {
   // Sections: the form's start, then one per section item; a section's items stay together.
   const secs = [[]];
   f.questions.forEach(q => { if (q.type === 'section') secs.push([]); secs.at(-1).push(q); });
-  if (s.shuffle) secs.forEach(p => {
+  if (s.shuffle) secs.forEach((p, n) => {
     const head = p[0]?.type === 'section' ? 1 : 0; // a section's heading stays on top
-    for (let i = p.length - 1; i > head; i--) {
-      const j = head + Math.floor(Math.random() * (i - head + 1));
-      [p[i], p[j]] = [p[j], p[i]];
+    const units = []; // a merged image moves with the item below it
+    p.slice(head).forEach(q => { const last = units.at(-1)?.at(-1); last?.type === 'image' && last.merge ? units.at(-1).push(q) : units.push([q]); });
+    for (let i = units.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [units[i], units[j]] = [units[j], units[i]];
     }
+    secs[n] = [...p.slice(0, head), ...units.flat()];
   });
   if (s.email) secs[0].unshift(f.lang === 'dv' ? { ...EMAIL_Q, text: EMAIL_Q.textDv } : EMAIL_Q);
   // Pages: a section starts one unless set not to, and its goto says where the page before it leads.
@@ -1295,8 +1418,8 @@ function renderFill(done = false, answers = null) {
         ${f.description || f.descriptionDv ? localized(f, 'div', f.description, f.descriptionDv, `desc ${justCls(f.descJustify)}`, '', clean) : ''}
       </section>
       <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.secs.map((sec, k) => k
-        ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${secDesc(sec[0])}${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`
-        : sec.map(q => itemHTML(q)).join('')).join('')}</div>`).join('')}</div>
+        ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${secDesc(sec[0])}${itemsHTML(sec.slice(1))}</details>`
+        : itemsHTML(sec)).join('')}</div>`).join('')}</div>
       <div class="field-error ${dv}" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
@@ -1345,8 +1468,11 @@ function collect(scope) {
       file: () => wrap.querySelector('input').files[0] ?? '',
     }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
     const tooBig = v instanceof File && v.size > MAX_FILE;
+    const rule = ruleError(q, v);
+    const qe = wrap.querySelector('.q-error');
+    if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
     const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
-      || (q.type === 'date' && v && !validDate(v));
+      || (q.type === 'date' && v && !validDate(v)) || !!rule;
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;

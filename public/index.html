@@ -74,6 +74,8 @@ h1{font-size:24px;margin:0}
 .menu{position:absolute;inset-inline-end:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
 .menu > *{display:flex;align-items:center;gap:14px;white-space:nowrap;width:100%;text-align:start;padding:12px 18px;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);text-decoration:none;cursor:pointer}
 .menu > *:hover{background:var(--teal-100)}
+.menu > :is([data-act=del-q],[data-act=del-form]){color:var(--danger)}
+.menu > :is([data-act=del-q],[data-act=del-form]) svg{fill:var(--danger)}
 .menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
 .menu-gap{width:22px;flex:none}
 /* Card ⋮ menu: Delete, Response validation, Merge with item below */
@@ -135,6 +137,11 @@ h1{font-size:24px;margin:0}
 /* Section headers respondents see: dark green box, large title (Mv Eamaan XP for Dhivehi) */
 .fill .block.section{background:var(--teal-800);color:#fff;border-top:0}
 .fill .block.section .q-label{font-size:18px;line-height:1.4}
+/* Text set to Mv Eamaan XP with the font button shows 2px bigger than in Faruma */
+.title-input.dv.eam{font-size:32px}
+.q-text.dv.eam,.q-label.dv.eam{font-size:18px}
+.fill .block.section .q-label.dv.eam{font-size:20px}
+h1.dv.eam,h2.dv.eam{font-size:26px}
 /* Descriptions: form, section and text cards, 2px under question text */
 .fill .desc{font-size:14px}
 /* A section continuing on the same page folds away under its header */
@@ -584,7 +591,7 @@ const cardMenu = items => `
 // Dhivehi titles pick Faruma or Mv Eamaan XP (stored as obj[key]); descriptions can be justified.
 // Form and section titles default to Mv Eamaan XP, other titles and image labels to Faruma.
 const fontOf = (obj, key, def) => obj[key] || def;
-const headCls = (obj, key, def) => fontOf(obj, key, def) === 'eamaan' ? 'head' : '';
+const headCls = (obj, key, def) => fontOf(obj, key, def) === 'eamaan' ? 'head eam' : ''; // eam: 2px bigger, as Mv Eamaan XP runs small
 const FONTS = ['faruma', 'eamaan']; // the button steps through these in turn
 const fontOpts = (key, cur) =>
   `<button type="button" class="icon" data-style="${key}" data-font="${cur}" title="Change font" aria-label="Change font">${ICONS.font}</button>`;
@@ -1197,7 +1204,7 @@ app.addEventListener('click', e => {
     obj[key] = FONTS[(FONTS.indexOf(b.dataset.font) + 1) % FONTS.length];
     scope.querySelectorAll(`[data-style="${key}"]`).forEach(x => {
       x.dataset.font = obj[key];
-      x.closest('.rt').querySelector('[contenteditable]').classList.toggle('head', obj[key] === 'eamaan');
+      ['head', 'eam'].forEach(c => x.closest('.rt').querySelector('[contenteditable]').classList.toggle(c, obj[key] === 'eamaan'));
     });
   } else {
     obj[key] = !obj[key];

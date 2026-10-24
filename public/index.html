@@ -1152,7 +1152,7 @@ function answerHTML(q) {
     cbgrid: gridHTML(q),
     table: `<div class="tbl-wrap"><table class="gridq"><thead><tr>${colHeads(q)}</tr></thead>
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
-      <button type="button" class="link" data-act="add-row">+ Add row</button>`,
+      <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvAttr ? 'ރޯއެއް އިތުރުކުރޭ' : 'Add row'}</button>`,
   }[q.type];
   // Optional questions are marked instead of required ones.
   const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;
@@ -1186,7 +1186,7 @@ function renderFill(done = false, answers = null) {
         <h2>Thank you</h2>
         <p>${esc(s.confirm.trim() || 'Your response has been recorded.')}</p>
         ${s.quiz && s.showScore && answers ? scoreHTML(grade(f, answers)) : ''}
-        ${s.another && (!s.once || preview) ? '<button class="btn ghost" data-act="again">Submit another response</button>' : ''}
+        ${s.another && (!s.once || preview) ? `<button class="btn ghost ${f.lang === 'dv' ? 'dv' : ''}" data-act="again">${f.lang === 'dv' ? 'އިތުރު ހުށަހެޅުމެއް ހުށަހަޅާ' : 'Submit another response'}</button>` : ''}
       </section>`, fillBar());
   }
   if (s.once && !preview && answered(f.id)) {

@@ -248,7 +248,20 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .fill-head .desc{color:var(--muted);margin:8px 0 0}
 .answer .q-label{font-size:16px;font-weight:600;margin-bottom:12px}
 /* Choice questions left without text: the options take the question's place and style */
-.answer.bare :is(.choice,select){font-size:16px;font-weight:600}
+.answer.bare :is(.choice,.dd > summary){font-size:16px;font-weight:600}
+/* Dropdown on the form: a field that opens a list; long values wrap instead of being cut off */
+.dd{position:relative}
+.dd > summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:12px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center/12px;padding-block:10px;padding-inline:14px 38px}
+.dd > summary::-webkit-details-marker{display:none}
+[dir=rtl] .dd > summary{background-position:left 14px center}
+.dd > summary.ph{color:var(--muted)}
+.dd[open] > summary,.dd > summary:focus-visible{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
+.dd-list{position:absolute;inset-inline:0;top:calc(100% + 4px);z-index:3;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-height:300px;overflow:auto;padding:6px 0}
+.dd-opt{display:block;padding:10px 14px;cursor:pointer}
+.dd-opt:hover,.dd-opt:has(input:checked){background:var(--teal-100)}
+.dd-opt:has(input:checked){font-weight:600}
+.dd-opt:has(input:focus-visible){outline:2px solid var(--teal-700);outline-offset:-2px}
+.dd-opt input{position:absolute;opacity:0;pointer-events:none}
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
@@ -937,6 +950,13 @@ app.addEventListener('input', e => {
   }
 });
 app.addEventListener('change', e => {
+  const dd = e.target.closest('.dd');
+  if (dd) { // picked from a dropdown: show it in the field and close the list
+    const sum = dd.querySelector('summary');
+    sum.textContent = e.target.value;
+    sum.classList.remove('ph');
+    return dd.open = false;
+  }
   if (e.target.matches('[data-image]')) return pickImage(e.target);
   if (e.target.matches('.date-pick')) {
     const [y, m, d] = e.target.value.split('-');
@@ -1040,6 +1060,14 @@ app.addEventListener('click', e => {
 });
 
 // Closes the ⋮ menu after picking an item or tapping elsewhere.
+// Clear form puts dropdowns back to their placeholder.
+app.addEventListener('reset', e => e.target.querySelectorAll('.dd summary').forEach(sum => {
+  sum.textContent = sum.dataset.ph;
+  sum.classList.add('ph');
+  sum.parentElement.open = false;
+}));
+// Dropdown lists close when tapping elsewhere.
+document.addEventListener('click', e => app.querySelectorAll('.dd[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));
 document.addEventListener('click', e => app.querySelectorAll('.more[open]').forEach(d => {
   if (!d.contains(e.target) || e.target.closest('.menu')) d.open = false;
 }));
@@ -1111,7 +1139,8 @@ function answerHTML(q) {
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" aria-label="Choose date"></button></div>`,
-    dropdown: `<select${dvAttr}><option value="">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
+    dropdown: `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</summary>
+      <div class="dd-list">${q.options.map((o, j) => `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${q.id}" value="${esc(optLabel(q, j))}">${esc(optLabel(q, j))}</label>`).join('')}</div></details>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
@@ -1126,7 +1155,7 @@ function answerHTML(q) {
       <button type="button" class="link" data-act="add-row">+ Add row</button>`,
   }[q.type];
   // Optional questions are marked instead of required ones.
-  const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? 'އިޚްތިޔާރީ' : 'Optional'}</span>`;
+  const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;
   const bare = ['radio', 'checkbox', 'dropdown'].includes(q.type) && !plain(q.text) && !plain(q.textDv);
   if (bare) return `
     <section class="card question answer bare" data-qid="${q.id}">
@@ -1246,7 +1275,7 @@ function collect(scope) {
     const one = () => picked('input')[0] ?? '';
     const v = {
       checkbox: () => picked('input'),
-      radio: one, scale: one, rating: one,
+      radio: one, scale: one, rating: one, dropdown: one,
       mcgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)[0] ?? ''])),
       cbgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)])),
       table: () => [...wrap.querySelectorAll('tbody tr')]

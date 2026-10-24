@@ -239,7 +239,6 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .rt:focus-within .rt-bar{display:flex}
 .rt-bar .icon{padding:6px}
 /* Font choice (Dhivehi titles) and justify (descriptions) in the formatting bar */
-.rt-bar .rt-opt{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font:13px "Segoe UI",system-ui,sans-serif;color:var(--ink);white-space:nowrap;cursor:pointer}
 .rt-bar [data-style][aria-pressed=true]{background:var(--teal-100);border-color:var(--teal-700);color:var(--teal-800)}
 .desc-input.justify,.desc.justify{text-align:justify}
 .rt-bar svg{display:block;width:22px;height:22px;fill:currentColor}
@@ -579,8 +578,9 @@ const cardMenu = items => `
 // Form and section titles default to Mv Eamaan XP, other titles and image labels to Faruma.
 const fontOf = (obj, key, def) => obj[key] || def;
 const headCls = (obj, key, def) => fontOf(obj, key, def) === 'eamaan' ? 'head' : '';
-const fontOpts = (key, cur) => ['faruma', 'eamaan'].map(v =>
-  `<button type="button" class="rt-opt" data-style="${key}" data-val="${v}" aria-pressed="${cur === v}">${v === 'faruma' ? 'Faruma' : 'Mv Eamaan XP'}</button>`).join('');
+const FONTS = ['faruma', 'eamaan']; // the button steps through these in turn
+const fontOpts = (key, cur) =>
+  `<button type="button" class="icon" data-style="${key}" data-font="${cur}" title="Change font" aria-label="Change font">${ICONS.font}</button>`;
 const justifyOpt = (key, on, fields) =>
   `<button type="button" class="icon" data-style="${key}" data-fields="${fields}" title="Justify" aria-label="Justify" aria-pressed="${!!on}">${ICONS.justify}</button>`;
 const justCls = on => on ? 'justify' : '';
@@ -858,6 +858,7 @@ function settingsHTML() {
 
 const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
+  font: svg('M9.93 13.5h4.14L12 7.98 9.93 13.5zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z'),
   check: svg('M9.55 18l-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z'),
   justify: svg('M3 21v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4v-2h18v2H3Zm0-4V7h18v2H3Zm0-4V3h18v2H3Z'),
   upload: svg('M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-5 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
@@ -1185,11 +1186,11 @@ app.addEventListener('click', e => {
   const scope = b.closest('[data-qid]') ?? b.closest('.form-head');
   const obj = scope.dataset.qid ? current.questions.find(x => x.id === scope.dataset.qid) : current;
   const key = b.dataset.style;
-  if (b.dataset.val) {
-    obj[key] = b.dataset.val;
+  if (b.dataset.font) {
+    obj[key] = FONTS[(FONTS.indexOf(b.dataset.font) + 1) % FONTS.length];
     scope.querySelectorAll(`[data-style="${key}"]`).forEach(x => {
-      x.setAttribute('aria-pressed', x.dataset.val === b.dataset.val);
-      x.closest('.rt').querySelector('[contenteditable]').classList.toggle('head', b.dataset.val === 'eamaan');
+      x.dataset.font = obj[key];
+      x.closest('.rt').querySelector('[contenteditable]').classList.toggle('head', obj[key] === 'eamaan');
     });
   } else {
     obj[key] = !obj[key];

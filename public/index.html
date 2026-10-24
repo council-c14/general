@@ -1111,7 +1111,7 @@ function answerHTML(q) {
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" aria-label="Choose date"></button></div>`,
-    dropdown: `<select${dvAttr}><option value="">Choose</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
+    dropdown: `<select${dvAttr}><option value="">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</option>${q.options.map((o, j) => `<option>${esc(optLabel(q, j))}</option>`).join('')}</select>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,

@@ -1224,7 +1224,7 @@ function renderFill(done = false, answers = null) {
     pages.at(-1).secs.push(sec);
   });
   const paged = pages.length > 1;
-  const dv = f.lang === 'dv' ? 'dv' : ''; // Dhivehi wording and font on Submit and Clear form
+  const dv = f.lang === 'dv' ? 'dv' : ''; // Dhivehi wording and font on the buttons
   trail = [];
   shell(`
     <form class="card fill" novalidate>
@@ -1238,9 +1238,9 @@ function renderFill(done = false, answers = null) {
       <div class="field-error" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
-        <button class="btn ghost" type="button" data-act="back" hidden>Back</button>
+        <button class="btn ghost ${dv}" type="button" data-act="back" hidden>${dv ? 'ފަހަތަށް' : 'Back'}</button>
         <button class="btn ghost ${dv}" type="reset">${dv ? 'ފޯމު ފޮހެލާ' : 'Clear form'}</button>
-        <button class="btn primary" type="button" data-act="next">Next</button>
+        <button class="btn primary ${dv}" type="button" data-act="next">${dv ? 'ކުރިއަށް' : 'Next'}</button>
         <button class="btn primary ${dv}" type="submit">${dv ? 'ހުށަހަޅާ' : 'Submit'}</button>
       </div>
     </form>`, fillBar());

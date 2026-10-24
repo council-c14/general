@@ -81,7 +81,8 @@ h1{font-size:24px;margin:0}
 .q-foot .switch{margin-inline-start:0}
 .q-foot .pts{margin-inline-start:12px}
 .q-foot > [data-act=dup-q]{margin-inline-start:auto}
-.card-more .menu{top:auto;bottom:100%}
+.card-more .menu{top:auto;bottom:100%;direction:ltr} /* items read left to right with the icon first, also on Dhivehi forms */
+[dir=rtl] .card-more .menu{right:auto;left:0} /* ⋮ is leftmost on Dhivehi forms, so the menu opens towards the right */
 /* Response validation row in the editor, and its error under the question */
 .valid-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
 .valid-row select{flex:1 1 150px;min-width:0}

@@ -262,6 +262,14 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .dd-opt:has(input:checked){font-weight:600}
 .dd-opt:has(input:focus-visible){outline:2px solid var(--teal-700);outline-offset:-2px}
 .dd-opt input{position:absolute;opacity:0;pointer-events:none}
+/* File upload: our own button (the browser's can't be restyled or translated) and the chosen file's name */
+.file-field{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;position:relative;cursor:pointer}
+.file-field input{position:absolute;width:1px;height:1px;opacity:0}
+.file-btn{display:inline-flex;align-items:center;gap:8px}
+.file-btn svg{width:18px;height:18px;fill:currentColor}
+.file-field:hover .file-btn,.file-field:has(input:focus-visible) .file-btn{border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
+.file-name{color:var(--muted);font-size:14px;min-width:0;overflow-wrap:anywhere}
+.file-field.picked .file-name{color:var(--ink)}
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
@@ -746,6 +754,7 @@ function settingsHTML() {
 
 const barTitle = f => plain(f.title) || plain(f.titleDv) || untitled(f);
 const ICONS = {
+  upload: svg('M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-5 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
   fold: svg('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'),
   place: svg('M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'),
   phone: svg('M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'),
@@ -954,6 +963,12 @@ app.addEventListener('input', e => {
   }
 });
 app.addEventListener('change', e => {
+  const ff = e.target.closest('.file-field');
+  if (ff) { // show the chosen file's name next to the button
+    const name = ff.querySelector('.file-name');
+    name.textContent = e.target.files[0]?.name ?? name.dataset.ph;
+    return ff.classList.toggle('picked', !!e.target.files[0]);
+  }
   const dd = e.target.closest('.dd');
   if (dd) { // picked from a dropdown: show it in the field and close the list
     const sum = dd.querySelector('summary');
@@ -1063,15 +1078,21 @@ app.addEventListener('click', e => {
   else document.execCommand('createLink', false, url);
 });
 
-// Closes the ⋮ menu after picking an item or tapping elsewhere.
-// Clear form puts dropdowns back to their placeholder.
-app.addEventListener('reset', e => e.target.querySelectorAll('.dd summary').forEach(sum => {
-  sum.textContent = sum.dataset.ph;
-  sum.classList.add('ph');
-  sum.parentElement.open = false;
-}));
+// Clear form puts dropdowns and file fields back to their placeholder.
+app.addEventListener('reset', e => {
+  e.target.querySelectorAll('.dd summary').forEach(sum => {
+    sum.textContent = sum.dataset.ph;
+    sum.classList.add('ph');
+    sum.parentElement.open = false;
+  });
+  e.target.querySelectorAll('.file-field').forEach(ff => {
+    ff.classList.remove('picked');
+    ff.querySelector('.file-name').textContent = ff.querySelector('.file-name').dataset.ph;
+  });
+});
 // Dropdown lists close when tapping elsewhere.
 document.addEventListener('click', e => app.querySelectorAll('.dd[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));
+// Closes the ⋮ menu after picking an item or tapping elsewhere.
 document.addEventListener('click', e => app.querySelectorAll('.more[open]').forEach(d => {
   if (!d.contains(e.target) || e.target.closest('.menu')) d.open = false;
 }));
@@ -1149,7 +1170,8 @@ function answerHTML(q) {
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
     time: '<input type="time">',
-    file: '<input type="file">',
+    file: `<label class="file-field"><input type="file"><span class="btn ghost small file-btn ${dvAttr ? 'dv' : ''}">${ICONS.upload}${dvAttr ? 'ފައިލް ނަންގަވާ' : 'Choose file'}</span>
+      <span class="file-name ${dvAttr ? 'dv' : ''}" data-ph="${dvAttr ? 'އެއްވެސް ފައިލެއް ނަންގަވާފައި ނެތް' : 'No file chosen'}">${dvAttr ? 'އެއްވެސް ފައިލެއް ނަންގަވާފައި ނެތް' : 'No file chosen'}</span></label>`,
     // Stars in reverse so CSS can light up a star and every star before it.
     rating: `<div class="rating">${[5, 4, 3, 2, 1].map(n => `<input type="radio" id="${q.id}-${n}" name="${q.id}" value="${n}"><label for="${q.id}-${n}" title="${n}">★</label>`).join('')}</div>`,
     mcgrid: gridHTML(q),

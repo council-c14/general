@@ -406,6 +406,8 @@ const DV = {
   'Choose image': 'ފޮޓޯ ނަގާ',
   'Replace image': 'ފޮޓޯ ބަދަލުކުރޭ',
   'Remove image': 'ފޮޓޯ ފޮހެލާ',
+  'Title and description': 'ސުރުޙީ އަދި ތަފްޞީލް',
+  Title: 'ސުރުޙީ',
 };
 // Options, rows and columns left empty in the editor read as their placeholder ("Option 2") everywhere else.
 function withPlaceholders(f) {
@@ -846,7 +848,7 @@ function blockHTML(q, i) {
     ${k ? secTab(k) : ''}
     <section class="card question block ${q.type}" data-qid="${q.id}">
       ${k ? '' : `<div class="block-kind ${pc}">${dvText(BLOCKS[q.type])}</div>`}
-      ${richField('text', q.text, k ? dvText('Untitled section') : 'Title', `q-text ${pc}`)}
+      ${richField('text', q.text, dvText(k ? 'Untitled section' : 'Title'), `q-text ${pc}`)}
       ${dv('text', 'Title', 'q-text')}
       ${hasDesc ? richField('desc', q.desc, dvText('Description (optional)'), `desc-input ${pc}`, true, 'wide') + dv('desc', 'Description', 'desc-input', true) : ''}
       <div class="q-body">${media}</div>

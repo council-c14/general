@@ -1196,7 +1196,7 @@ function renderFill(done = false, answers = null) {
     return shell(`
       <section class="card thanks">
         ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
-        <p>You have already responded to this form.</p>
+        <p class="${dv}">${dv ? 'ތިޔަ ފަރާތުން ވަނީ މި ފޯމަށް ހުށަހެޅުމެއް ހުށަހަޅުއްވާފައި.' : 'You have already responded to this form.'}</p>
       </section>`, fillBar());
   }
   if (f.accepting === false && !preview) {
@@ -1237,7 +1237,7 @@ function renderFill(done = false, answers = null) {
       <div class="fill-body">${pages.map(p => `<div class="page" data-goto="${esc(p.goto)}" hidden>${p.secs.map((sec, k) => k
         ? `<details class="sec-fold" open><summary>${itemHTML(sec[0], true)}</summary>${secDesc(sec[0])}${sec.slice(1).map(q => itemHTML(q)).join('')}</details>`
         : sec.map(q => itemHTML(q)).join('')).join('')}</div>`).join('')}</div>
-      <div class="field-error" hidden></div>
+      <div class="field-error ${dv}" hidden></div>
       ${paged && s.progress ? `<div class="pager"><span>Page <b class="pg-n">1</b> of ${pages.length}</span><progress max="${pages.length}" value="1"></progress></div>` : ''}
       <div class="fill-foot">
         <button class="btn ghost ${dv}" type="button" data-act="back" hidden>${dv ? 'ފަހަތަށް' : 'Back'}</button>
@@ -1293,7 +1293,9 @@ function collect(scope) {
     answers[q.id] = v;
   });
   const err = app.querySelector('.field-error');
-  err.textContent = big ? 'Files must be 1.5 MB or smaller.' : 'Please answer the highlighted questions.';
+  const dv = current.lang === 'dv';
+  err.textContent = big ? (dv ? 'އަޕްލޯޑް ކުރައްވާ ފައިލް 1.5mb އަށްވުރެ ކުޑަ ވާންޖެހޭނެ' : 'Files must be 1.5 MB or smaller.')
+    : (dv ? 'ފާހަގަކުރެވިފައިވާ ސުވާލުތަކަށް ޖަވާބު ދެއްވާ' : 'Please answer the highlighted questions.');
   err.hidden = !firstBad;
   firstBad?.closest('details:not([open])')?.setAttribute('open', ''); // a folded section opens to show it
   firstBad?.scrollIntoView({ behavior: 'smooth', block: 'center' });

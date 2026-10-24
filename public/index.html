@@ -65,7 +65,7 @@ h1{font-size:24px;margin:0}
 .eb-row{display:flex;align-items:center;gap:2px}
 .eb-row .brand-mini{margin-inline-end:auto}
 /* Quick access buttons keep their left-to-right order on Dhivehi forms. */
-:is(.eb-row,.add-bar,.q-foot){direction:ltr}
+:is(.eb-row,.add-bar){direction:ltr}
 .icon-btn{background:none;border:0;color:#5f6368;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
 .icon-btn:hover{background:var(--teal-100);color:var(--teal-800)}
 .icon-btn svg{width:26px;height:26px;fill:currentColor}
@@ -77,8 +77,10 @@ h1{font-size:24px;margin:0}
 .menu svg{width:22px;height:22px;fill:#5f6368;flex:none}
 .menu-gap{width:22px;flex:none}
 /* Card ⋮ menu: Delete, Response validation, Merge with item below */
-.q-foot .card-more{margin-inline-start:auto}
-.q-foot .switch + .card-more{margin-inline-start:0}
+/* Card footer: Required (and points) at the start, Duplicate and ⋮ together at the end (right on English forms, left on Dhivehi) */
+.q-foot .switch{margin-inline-start:0}
+.q-foot .pts{margin-inline-start:12px}
+.q-foot > [data-act=dup-q]{margin-inline-start:auto}
 .card-more .menu{top:auto;bottom:100%}
 /* Response validation row in the editor, and its error under the question */
 .valid-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
@@ -920,9 +922,9 @@ function questionHTML(q, i) {
       <div class="q-body">${body}</div>
       ${ruleRow(q)}
       <div class="q-foot">
-        ${btn('dup-q', 'Duplicate', ICONS.copy)}
-        ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> <span class="${pc}">${dvText('Required')}</span></label>
+        ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
+        ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${cardMenu(RULE_TYPES[q.type] ? [menuToggle('validate', 'Response validation', q.validate)] : [])}
       </div>
     </section>`;
@@ -977,8 +979,8 @@ function blockHTML(q, i) {
       <div class="q-body">${media}</div>
       ${q.type === 'image' && q.merge ? '<div class="meta">Shown in one card with the item below.</div>' : ''}
       <div class="q-foot">
-        ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> <span class="${pc}">${dvText('Start on a new page')}</span></label>` : ''}
+        ${btn('dup-q', 'Duplicate', ICONS.copy)}
         ${cardMenu(q.type === 'image' ? [menuToggle('merge', 'Merge with item below', q.merge)] : [])}
       </div>
     </section>`;

@@ -1180,11 +1180,12 @@ function renderFill(done = false, answers = null) {
   const f = current;
   const s = opts(f);
   const preview = location.hash.startsWith('#/preview/');
+  const dv = f.lang === 'dv' ? 'dv' : ''; // Dhivehi wording and font on buttons and messages
   if (done) {
     return shell(`
       <section class="card thanks">
-        <h2>Thank you</h2>
-        <p>${esc(s.confirm.trim() || 'Your response has been recorded.')}</p>
+        <h2 class="${dv}">${dv ? 'ޝުކުރިއްޔާ!' : 'Thank you'}</h2>
+        <p class="${dv}">${esc(s.confirm.trim() || (dv ? 'ތިޔަ ފަރާތުގެ ހުށަހެޅުން ރެކޯޑްކުރެވިއްޖެ.' : 'Your response has been recorded.'))}</p>
         ${s.quiz && s.showScore && answers ? scoreHTML(grade(f, answers)) : ''}
         ${s.another && (!s.once || preview) ? `<button class="btn ghost ${f.lang === 'dv' ? 'dv' : ''}" data-act="again">${f.lang === 'dv' ? 'އިތުރު ހުށަހެޅުމެއް ހުށަހަޅާ' : 'Submit another response'}</button>` : ''}
       </section>`, fillBar());
@@ -1200,7 +1201,7 @@ function renderFill(done = false, answers = null) {
     return shell(`
       <section class="card thanks">
         ${localized(f, 'h2', f.title || untitled(f), f.titleDv, 'head', '', clean)}
-        <p>This form is no longer accepting responses.</p>
+        <p class="${dv}">${dv ? 'ފޯމު ހުށަހެޅުމުގެ މުއްދަތު ހަމަވެފައި' : 'This form is no longer accepting responses.'}</p>
       </section>`, fillBar());
   }
   // Sections: the form's start, then one per section item; a section's items stay together.
@@ -1224,7 +1225,6 @@ function renderFill(done = false, answers = null) {
     pages.at(-1).secs.push(sec);
   });
   const paged = pages.length > 1;
-  const dv = f.lang === 'dv' ? 'dv' : ''; // Dhivehi wording and font on the buttons
   trail = [];
   shell(`
     <form class="card fill" novalidate>

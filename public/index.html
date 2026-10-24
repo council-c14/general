@@ -338,6 +338,9 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 .foot span{display:inline-flex;align-items:center;gap:6px}
 .foot svg{width:14px;height:14px;fill:currentColor;flex:none}
 
+/* Tooltips for tools: hover with a mouse, press and hold on touch screens */
+.tip{position:fixed;z-index:50;max-width:240px;background:#2b2f31;color:#fff;font:12px/1.4 "Segoe UI",Faruma,system-ui,sans-serif;padding:6px 10px;border-radius:8px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+:is(button,summary,a)[data-tip],:is(button,summary,a)[title]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .toast{
   position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--teal-900);color:#fff;
   padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;
@@ -364,6 +367,7 @@ th{background:var(--teal-100);color:var(--teal-800);white-space:nowrap}
 <body>
 <div id="app"></div>
 <div id="toast" class="toast" role="status"></div>
+<div id="tip" class="tip" role="tooltip" hidden></div>
 
 <dialog id="lang-dialog" class="lang-dialog">
   <h2>Form language</h2>
@@ -1232,6 +1236,38 @@ app.addEventListener('reset', e => {
 });
 // Dropdown lists close when tapping elsewhere.
 document.addEventListener('click', e => app.querySelectorAll('.dd[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));
+// Tooltips: any tool with a title. The title moves to data-tip so the browser's own tooltip doesn't show too.
+const tip = document.getElementById('tip');
+let tipTimer;
+let heldTip = false; // a press and hold shows the tip without pressing the tool
+const tipTarget = e => e.target.closest?.('[title], [data-tip]');
+function showTip(el) {
+  if (el.title) {
+    el.dataset.tip = el.title;
+    if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.title);
+    el.removeAttribute('title');
+  }
+  tip.textContent = el.dataset.tip;
+  tip.hidden = false;
+  const r = el.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  tip.style.top = `${r.top - t.height - 8 < 4 ? r.bottom + 8 : r.top - t.height - 8}px`;
+  tip.style.left = `${Math.min(Math.max(4, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 4)}px`;
+}
+const hideTip = () => { clearTimeout(tipTimer); tip.hidden = true; };
+document.addEventListener('pointerover', e => { const el = tipTarget(e); if (el && e.pointerType === 'mouse') showTip(el); });
+document.addEventListener('pointerout', e => { const el = tipTarget(e); if (el && e.pointerType === 'mouse' && !el.contains(e.relatedTarget)) hideTip(); });
+document.addEventListener('pointerdown', e => {
+  hideTip();
+  heldTip = false;
+  const el = tipTarget(e);
+  if (el && e.pointerType !== 'mouse') tipTimer = setTimeout(() => { heldTip = true; showTip(el); }, 500);
+});
+document.addEventListener('pointerup', () => { clearTimeout(tipTimer); if (heldTip) tipTimer = setTimeout(hideTip, 1500); });
+document.addEventListener('pointercancel', hideTip);
+document.addEventListener('click', e => { if (heldTip) { heldTip = false; e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener('contextmenu', e => { if (tipTarget(e)) e.preventDefault(); }); // no long-press menu on tools
+addEventListener('scroll', hideTip, true);
+
 // Closes the ⋮ menu after picking an item or tapping elsewhere.
 document.addEventListener('click', e => app.querySelectorAll('.more[open]').forEach(d => {
   if (!d.contains(e.target) || e.target.closest('.menu')) d.open = false;
@@ -1316,7 +1352,7 @@ function answerHTML(q, pre = '') {
     short: `<input type="text"${dvAttr}>`,
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
-    date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" aria-label="Choose date"></button></div>`,
+    date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" title="Choose date"></button></div>`,
     dropdown: `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</summary>
       <div class="dd-list">${q.options.map((o, j) => `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${q.id}" value="${esc(optLabel(q, j))}">${esc(optLabel(q, j))}</label>`).join('')}</div></details>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),

@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing</title>
+<style>
+:root{
+  --bg:#f5f5f2;--panel:#fff;--side:#eeeeea;
+  --ink:#1b1b19;--ink-2:#3a3a36;--muted:#72726b;--faint:#a3a39b;
+  --line:#e3e2dc;--line-2:#d3d2cb;
+  --accent:#1f5c4a;--accent-ink:#174636;--accent-weak:#e6efea;
+  --danger:#a5321e;--danger-weak:#f8e9e5;
+  --warn:#8a5a00;--warn-weak:#f7eedb;
+  --info:#28508a;--info-weak:#e8eef7;
+  --radius:6px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+input,select,textarea,button{font:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+/* Layout */
+#app{display:grid;grid-template-columns:224px 1fr;min-height:100vh}
+.side{background:var(--side);border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:2px}
+.biz{display:flex;align-items:center;gap:10px;padding:2px 8px 18px}
+.biz-mark{width:28px;height:28px;border-radius:5px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;overflow:hidden}
+.biz-mark img{width:100%;height:100%;object-fit:contain;background:#fff}
+.biz-name{font-weight:600;font-size:13px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.biz-sub{font-size:11px;color:var(--muted)}
+.nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:5px;color:var(--ink-2);font-weight:500}
+.nav a:hover{background:#e4e4df;text-decoration:none}
+.nav a.on{background:var(--panel);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none;opacity:.8}
+.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:14px 10px 4px}
+.side-foot{margin-top:auto;padding:8px 10px;font-size:11px;color:var(--faint)}
+main{padding:28px 36px 64px;min-width:0;max-width:1240px}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-head h1{font-size:22px}
+.page-head .sub{color:var(--muted);margin-top:2px}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+.crumb a{color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Controls */
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--radius);border:1px solid var(--line-2);background:var(--panel);color:var(--ink);font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none!important}
+.btn:hover{background:#fafaf8;border-color:#c4c3bb}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover{background:#33332f}
+.btn.danger{color:var(--danger)}
+.btn.ghost{border-color:transparent;background:none}
+.btn.ghost:hover{background:#ebebe6}
+.btn.sm{height:28px;padding:0 9px;font-size:13px}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.inp,label.f :is(input,select,textarea){height:34px;padding:0 10px;border:1px solid var(--line-2);border-radius:var(--radius);background:#fff;font-size:14px;font-weight:400;color:var(--ink);width:100%;min-width:0}
+label.f textarea,textarea.inp{height:auto;padding:8px 10px;resize:vertical;min-height:72px}
+.inp:focus,label.f :is(input,select,textarea):focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+.hint{font-weight:400;color:var(--muted);font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.span2{grid-column:span 2}
+
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--radius);background:#fff;padding:2px;gap:2px}
+.seg button,.seg a{border:0;background:none;padding:4px 10px;border-radius:4px;font-size:13px;color:var(--ink-2);cursor:pointer;font-weight:500;text-decoration:none!important}
+.seg .on{background:var(--ink);color:#fff}
+
+/* Cards and tables */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.card-head h2{font-size:14px}
+.card-body{padding:18px}
+.stack{display:grid;gap:18px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:18px}
+.kpi{padding:16px 18px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:0}
+.kpi-label{font-size:12px;color:var(--muted)}
+.kpi-value{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi-note{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi-value.bad{color:var(--danger)}
+
+table.t{width:100%;border-collapse:collapse}
+.t th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);background:#fafaf8;white-space:nowrap}
+.t td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tr:last-child td{border-bottom:0}
+.t tbody tr.link{cursor:pointer}
+.t tbody tr.link:hover td{background:#fafaf7}
+.t tfoot td{font-weight:600;border-top:1px solid var(--line-2);background:#fafaf8}
+.t .num{text-align:right}
+.t th.num{text-align:right}
+.t .strong{font-weight:500}
+.tbl-wrap{overflow-x:auto}
+.empty{padding:44px 20px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-weight:600;margin-bottom:4px}
+
+.toolbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.toolbar .inp{width:240px;height:30px;font-size:13px}
+.toolbar .grow{flex:1}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:#efefeb;color:var(--ink-2);white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75}
+.pill.sent{background:var(--info-weak);color:var(--info)}
+.pill.partial,.pill.expired{background:var(--warn-weak);color:var(--warn)}
+.pill.paid,.pill.accepted{background:var(--accent-weak);color:var(--accent-ink)}
+.pill.overdue,.pill.declined{background:var(--danger-weak);color:var(--danger)}
+.pill.invoiced{background:#ecebf5;color:#4a4580}
+.pill.void{text-decoration:line-through;color:var(--faint)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tabs a{padding:8px 12px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none!important}
+.tabs a.on{color:var(--ink);border-color:var(--ink)}
+.tabs a .c{font-size:11px;background:#e9e9e4;border-radius:999px;padding:1px 6px;margin-left:4px;color:var(--ink-2)}
+
+/* Two-column pages */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.sticky{position:sticky;top:20px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:8px 0;margin:0}
+.dl dt{color:var(--muted)}
+.dl dd{margin:0;padding-left:16px;text-align:right;font-variant-numeric:tabular-nums}
+.dl .total{font-weight:600;font-size:15px;padding-top:8px;border-top:1px solid var(--line)}
+
+/* Line item editor */
+.items-edit{width:100%;border-collapse:collapse;margin-top:6px}
+.items-edit th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.items-edit td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.items-edit .inp{height:32px}
+.items-edit textarea.inp{min-height:32px;height:32px;padding:6px 10px;resize:none;overflow:hidden;line-height:1.35}
+.items-edit .amt{padding-top:13px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.items-edit .q{width:84px}.items-edit .r{width:130px}.items-edit .a{width:120px}.items-edit .x{width:36px}
+.items-edit input[type=number]{text-align:right}
+.icon-x{width:30px;height:30px;border:0;background:none;border-radius:5px;color:var(--faint);cursor:pointer;margin-top:1px}
+.icon-x:hover{background:var(--danger-weak);color:var(--danger)}
+
+/* Menu */
+details.menu{position:relative}
+details.menu summary{list-style:none}
+details.menu summary::-webkit-details-marker{display:none}
+.menu-list{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line-2);border-radius:8px;box-shadow:0 10px 30px rgba(20,20,15,.12);padding:4px;min-width:190px;z-index:20}
+.menu-list button{display:block;width:100%;text-align:left;padding:7px 10px;border:0;background:none;border-radius:5px;cursor:pointer}
+.menu-list button:hover{background:#f1f1ed}
+.menu-list .danger{color:var(--danger)}
+.menu-list hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+/* Dialog and toast */
+dialog{border:0;border-radius:10px;padding:0;width:min(520px,calc(100% - 32px));box-shadow:0 24px 60px rgba(20,20,15,.25);color:var(--ink)}
+dialog::backdrop{background:rgba(28,28,24,.35)}
+.dlg-head{padding:16px 20px;border-bottom:1px solid var(--line);font-weight:600;font-size:15px}
+.dlg-body{padding:18px 20px;display:grid;gap:14px}
+.dlg-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:#fafaf8;border-radius:0 0 10px 10px}
+.err{color:var(--danger);font-size:13px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:9px 14px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:.18s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Document preview */
+.paper-wrap{overflow:auto;padding:2px}
+.paper{width:210mm;min-height:297mm;background:#fff;color:#1d1d1b;box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 28px rgba(20,20,15,.08);border:1px solid var(--line);margin:0 auto;position:relative;font-size:10pt;line-height:1.45}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.thumb{height:400px;overflow:hidden;border-bottom:1px solid var(--line);background:#f0f0ec;padding:16px 0 0;border-radius:8px 8px 0 0}
+.thumb .paper{zoom:.39;pointer-events:none;border:0}
+.thumb-foot{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+/* Shared document parts */
+.paper .doc-items{width:100%;border-collapse:collapse}
+.paper .doc-items th{text-align:left;font-weight:600}
+.paper .doc-items th.r{text-align:right}
+.paper .doc-items td{vertical-align:top}
+.paper .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.paper .item-sub{color:#6b6b66;font-size:9pt;white-space:pre-line}
+.paper .tot{margin-left:auto;width:78mm;border-collapse:collapse}
+.paper .tot td{padding:4px 0}
+.paper .pre{white-space:pre-line}
+.paper .stamp{position:absolute;top:62mm;right:20mm;transform:rotate(-12deg);border:2.5px solid #2f7a55;color:#2f7a55;padding:4px 14px;font-weight:800;letter-spacing:.18em;font-size:20pt;border-radius:4px;opacity:.8}
+.paper .sign{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:16mm}
+.paper .sign div{border-top:1px solid #9a9a94;padding-top:4px;font-size:8.5pt;color:#6b6b66}
+.paper .logo{max-height:18mm;max-width:50mm;display:block}
+
+/* Template: Classic */
+.tpl-classic{padding:18mm 18mm 26mm}
+.tpl-classic .serif{font-family:Georgia,"Times New Roman",serif}
+.tpl-classic .hd{display:flex;justify-content:space-between;gap:12mm;padding-bottom:7mm;border-bottom:2px solid #1d1d1b}
+.tpl-classic .bname{font-family:Georgia,serif;font-size:17pt;margin:3mm 0 1.5mm}
+.tpl-classic .from{color:#55554f;font-size:9pt}
+.tpl-classic .title{text-align:right}
+.tpl-classic .title h1{font-family:Georgia,serif;font-weight:400;font-size:24pt;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4mm}
+.tpl-classic .meta{margin-left:auto;border-collapse:collapse;font-size:9pt}
+.tpl-classic .meta th{text-align:left;color:#6b6b66;font-weight:400;padding:1px 6mm 1px 0}
+.tpl-classic .meta td{text-align:right;padding:1px 0;font-weight:600}
+.tpl-classic .parties{display:flex;justify-content:space-between;gap:12mm;margin:8mm 0}
+.tpl-classic h4{font-size:8pt;text-transform:uppercase;letter-spacing:.12em;color:#6b6b66;font-weight:600;margin:0 0 2mm}
+.tpl-classic .due b{display:block;font-family:Georgia,serif;font-size:18pt;font-weight:400;text-align:right}
+.tpl-classic .due{text-align:right}
+.tpl-classic .doc-items th{font-size:8pt;text-transform:uppercase;letter-spacing:.1em;padding:2.5mm 2mm;border-top:1px solid #1d1d1b;border-bottom:1px solid #1d1d1b}
+.tpl-classic .doc-items td{padding:2.5mm 2mm;border-bottom:1px solid #dcdcd6}
+.tpl-classic .tot{margin-top:5mm}
+.tpl-classic .tot .grand td{border-top:2px solid #1d1d1b;padding-top:2mm;font-weight:700;font-size:11pt}
+.tpl-classic .notes{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:10mm;font-size:9pt}
+.tpl-classic .foot{position:absolute;left:18mm;right:18mm;bottom:12mm;text-align:center;color:#8a8a84;font-size:8pt;border-top:1px solid #dcdcd6;padding-top:3mm}
+
+/* Template: Modern */
+.tpl-modern{padding:0 0 26mm}
+.tpl-modern .band{background:var(--a);color:#fff;padding:12mm 16mm 10mm;display:flex;justify-content:space-between;align-items:flex-start;gap:10mm}
+.tpl-modern .band .logo{background:#fff;padding:2mm;border-radius:2px;margin-bottom:3mm}
+.tpl-modern .bname{font-size:15pt;font-weight:700;letter-spacing:-.01em}
+.tpl-modern .band .from{opacity:.85;font-size:8.5pt;text-align:right}
+.tpl-modern .title{padding:10mm 16mm 0;display:flex;justify-content:space-between;align-items:baseline}
+.tpl-modern .title h1{font-size:26pt;font-weight:300;letter-spacing:-.02em;margin:0;color:var(--a)}
+.tpl-modern .title .no{font-size:11pt;color:#55554f}
+.tpl-modern .strip{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8mm;margin:7mm 16mm 9mm;padding:6mm 0;border-top:1px solid #e3e3de;border-bottom:1px solid #e3e3de}
+.tpl-modern h4{font-size:7.5pt;text-transform:uppercase;letter-spacing:.1em;color:#8a8a84;font-weight:600;margin:0 0 1.5mm}
+.tpl-modern .big{font-size:17pt;font-weight:700;color:var(--a);font-variant-numeric:tabular-nums}
+.tpl-modern .body{padding:0 16mm}
+.tpl-modern .doc-items th{background:color-mix(in srgb,var(--a) 9%,#fff);color:var(--a);font-size:8pt;text-transform:uppercase;letter-spacing:.06em;padding:2.5mm 3mm}
+.tpl-modern .doc-items td{padding:3mm;border-bottom:1px solid #ececE7}
+.tpl-modern .tot{margin-top:4mm}
+.tpl-modern .tot td{padding:3px 3mm}
+.tpl-modern .tot .grand td{background:var(--a);color:#fff;font-weight:700;font-size:11pt;padding:2.5mm 3mm}
+.tpl-modern .notes{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:10mm;font-size:9pt}
+.tpl-modern .foot{position:absolute;left:16mm;right:16mm;bottom:12mm;display:flex;justify-content:space-between;color:#8a8a84;font-size:8pt}
+.tpl-modern .stamp{top:50mm}
+
+/* Template: Minimal */
+.tpl-minimal{padding:20mm 20mm 26mm;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:9.5pt}
+.tpl-minimal .hd{display:grid;grid-template-columns:1fr auto;gap:10mm;align-items:start}
+.tpl-minimal .bname{font-weight:700;font-size:11pt}
+.tpl-minimal h1{font-size:9.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin:0}
+.tpl-minimal .amt{font-size:28pt;font-weight:300;letter-spacing:-.02em;text-align:right;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2mm}
+.tpl-minimal .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm;margin:16mm 0 12mm;font-size:9pt}
+.tpl-minimal h4{font-size:7.5pt;font-weight:400;color:#8a8a84;margin:0 0 1.5mm}
+.tpl-minimal .doc-items th{font-weight:400;color:#8a8a84;font-size:8pt;padding:0 0 2.5mm;border-bottom:1px solid #1d1d1b}
+.tpl-minimal .doc-items td{padding:2.5mm 0;border-bottom:1px solid #e8e8e3}
+.tpl-minimal .doc-items td+td,.tpl-minimal .doc-items th+th{padding-left:4mm}
+.tpl-minimal .tot{margin-top:4mm}
+.tpl-minimal .tot .grand td{border-top:1px solid #1d1d1b;padding-top:2mm;font-weight:700}
+.tpl-minimal .notes{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;margin-top:14mm;font-size:8.5pt;color:#44443f}
+.tpl-minimal .foot{position:absolute;left:20mm;right:20mm;bottom:12mm;color:#a3a39b;font-size:7.5pt;display:flex;justify-content:space-between}
+.tpl-minimal .paid-note{color:#2f7a55;font-weight:700;text-align:right;letter-spacing:.1em;font-size:8pt;text-transform:uppercase}
+
+/* Report paper */
+.tpl-report{padding:16mm 16mm 22mm}
+.tpl-report .hd{display:flex;justify-content:space-between;gap:10mm;border-bottom:2px solid #1d1d1b;padding-bottom:5mm;margin-bottom:6mm}
+.tpl-report .bname{font-size:13pt;font-weight:700}
+.tpl-report h1{font-size:16pt;margin:0;text-align:right;font-weight:600}
+.tpl-report h3{font-size:9pt;text-transform:uppercase;letter-spacing:.08em;margin:7mm 0 2mm;color:#55554f}
+.tpl-report .boxes{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dcdcd6;margin:5mm 0}
+.tpl-report .boxes div{padding:3mm;border-left:1px solid #dcdcd6}
+.tpl-report .boxes div:first-child{border-left:0}
+.tpl-report .boxes b{display:block;font-size:11.5pt;font-variant-numeric:tabular-nums}
+.tpl-report .boxes span{font-size:8pt;color:#6b6b66}
+.tpl-report table.rt{width:100%;border-collapse:collapse;font-size:9pt}
+.tpl-report .rt th{text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.06em;color:#55554f;border-bottom:1px solid #1d1d1b;padding:1.8mm 1.5mm}
+.tpl-report .rt td{padding:1.8mm 1.5mm;border-bottom:1px solid #e6e6e1}
+.tpl-report .rt th.r{text-align:right}
+.tpl-report .rt tfoot td{font-weight:700;border-top:1px solid #1d1d1b;border-bottom:0}
+
+#print{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff}
+  #app,#toast,dialog{display:none!important}
+  #print{display:block}
+  #print .paper{box-shadow:none;border:0;margin:0;min-height:296mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+@media (max-width:1100px){
+  .split{grid-template-columns:1fr}
+  .sticky{position:static}
+}
+@media (max-width:860px){
+  #app{grid-template-columns:1fr;align-content:start}
+  .t td{white-space:nowrap}
+  .side{position:sticky;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:8px 12px;z-index:10;border-right:0;border-bottom:1px solid var(--line)}
+  .biz{padding:0 8px 0 0}.biz-sub,.nav-label,.side-foot,.biz-name{display:none}
+  .nav{display:flex;gap:2px}
+  .nav a{white-space:nowrap}
+  main{padding:20px 16px 48px}
+  .kpis,.grid4{grid-template-columns:1fr 1fr}
+  .kpi:nth-child(3){border-left:0}
+  .kpi:nth-child(n+3){border-top:1px solid var(--line)}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .span2{grid-column:auto}
+  .paper-wrap .paper{zoom:.45}
+  .toolbar .inp{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="side">
+    <div class="biz"><div class="biz-mark" id="biz-mark"></div><div style="min-width:0"><div class="biz-name" id="biz-name"></div><div class="biz-sub">Billing</div></div></div>
+    <nav class="nav" id="nav">
+      <a href="#/" data-nav=""><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Overview</a>
+      <a href="#/invoices" data-nav="invoices doc-invoice"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h7"/></svg>Invoices</a>
+      <a href="#/quotes" data-nav="quotes doc-quote"><svg viewBox="0 0 24 24"><path d="M6 2h12v20H6z"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>Quotations</a>
+      <a href="#/customers" data-nav="customers customer"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 010 8M22 21c0-3-1.5-5-4-5.6"/></svg>Customers</a>
+      <a href="#/reports" data-nav="reports report"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</a>
+      <div class="nav-label">Setup</div>
+      <a href="#/templates" data-nav="templates"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Templates</a>
+      <a href="#/settings" data-nav="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Business settings</a>
+    </nav>
+    <div class="side-foot" id="side-foot"></div>
+  </aside>
+  <main id="main"><div class="empty">Loading…</div></main>
+</div>
+<div id="print"></div>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const br = s => esc(s).replace(/\n/g, '<br>');
+const r2 = n => Math.round(((+n || 0) + Number.EPSILON) * 100) / 100;
+const sum = (list, f) => r2(list.reduce((s, x) => s + (+f(x) || 0), 0));
+const uid = () => crypto.randomUUID();
+const today = () => new Date().toLocaleDateString('en-CA');
+const ymd = (y, m, d) => new Date(y, m, d).toLocaleDateString('en-CA');
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00'); d.setDate(d.getDate() + (+n || 0)); return d.toLocaleDateString('en-CA'); };
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const fmtDate = iso => iso ? new Date(iso + 'T00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+function money(n, cur = S().currency) {
+  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD' }).format(n || 0); }
+  catch { return `${cur} ${(+n || 0).toFixed(2)}`; }
+}
+const plain = n => (+n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+let db = { customers: [], docs: [], settings: {} };
+const DEFAULTS = {
+  name: 'Your Business', address: '', phone: '', email: '', website: '', taxId: '',
+  currency: 'MVR', taxLabel: 'GST', taxRate: 8, invoicePrefix: 'INV-', quotePrefix: 'QT-',
+  dueDays: 30, validDays: 14, invoiceTemplate: 'classic', quoteTemplate: 'modern', accent: '#1f5c4a',
+  logo: '', notes: 'Thank you for your business.', terms: '', bank: '',
+};
+const S = () => ({ ...DEFAULTS, ...db.settings });
+const TEMPLATES = { classic: 'Classic', modern: 'Modern', minimal: 'Minimal' };
+const TEMPLATE_NOTES = {
+  classic: 'Serif letterhead with ruled tables. Suits professional services and formal tenders.',
+  modern: 'Colour band in your brand accent with a clear amount-due strip.',
+  minimal: 'Swiss-style grid, monochrome, the amount set large at the top.',
+};
+const METHODS = ['Bank transfer', 'Cash', 'Card', 'Cheque', 'Other'];
+const cust = id => db.customers.find(c => c.id === id) || { name: 'Unknown customer' };
+const docLabel = t => t === 'quote' ? 'Quotation' : 'Invoice';
+
+/* ---------- server ---------- */
+async function api(path = '', opts = {}) {
+  const res = await fetch(`/api/billing${path ? '/' + path : ''}`, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+// Every write goes through here so the screen and the server can't drift silently.
+async function persist(kind, rec) {
+  try { await api(`${kind}/${rec.id}`, { method: 'PUT', body: rec }); return true; }
+  catch { toast('Could not save. Check your connection and try again.'); return false; }
+}
+async function destroy(kind, id) {
+  try { await api(`${kind}/${id}`, { method: 'DELETE' }); return true; }
+  catch { toast('Could not delete. Check your connection and try again.'); return false; }
+}
+function upsert(list, rec) { const i = list.findIndex(x => x.id === rec.id); i < 0 ? list.push(rec) : (list[i] = rec); }
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- money and status ---------- */
+function totals(d) {
+  const sub = sum(d.items || [], i => r2(i.qty * i.rate));
+  const disc = r2(sub * (+d.discount || 0) / 100);
+  const tax = r2((sub - disc) * (+d.taxRate || 0) / 100);
+  const total = r2(sub - disc + tax);
+  const paid = sum(d.payments || [], p => p.amount);
+  return { sub, disc, tax, total, paid, balance: r2(total - paid) };
+}
+// Stored status is draft/sent/void (+ accepted/declined/invoiced for quotes); the rest is derived.
+function status(d) {
+  if (d.status === 'void') return 'void';
+  if (d.type === 'quote') {
+    if (d.status === 'sent' && d.due && d.due < today()) return 'expired';
+    return d.status;
+  }
+  if (d.status === 'draft') return 'draft';
+  const t = totals(d);
+  if (t.total > 0 && t.balance <= 0) return 'paid';
+  if (d.due && d.due < today()) return 'overdue';
+  return t.paid > 0 ? 'partial' : 'sent';
+}
+const STATUS_LABEL = { draft: 'Draft', sent: 'Sent', partial: 'Part paid', paid: 'Paid', overdue: 'Overdue', void: 'Void', accepted: 'Accepted', declined: 'Declined', expired: 'Expired', invoiced: 'Invoiced' };
+const pill = d => { const s = status(d); return `<span class="pill ${s}">${STATUS_LABEL[s]}</span>`; };
+const isOpen = d => d.type === 'invoice' && ['sent', 'partial', 'overdue'].includes(status(d));
+const isBilled = d => d.type === 'invoice' && !['draft', 'void'].includes(d.status);
+
+// ponytail: next number is max+1 on this device; two people creating at the same second can collide (Save warns).
+function nextNumber(type) {
+  const prefix = type === 'quote' ? S().quotePrefix : S().invoicePrefix;
+  const max = db.docs.filter(d => d.type === type && String(d.number).startsWith(prefix))
+    .reduce((m, d) => Math.max(m, +(String(d.number).slice(prefix.length).match(/\d+$/) || [0])[0]), 0);
+  return prefix + String(max + 1).padStart(4, '0');
+}
+const payments = () => db.docs.filter(isBilled).flatMap(d => (d.payments || []).map(p => ({ ...p, doc: d })));
+
+function ledger(cid) {
+  const rows = [];
+  for (const d of db.docs) {
+    if (d.customerId !== cid || !isBilled(d)) continue;
+    rows.push({ date: d.date, kind: 'Invoice', ref: d.number, doc: d, debit: totals(d).total, credit: 0 });
+    for (const p of d.payments || []) rows.push({ date: p.date, kind: 'Payment', ref: `${p.method}${p.ref ? ' · ' + p.ref : ''} — ${d.number}`, doc: d, debit: 0, credit: r2(p.amount) });
+  }
+  return rows.sort((a, b) => a.date.localeCompare(b.date) || b.debit - a.debit);
+}
+function statement(cid, from, to) {
+  let opening = 0; const rows = [];
+  for (const x of ledger(cid)) {
+    if (from && x.date < from) opening = r2(opening + x.debit - x.credit);
+    else if (!to || x.date <= to) rows.push(x);
+  }
+  let bal = opening;
+  for (const x of rows) x.balance = bal = r2(bal + x.debit - x.credit);
+  return { opening, rows, closing: bal, debit: sum(rows, x => x.debit), credit: sum(rows, x => x.credit) };
+}
+const BUCKETS = ['Current', '1–30 days', '31–60 days', '61–90 days', '90+ days'];
+function aging(docs) {
+  const b = [0, 0, 0, 0, 0];
+  for (const d of docs.filter(isOpen)) {
+    const late = daysBetween(d.due || d.date, today());
+    const i = late <= 0 ? 0 : late <= 30 ? 1 : late <= 60 ? 2 : late <= 90 ? 3 : 4;
+    b[i] = r2(b[i] + totals(d).balance);
+  }
+  return b;
+}
+
+/* ---------- document templates ---------- */
+function itemsTable(d, cols = ['#', 'Description', 'Qty', 'Rate', 'Amount']) {
+  return `<table class="doc-items"><thead><tr>
+    <th style="width:7mm">${cols[0]}</th><th>${cols[1]}</th><th class="r" style="width:16mm">${cols[2]}</th><th class="r" style="width:28mm">${cols[3]}</th><th class="r" style="width:30mm">${cols[4]}</th>
+  </tr></thead><tbody>${(d.items || []).map((it, i) => {
+    const [first, ...rest] = String(it.desc || '').split('\n');
+    return `<tr><td>${i + 1}</td><td>${esc(first)}${rest.length ? `<div class="item-sub">${esc(rest.join('\n'))}</div>` : ''}</td>
+      <td class="r">${+it.qty || 0}</td><td class="r">${plain(it.rate)}</td><td class="r">${plain(r2(it.qty * it.rate))}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+function totalsTable(d) {
+  const t = totals(d), s = S(), q = d.type === 'quote';
+  const showPaid = !q && t.paid > 0;
+  return `<table class="tot">
+    <tr><td>Subtotal</td><td class="r">${plain(t.sub)}</td></tr>
+    ${t.disc ? `<tr><td>Discount (${+d.discount}%)</td><td class="r">−${plain(t.disc)}</td></tr>` : ''}
+    ${+d.taxRate ? `<tr><td>${esc(s.taxLabel)} (${+d.taxRate}%)</td><td class="r">${plain(t.tax)}</td></tr>` : ''}
+    <tr class="${showPaid ? '' : 'grand'}"><td>Total (${esc(s.currency)})</td><td class="r">${money(t.total)}</td></tr>
+    ${showPaid ? `<tr><td>Paid</td><td class="r">−${plain(t.paid)}</td></tr><tr class="grand"><td>Balance due</td><td class="r">${money(t.balance)}</td></tr>` : ''}
+  </table>`;
+}
+function notesBlock(d, wrap = true) {
+  const s = S(), parts = [];
+  if (d.notes) parts.push(`<div><h4>Notes</h4><div class="pre">${esc(d.notes)}</div></div>`);
+  if (d.type === 'invoice' && s.bank) parts.push(`<div><h4>Payment details</h4><div class="pre">${esc(s.bank)}</div></div>`);
+  if (d.terms) parts.push(`<div><h4>Terms</h4><div class="pre">${esc(d.terms)}</div></div>`);
+  return parts.length ? `<div class="notes">${parts.join('')}</div>` : '';
+}
+const contactLine = (x, sep = ' · ') => [x.phone, x.email].filter(Boolean).map(esc).join(sep);
+function billTo(c) {
+  return `<strong>${esc(c.name)}</strong>${c.contact ? `<br>Attn: ${esc(c.contact)}` : ''}${c.address ? `<br>${br(c.address)}` : ''}
+    ${contactLine(c) ? `<br>${contactLine(c)}` : ''}${c.taxId ? `<br>TIN ${esc(c.taxId)}` : ''}`;
+}
+const logoImg = s => s.logo ? `<img class="logo" src="${esc(s.logo)}" alt="">` : '';
+const signBlock = d => d.type === 'quote' ? `<div class="sign"><div>Accepted by (name &amp; signature)</div><div>Date</div></div>` : '';
+const stamp = d => d.type === 'invoice' && status(d) === 'paid' ? '<div class="stamp">PAID</div>' : '';
+
+function renderDoc(d, tpl = d.template, c = cust(d.customerId)) {
+  const s = S(), t = totals(d), q = d.type === 'quote', title = docLabel(d.type);
+  const dueLabel = q ? 'Valid until' : 'Due date';
+  const amountLabel = q ? 'Quoted total' : t.paid > 0 ? 'Balance due' : 'Amount due';
+  const amount = q ? t.total : t.balance;
+  const fromLines = `${s.address ? br(s.address) + '<br>' : ''}${contactLine(s)}${s.taxId ? `<br>TIN ${esc(s.taxId)}` : ''}`;
+  const style = `--a:${esc(s.accent)}`;
+
+  if (tpl === 'modern') return `<div class="paper tpl-modern" style="${style}">
+    <div class="band"><div>${logoImg(s)}<div class="bname">${esc(s.name)}</div></div><div class="from">${fromLines}</div></div>
+    <div class="title"><h1>${title}</h1><div class="no">No. <strong>${esc(d.number)}</strong></div></div>
+    <div class="strip">
+      <div><h4>${q ? 'Prepared for' : 'Billed to'}</h4>${billTo(c)}</div>
+      <div><h4>Issue date</h4>${fmtDate(d.date)}<h4 style="margin-top:3mm">${dueLabel}</h4>${fmtDate(d.due)}${d.ref ? `<h4 style="margin-top:3mm">Reference</h4>${esc(d.ref)}` : ''}</div>
+      <div><h4>${amountLabel}</h4><div class="big">${money(amount)}</div></div>
+    </div>
+    <div class="body">${itemsTable(d)}${totalsTable(d)}${notesBlock(d)}${signBlock(d)}</div>
+    ${stamp(d)}
+    <div class="foot"><span>${esc(s.name)}</span><span>${esc(s.website)}</span><span>${esc(d.number)}</span></div>
+  </div>`;
+
+  if (tpl === 'minimal') return `<div class="paper tpl-minimal">
+    <div class="hd">
+      <div>${logoImg(s)}<div class="bname" style="margin-top:${s.logo ? '3mm' : 0}">${esc(s.name)}</div><div style="color:#6b6b66;margin-top:1mm">${fromLines}</div></div>
+      <div><h1 style="text-align:right">${title}</h1><div class="amt">${money(amount)}</div><div style="text-align:right;color:#8a8a84;font-size:8pt">${amountLabel}</div>
+        ${!q && status(d) === 'paid' ? '<div class="paid-note">Paid in full</div>' : ''}</div>
+    </div>
+    <div class="grid">
+      <div><h4>${q ? 'For' : 'Billed to'}</h4>${billTo(c)}</div>
+      <div><h4>Number</h4>${esc(d.number)}${d.ref ? `<h4 style="margin-top:3mm">Reference</h4>${esc(d.ref)}` : ''}</div>
+      <div><h4>Issued</h4>${fmtDate(d.date)}</div>
+      <div><h4>${dueLabel}</h4>${fmtDate(d.due)}</div>
+    </div>
+    ${itemsTable(d, ['', 'Description', 'Qty', 'Unit price', 'Amount'])}${totalsTable(d)}${notesBlock(d)}${signBlock(d)}
+    <div class="foot"><span>${esc(s.name)}${s.website ? ' — ' + esc(s.website) : ''}</span><span>${esc(d.number)}</span></div>
+  </div>`;
+
+  return `<div class="paper tpl-classic">
+    <div class="hd">
+      <div>${logoImg(s)}<div class="bname">${esc(s.name)}</div><div class="from">${fromLines}</div></div>
+      <div class="title"><h1>${title}</h1><table class="meta">
+        <tr><th>${title} no.</th><td>${esc(d.number)}</td></tr>
+        <tr><th>Date</th><td>${fmtDate(d.date)}</td></tr>
+        <tr><th>${dueLabel}</th><td>${fmtDate(d.due)}</td></tr>
+        ${d.ref ? `<tr><th>Reference</th><td>${esc(d.ref)}</td></tr>` : ''}
+      </table></div>
+    </div>
+    <div class="parties"><div><h4>${q ? 'Quotation for' : 'Bill to'}</h4>${billTo(c)}</div>
+      <div class="due"><h4>${amountLabel}</h4><b>${money(amount)}</b>${q ? '' : `<span style="color:#6b6b66;font-size:9pt">by ${fmtDate(d.due)}</span>`}</div></div>
+    ${itemsTable(d)}${totalsTable(d)}${notesBlock(d)}${signBlock(d)}
+    ${stamp(d)}
+    <div class="foot">${[s.name, s.phone, s.email, s.website].filter(Boolean).map(esc).join('  ·  ')}</div>
+  </div>`;
+}
+
+function printPaper(html, title) {
+  $('#print').innerHTML = html;
+  const old = document.title;
+  document.title = title; // becomes the PDF file name in most browsers
+  window.print();
+  document.title = old;
+}
+
+/* ---------- dialogs ---------- */
+function modal(title, body, { ok = 'Save', danger = false, onSubmit } = {}) {
+  const dlg = $('#dlg');
+  dlg.innerHTML = `<form novalidate><div class="dlg-head">${title}</div><div class="dlg-body">${body}<div class="err" hidden></div></div>
+    <div class="dlg-foot"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary${danger ? ' danger-bg' : ''}" ${danger ? 'style="background:var(--danger);border-color:var(--danger)"' : ''}>${ok}</button></div></form>`;
+  const form = $('form', dlg);
+  $('[data-close]', dlg).onclick = () => dlg.close();
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const msg = await onSubmit?.(Object.fromEntries(new FormData(form)), form);
+    if (typeof msg === 'string') { const el = $('.err', dlg); el.textContent = msg; el.hidden = false; return; }
+    dlg.close();
+  };
+  dlg.showModal();
+  $('input,select,textarea', form)?.focus();
+}
+const confirmBox = (title, text, ok = 'Delete') => new Promise(res => {
+  modal(title, `<p style="margin:0;color:var(--ink-2)">${text}</p>`, { ok, danger: true, onSubmit: () => res(true) });
+  $('#dlg').addEventListener('close', () => res(false), { once: true });
+});
+
+function customerDialog(c = {}, done) {
+  const v = k => esc(c[k] || '');
+  modal(c.id ? 'Edit customer' : 'New customer', `
+    <label class="f">Customer or company name<input name="name" value="${v('name')}" required maxlength="160"></label>
+    <div class="grid2"><label class="f">Contact person<input name="contact" value="${v('contact')}"></label>
+      <label class="f">Tax ID (TIN)<input name="taxId" value="${v('taxId')}"></label></div>
+    <div class="grid2"><label class="f">Email<input name="email" type="email" value="${v('email')}"></label>
+      <label class="f">Phone<input name="phone" value="${v('phone')}"></label></div>
+    <label class="f">Billing address<textarea name="address" rows="3">${v('address')}</textarea></label>
+    <label class="f">Internal notes <span class="hint">Not printed on documents</span><textarea name="notes" rows="2">${v('notes')}</textarea></label>`, {
+    ok: c.id ? 'Save changes' : 'Add customer',
+    onSubmit: async (f, form) => {
+      f.name = f.name.trim();
+      if (!f.name) return 'Enter the customer name.';
+      if (f.email && !form.email.checkValidity()) return 'That email address doesn’t look right.';
+      const rec = { ...c, ...f, id: c.id || uid(), createdAt: c.createdAt || new Date().toISOString() };
+      if (!await persist('customer', rec)) return 'Could not save. Try again.';
+      upsert(db.customers, rec);
+      done?.(rec);
+    },
+  });
+}
+
+function paymentDialog(d) {
+  const t = totals(d);
+  modal(`Record payment · ${esc(d.number)}`, `
+    <div class="muted">Balance due <strong style="color:var(--ink)">${money(t.balance)}</strong></div>
+    <div class="grid2"><label class="f">Amount<input name="amount" type="number" step="0.01" min="0.01" value="${plain(t.balance)}" required></label>
+      <label class="f">Date received<input name="date" type="date" value="${today()}" required></label></div>
+    <div class="grid2"><label class="f">Method<select name="method">${METHODS.map(m => `<option>${m}</option>`).join('')}</select></label>
+      <label class="f">Reference <span class="hint">Transfer ID, cheque no.</span><input name="ref"></label></div>`, {
+    ok: 'Record payment',
+    onSubmit: async f => {
+      const amount = r2(f.amount);
+      if (!(amount > 0)) return 'Enter an amount greater than zero.';
+      if (amount > t.balance) return `That is more than the balance due (${money(t.balance)}).`;
+      if (!f.date) return 'Pick the date the payment was received.';
+      const rec = { ...d, status: d.status === 'draft' ? 'sent' : d.status, payments: [...(d.payments || []), { id: uid(), amount, date: f.date, method: f.method, ref: f.ref.trim() }] };
+      if (!await persist('doc', rec)) return 'Could not save. Try again.';
+      upsert(db.docs, rec);
+      toast(totals(rec).balance <= 0 ? `${d.number} is now paid in full` : 'Payment recorded');
+      route();
+    },
+  });
+}
+
+/* ---------- page parts ---------- */
+const head = (title, sub = '', actions = '', crumb = '') =>
+  `<div class="page-head"><div>${crumb ? `<div class="crumb">${crumb}</div>` : ''}<h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div class="actions">${actions}</div></div>`;
+const kpi = (label, value, note = '', bad = false) =>
+  `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value${bad ? ' bad' : ''}">${value}</div>${note ? `<div class="kpi-note">${note}</div>` : ''}</div>`;
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  print: '<svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>',
+  down: '<svg viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+};
+const empty = (title, text, action = '') => `<div class="empty"><strong>${title}</strong>${text}${action ? `<div style="margin-top:14px">${action}</div>` : ''}</div>`;
+
+function docRows(list, { showCustomer = true } = {}) {
+  return list.map(d => {
+    const t = totals(d);
+    return `<tr class="link" data-href="#/doc/${d.id}">
+      <td class="strong">${esc(d.number)}</td>
+      ${showCustomer ? `<td>${esc(cust(d.customerId).name)}</td>` : ''}
+      <td>${fmtDate(d.date)}</td><td>${fmtDate(d.due)}</td><td>${pill(d)}</td>
+      <td class="num">${money(t.total)}</td>
+      ${d.type === 'invoice' ? `<td class="num">${isOpen(d) ? money(t.balance) : '<span class="muted">—</span>'}</td>` : ''}
+    </tr>`;
+  }).join('');
+}
+function docTable(list, type, opts = {}) {
+  const showCustomer = opts.showCustomer !== false;
+  return `<div class="tbl-wrap"><table class="t"><thead><tr><th>Number</th>${showCustomer ? '<th>Customer</th>' : ''}<th>Date</th><th>${type === 'quote' ? 'Valid until' : 'Due'}</th><th>Status</th><th class="num">Total</th>${type === 'invoice' ? '<th class="num">Balance</th>' : ''}</tr></thead>
+    <tbody>${docRows(list, opts)}</tbody></table></div>`;
+}
+const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '') || String(b.number).localeCompare(String(a.number));
+
+function downloadCSV(name, rows) {
+  const cell = v => {
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(v)) v = "'" + v; // stop spreadsheets running cell text as a formula
+    v = String(v ?? '');
+    return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- views ---------- */
+const main = () => $('#main');
+
+function vOverview() {
+  const s = S(), inv = db.docs.filter(d => d.type === 'invoice');
+  const open = inv.filter(isOpen), overdue = open.filter(d => status(d) === 'overdue');
+  const month = today().slice(0, 7);
+  const collected = payments().filter(p => p.date.startsWith(month));
+  const quotes = db.docs.filter(d => d.type === 'quote' && status(d) === 'sent');
+  const billedMonth = inv.filter(d => isBilled(d) && d.date.startsWith(month));
+  const recent = [...db.docs].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, 8);
+  const monthName = new Date().toLocaleDateString('en-GB', { month: 'long' });
+
+  main().innerHTML = head('Overview', new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    `<a class="btn" href="#/new/quote">${ICON.plus}New quotation</a><a class="btn primary" href="#/new/invoice">${ICON.plus}New invoice</a>`) + `
+    <div class="kpis">
+      ${kpi('Outstanding', money(sum(open, d => totals(d).balance)), `${open.length} open invoice${open.length === 1 ? '' : 's'}`)}
+      ${kpi('Overdue', money(sum(overdue, d => totals(d).balance)), `${overdue.length} invoice${overdue.length === 1 ? '' : 's'} past due`, overdue.length > 0)}
+      ${kpi(`Collected in ${monthName}`, money(sum(collected, p => p.amount)), `${collected.length} payment${collected.length === 1 ? '' : 's'}`)}
+      ${kpi(`Invoiced in ${monthName}`, money(sum(billedMonth, d => totals(d).total)), `${quotes.length} quotation${quotes.length === 1 ? '' : 's'} awaiting reply`)}
+    </div>
+    <div class="split">
+      <div class="stack">
+        <div class="card"><div class="card-head"><h2>Overdue invoices</h2><a href="#/invoices/overdue" class="small">View all</a></div>
+          ${overdue.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Number</th><th>Customer</th><th>Due</th><th class="num">Days late</th><th class="num">Balance</th></tr></thead><tbody>
+            ${overdue.sort((a, b) => a.due.localeCompare(b.due)).slice(0, 8).map(d => `<tr class="link" data-href="#/doc/${d.id}"><td class="strong">${esc(d.number)}</td><td>${esc(cust(d.customerId).name)}</td><td>${fmtDate(d.due)}</td><td class="num">${daysBetween(d.due, today())}</td><td class="num">${money(totals(d).balance)}</td></tr>`).join('')}
+          </tbody></table></div>` : empty('Nothing overdue', 'Every sent invoice is within its payment terms.')}
+        </div>
+        <div class="card"><div class="card-head"><h2>Recently updated</h2></div>
+          ${recent.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Document</th><th>Customer</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>
+            ${recent.map(d => `<tr class="link" data-href="#/doc/${d.id}"><td><span class="strong">${esc(d.number)}</span> <span class="muted small">${docLabel(d.type)}</span></td><td>${esc(cust(d.customerId).name)}</td><td>${fmtDate(d.date)}</td><td>${pill(d)}</td><td class="num">${money(totals(d).total)}</td></tr>`).join('')}
+          </tbody></table></div>` : empty('No documents yet', 'Add a customer, then raise your first quotation or invoice.', `<a class="btn primary" href="#/customers/new">${ICON.plus}Add customer</a>`)}
+        </div>
+      </div>
+      <div class="card"><div class="card-head"><h2>Receivables by age</h2></div><div class="card-body">
+        <dl class="dl">${aging(inv).map((v, i) => `<dt>${BUCKETS[i]}</dt><dd>${money(v)}</dd>`).join('')}
+        <dt class="total">Total</dt><dd class="total">${money(sum(open, d => totals(d).balance))}</dd></dl>
+        <a class="btn sm" style="margin-top:16px" href="#/reports">Open reports</a>
+      </div></div>
+    </div>`;
+}
+
+const listState = { invoice: { f: 'all', q: '' }, quote: { f: 'all', q: '' } };
+const FILTERS = {
+  invoice: { all: 'All', draft: 'Draft', unpaid: 'Unpaid', overdue: 'Overdue', paid: 'Paid' },
+  quote: { all: 'All', draft: 'Draft', sent: 'Awaiting reply', accepted: 'Accepted', closed: 'Closed' },
+};
+const matchFilter = (d, f) => f === 'all' ? true
+  : f === 'unpaid' ? isOpen(d)
+  : f === 'closed' ? ['declined', 'expired', 'invoiced', 'void'].includes(status(d))
+  : status(d) === f;
+
+function vList(type, filter) {
+  const st = listState[type];
+  if (filter && FILTERS[type][filter]) st.f = filter;
+  const all = db.docs.filter(d => d.type === type);
+  const plural = type === 'quote' ? 'Quotations' : 'Invoices';
+  main().innerHTML = head(plural, `${all.length} total`, `<a class="btn primary" href="#/new/${type}">${ICON.plus}New ${docLabel(type).toLowerCase()}</a>`) + `
+    <div class="card"><div class="toolbar">
+      <div class="seg">${Object.entries(FILTERS[type]).map(([k, v]) => `<button data-filter="${k}" class="${st.f === k ? 'on' : ''}">${v} <span class="muted small">${all.filter(d => matchFilter(d, k)).length}</span></button>`).join('')}</div>
+      <div class="grow"></div><input class="inp" type="search" placeholder="Search number, customer, reference" value="${esc(st.q)}" id="q">
+    </div><div id="rows"></div></div>`;
+  const draw = () => {
+    const q = st.q.toLowerCase();
+    const list = all.filter(d => matchFilter(d, st.f) && (!q || `${d.number} ${cust(d.customerId).name} ${d.ref || ''}`.toLowerCase().includes(q))).sort(byDateDesc);
+    $('#rows').innerHTML = list.length ? docTable(list, type) + `<div class="toolbar" style="border-top:1px solid var(--line);border-bottom:0;justify-content:flex-end"><span class="muted small">${list.length} shown · Total ${money(sum(list, d => totals(d).total))}</span></div>`
+      : all.length ? empty('No matches', 'Try another filter or search term.') : empty(`No ${plural.toLowerCase()} yet`, `Create your first ${docLabel(type).toLowerCase()} to see it here.`, `<a class="btn primary" href="#/new/${type}">${ICON.plus}New ${docLabel(type).toLowerCase()}</a>`);
+    // the same filter state shows in the counts; seg buttons rewrite the state
+    $$('.seg [data-filter]').forEach(b => b.classList.toggle('on', b.dataset.filter === st.f));
+  };
+  $('#q').oninput = e => { st.q = e.target.value; draw(); };
+  $$('.seg [data-filter]').forEach(b => b.onclick = () => { st.f = b.dataset.filter; draw(); });
+  draw();
+}
+
+/* Editor */
+let draft = null, pendingDoc = null, dirty = false;
+function freshDoc(type, customerId = '') {
+  const s = S(), d = today();
+  return {
+    id: uid(), type, number: nextNumber(type), customerId, date: d,
+    due: addDays(d, type === 'quote' ? s.validDays : s.dueDays), ref: '', status: 'draft',
+    items: [{ desc: '', qty: 1, rate: 0 }], discount: 0, taxRate: s.taxRate,
+    notes: s.notes, terms: s.terms, template: type === 'quote' ? s.quoteTemplate : s.invoiceTemplate, payments: [],
+  };
+}
+function vEdit(id, type, customerId) {
+  const existing = id && db.docs.find(d => d.id === id);
+  if (id && !existing) return notFound();
+  draft = existing ? structuredClone(existing) : pendingDoc || freshDoc(type, customerId);
+  pendingDoc = null; dirty = false;
+  const isNew = !existing, s = S(), label = docLabel(draft.type);
+  const customerOptions = () => `<option value="">Select a customer…</option>${[...db.customers].sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${c.id === draft.customerId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__new">+ Add new customer…</option>`;
+  const back = isNew ? `#/${draft.type === 'quote' ? 'quotes' : 'invoices'}` : `#/doc/${draft.id}`;
+
+  main().innerHTML = head(isNew ? `New ${label.toLowerCase()}` : `Edit ${esc(draft.number)}`, '',
+    `<a class="btn" href="${back}">Cancel</a><button class="btn primary" data-act="save-doc">Save ${label.toLowerCase()}</button>`,
+    `<a href="#/${draft.type === 'quote' ? 'quotes' : 'invoices'}">${label === 'Quotation' ? 'Quotations' : 'Invoices'}</a> / ${isNew ? 'New' : esc(draft.number)}`) + `
+    <div class="split">
+      <div class="stack">
+        <div class="card"><div class="card-body">
+          <div class="grid3">
+            <label class="f span2">Customer<select data-f="customerId" id="cust-sel">${customerOptions()}</select></label>
+            <label class="f">${label} number<input data-f="number" value="${esc(draft.number)}"></label>
+            <label class="f">Issue date<input type="date" data-f="date" value="${draft.date}"></label>
+            <label class="f">${draft.type === 'quote' ? 'Valid until' : 'Due date'}<input type="date" data-f="due" value="${draft.due}"></label>
+            <label class="f">Reference / PO <span class="hint">Optional</span><input data-f="ref" value="${esc(draft.ref)}"></label>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-head"><h2>Line items</h2><span class="muted small">Prices in ${esc(s.currency)}, before ${esc(s.taxLabel)}. Shift+Enter in a description adds a detail line.</span></div>
+          <div class="card-body" style="padding-top:6px"><div class="tbl-wrap"><table class="items-edit"><thead><tr><th>Description</th><th class="q" style="text-align:right">Qty</th><th class="r" style="text-align:right">Rate</th><th class="a" style="text-align:right">Amount</th><th class="x"></th></tr></thead><tbody id="items"></tbody></table></div>
+          <button class="btn sm" style="margin-top:10px" data-act="add-item">${ICON.plus}Add line</button></div></div>
+        <div class="card"><div class="card-body grid2">
+          <label class="f">Notes to customer<textarea data-f="notes" rows="4">${esc(draft.notes)}</textarea></label>
+          <label class="f">Terms &amp; conditions<textarea data-f="terms" rows="4">${esc(draft.terms)}</textarea></label>
+        </div></div>
+      </div>
+      <div class="card sticky"><div class="card-head"><h2>Summary</h2></div><div class="card-body stack">
+        <div class="grid2"><label class="f">Discount %<input type="number" min="0" max="100" step="0.01" data-f="discount" value="${+draft.discount || 0}"></label>
+          <label class="f">${esc(s.taxLabel)} %<input type="number" min="0" max="100" step="0.01" data-f="taxRate" value="${+draft.taxRate || 0}"></label></div>
+        <dl class="dl" id="sum"></dl>
+        <label class="f">Template<select data-f="template">${Object.entries(TEMPLATES).map(([k, v]) => `<option value="${k}" ${draft.template === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <button class="btn primary" data-act="save-doc" style="justify-content:center">Save ${label.toLowerCase()}</button>
+      </div></div>
+    </div>`;
+
+  const drawSum = () => {
+    const t = totals(draft);
+    $('#sum').innerHTML = `<dt>Subtotal</dt><dd>${money(t.sub)}</dd>${t.disc ? `<dt>Discount</dt><dd>−${money(t.disc)}</dd>` : ''}<dt>${esc(s.taxLabel)}</dt><dd>${money(t.tax)}</dd><dt class="total">Total</dt><dd class="total">${money(t.total)}</dd>${t.paid ? `<dt>Paid</dt><dd>${money(t.paid)}</dd>` : ''}`;
+  };
+  const fit = el => { el.style.height = '32px'; el.style.height = el.scrollHeight + 2 + 'px'; };
+  const drawItems = () => {
+    $('#items').innerHTML = draft.items.map((it, i) => `<tr data-i="${i}">
+      <td><textarea class="inp" rows="1" data-k="desc" placeholder="Item or service">${esc(it.desc)}</textarea></td>
+      <td class="q"><input class="inp" type="number" step="any" min="0" data-k="qty" value="${it.qty}"></td>
+      <td class="r"><input class="inp" type="number" step="0.01" min="0" data-k="rate" value="${it.rate}"></td>
+      <td class="a amt">${plain(r2(it.qty * it.rate))}</td>
+      <td class="x"><button class="icon-x" data-act="del-item" title="Remove line" aria-label="Remove line">✕</button></td></tr>`).join('');
+    $$('#items textarea').forEach(fit);
+  };
+  drawItems(); drawSum();
+
+  main().oninput = e => {
+    const el = e.target;
+    if (el.dataset.f && el.dataset.f !== 'customerId') draft[el.dataset.f] = el.type === 'number' ? +el.value : el.value;
+    const row = el.closest('tr[data-i]');
+    if (row && el.dataset.k) {
+      const it = draft.items[+row.dataset.i];
+      it[el.dataset.k] = el.dataset.k === 'desc' ? el.value : +el.value;
+      if (el.tagName === 'TEXTAREA') fit(el);
+      $('.amt', row).textContent = plain(r2(it.qty * it.rate));
+    }
+    dirty = true; drawSum();
+  };
+  main().onkeydown = e => {
+    if (e.target.dataset.k === 'desc' && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Enter moves on to qty; Shift+Enter keeps the newline
+      $('[data-k=qty]', e.target.closest('tr')).focus();
+    }
+  };
+  $('#cust-sel').onchange = e => {
+    if (e.target.value !== '__new') { draft.customerId = e.target.value; dirty = true; return; }
+    e.target.value = draft.customerId;
+    customerDialog({}, c => { draft.customerId = c.id; dirty = true; $('#cust-sel').innerHTML = customerOptions(); });
+  };
+  vEdit.addItem = () => { draft.items.push({ desc: '', qty: 1, rate: 0 }); dirty = true; drawItems(); drawSum(); $$('#items textarea').at(-1).focus(); };
+  vEdit.delItem = i => { draft.items.splice(i, 1); if (!draft.items.length) draft.items.push({ desc: '', qty: 1, rate: 0 }); dirty = true; drawItems(); drawSum(); };
+}
+async function saveDoc() {
+  const d = draft;
+  d.number = String(d.number).trim();
+  const items = d.items.filter(i => String(i.desc).trim() || +i.rate);
+  const problem = !d.customerId ? 'Choose a customer.'
+    : !d.number ? `Enter a ${docLabel(d.type).toLowerCase()} number.`
+    : db.docs.some(x => x.type === d.type && x.id !== d.id && x.number === d.number) ? `${d.number} is already used by another ${docLabel(d.type).toLowerCase()}.`
+    : !items.length ? 'Add at least one line item.'
+    : !d.date ? 'Set the issue date.'
+    : d.due && d.due < d.date ? `The ${d.type === 'quote' ? 'valid-until' : 'due'} date is before the issue date.`
+    : null;
+  if (problem) return toast(problem);
+  const isNew = !db.docs.some(x => x.id === d.id);
+  const now = new Date().toISOString();
+  const rec = { ...d, items, createdAt: d.createdAt || now, updatedAt: now };
+  if (!await persist('doc', rec)) return;
+  upsert(db.docs, rec);
+  if (isNew && rec.quoteId) {
+    const q = db.docs.find(x => x.id === rec.quoteId);
+    if (q) { const qr = { ...q, status: 'invoiced', invoiceId: rec.id, updatedAt: now }; if (await persist('doc', qr)) upsert(db.docs, qr); }
+  }
+  dirty = false;
+  toast(`${rec.number} saved`);
+  location.hash = `#/doc/${rec.id}`;
+}
+
+/* Document view */
+function vDoc(id) {
+  const d = db.docs.find(x => x.id === id);
+  if (!d) return notFound();
+  const t = totals(d), st = status(d), q = d.type === 'quote', c = cust(d.customerId);
+  const listHref = q ? '#/quotes' : '#/invoices';
+  const linked = q ? d.invoiceId && db.docs.find(x => x.id === d.invoiceId) : d.quoteId && db.docs.find(x => x.id === d.quoteId);
+  const menu = [
+    `<button data-act="edit">Edit</button>`,
+    `<button data-act="duplicate">Duplicate</button>`,
+    d.status === 'draft' ? '' : `<button data-act="set-status" data-v="draft">Revert to draft</button>`,
+    q && ['sent', 'expired'].includes(st) ? `<button data-act="set-status" data-v="declined">Mark as declined</button>` : '',
+    !q && st !== 'void' && !t.paid ? `<button data-act="set-status" data-v="void">Void invoice</button>` : '',
+    '<hr>',
+    `<button class="danger" data-act="delete-doc">Delete</button>`,
+  ].join('');
+  const primary =
+    d.status === 'draft' ? `<button class="btn primary" data-act="set-status" data-v="sent">Mark as sent</button>`
+    : !q && isOpen(d) ? `<button class="btn primary" data-act="pay">Record payment</button>`
+    : q && ['sent', 'expired'].includes(st) ? `<button class="btn" data-act="set-status" data-v="accepted">Mark accepted</button><button class="btn primary" data-act="convert">Convert to invoice</button>`
+    : q && st === 'accepted' ? `<button class="btn primary" data-act="convert">Convert to invoice</button>` : '';
+
+  main().innerHTML = head(`${esc(d.number)} ${pill(d)}`, `${docLabel(d.type)} for <a href="#/customer/${d.customerId}">${esc(c.name)}</a>`,
+    `<div class="seg" title="Template">${Object.entries(TEMPLATES).map(([k, v]) => `<button data-act="tpl" data-v="${k}" class="${(d.template || 'classic') === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+     <button class="btn" data-act="print">${ICON.print}Print / PDF</button>${primary}
+     <details class="menu"><summary class="btn" aria-label="More actions">${ICON.more}</summary><div class="menu-list">${menu}</div></details>`,
+    `<a href="${listHref}">${q ? 'Quotations' : 'Invoices'}</a> / ${esc(d.number)}`) + `
+    <div class="split">
+      <div class="paper-wrap" id="paper">${renderDoc(d)}</div>
+      <div class="stack sticky">
+        <div class="card"><div class="card-body"><dl class="dl">
+          <dt>Total</dt><dd>${money(t.total)}</dd>
+          ${q ? '' : `<dt>Paid</dt><dd>${money(t.paid)}</dd><dt class="total">Balance</dt><dd class="total">${money(t.balance)}</dd>`}
+          <dt>Issued</dt><dd>${fmtDate(d.date)}</dd><dt>${q ? 'Valid until' : 'Due'}</dt><dd>${fmtDate(d.due)}</dd>
+          ${linked ? `<dt>${q ? 'Invoice' : 'From quote'}</dt><dd><a href="#/doc/${linked.id}">${esc(linked.number)}</a></dd>` : ''}
+        </dl></div></div>
+        ${q ? '' : `<div class="card"><div class="card-head"><h2>Payments</h2>${isOpen(d) ? `<button class="btn sm" data-act="pay">${ICON.plus}Add</button>` : ''}</div>
+          ${(d.payments || []).length ? `<table class="t"><tbody>${d.payments.map(p => `<tr><td><div class="strong">${money(p.amount)}</div><div class="muted small">${fmtDate(p.date)} · ${esc(p.method)}${p.ref ? ' · ' + esc(p.ref) : ''}</div></td><td class="num"><button class="icon-x" data-act="del-pay" data-v="${p.id}" title="Remove payment" aria-label="Remove payment">✕</button></td></tr>`).join('')}</tbody></table>`
+            : `<div class="card-body muted small">No payments recorded yet.</div>`}</div>`}
+        <div class="card"><div class="card-head"><h2>Customer</h2><a class="small" href="#/report/${d.customerId}">Report</a></div><div class="card-body small" style="line-height:1.6">${billTo(c)}</div></div>
+      </div>
+    </div>`;
+  vDoc.current = d;
+}
+async function docAction(act, v) {
+  const d = vDoc.current;
+  const save = async patch => {
+    const rec = { ...d, ...patch, updatedAt: new Date().toISOString() };
+    if (!await persist('doc', rec)) return;
+    upsert(db.docs, rec); route();
+  };
+  if (act === 'tpl') return save({ template: v });
+  if (act === 'print') return printPaper(renderDoc(d), `${d.number} - ${cust(d.customerId).name}`);
+  if (act === 'edit') return (location.hash = `#/edit/${d.id}`);
+  if (act === 'pay') return paymentDialog(d);
+  if (act === 'set-status') {
+    if (v === 'void' && !await confirmBox(`Void ${esc(d.number)}?`, 'It stays on record for your audit trail but no longer counts as money owed.', 'Void invoice')) return;
+    const patch = { status: v };
+    if (v === 'draft' && d.type === 'quote') patch.invoiceId = undefined;
+    toast(`${d.number} marked ${STATUS_LABEL[v].toLowerCase()}`);
+    return save(patch);
+  }
+  if (act === 'convert') {
+    if (d.invoiceId && db.docs.some(x => x.id === d.invoiceId)) return (location.hash = `#/doc/${d.invoiceId}`);
+    const inv = freshDoc('invoice', d.customerId);
+    pendingDoc = { ...inv, items: structuredClone(d.items), discount: d.discount, taxRate: d.taxRate, ref: d.ref || d.number, quoteId: d.id, notes: d.notes };
+    return (location.hash = '#/new/invoice');
+  }
+  if (act === 'duplicate') {
+    pendingDoc = { ...freshDoc(d.type, d.customerId), items: structuredClone(d.items), discount: d.discount, taxRate: d.taxRate, notes: d.notes, terms: d.terms, template: d.template };
+    return (location.hash = `#/new/${d.type}`);
+  }
+  if (act === 'del-pay') {
+    const p = d.payments.find(x => x.id === v);
+    if (!await confirmBox('Remove this payment?', `${money(p.amount)} received ${fmtDate(p.date)} will be removed and the balance goes back up.`, 'Remove')) return;
+    return save({ payments: d.payments.filter(x => x.id !== v) });
+  }
+  if (act === 'delete-doc') {
+    const why = d.payments?.length ? ' It has payments recorded; consider voiding instead so your records stay complete.' : '';
+    if (!await confirmBox(`Delete ${esc(d.number)}?`, `This permanently removes the ${docLabel(d.type).toLowerCase()}.${why}`)) return;
+    if (!await destroy('doc', d.id)) return;
+    db.docs = db.docs.filter(x => x.id !== d.id);
+    toast(`${d.number} deleted`);
+    location.hash = d.type === 'quote' ? '#/quotes' : '#/invoices';
+  }
+}
+
+/* Customers */
+const custState = { q: '' };
+function custStats(id) {
+  const docs = db.docs.filter(d => d.customerId === id);
+  const inv = docs.filter(isBilled), open = inv.filter(isOpen);
+  return {
+    docs, inv, quotes: docs.filter(d => d.type === 'quote'),
+    billed: sum(inv, d => totals(d).total), paid: sum(inv, d => totals(d).paid),
+    outstanding: sum(open, d => totals(d).balance),
+    overdue: sum(open.filter(d => status(d) === 'overdue'), d => totals(d).balance),
+    last: inv.map(d => d.date).sort().at(-1),
+  };
+}
+function vCustomers(sub) {
+  main().innerHTML = head('Customers', `${db.customers.length} on file`, `<button class="btn primary" data-act="new-customer">${ICON.plus}New customer</button>`) + `
+    <div class="card"><div class="toolbar"><input class="inp" type="search" id="q" placeholder="Search name, contact, email, phone" value="${esc(custState.q)}"><div class="grow"></div><span class="muted small" id="cnt"></span></div><div id="rows"></div></div>`;
+  const draw = () => {
+    const q = custState.q.toLowerCase();
+    const list = db.customers.filter(c => !q || `${c.name} ${c.contact} ${c.email} ${c.phone}`.toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name));
+    $('#cnt').textContent = q ? `${list.length} match${list.length === 1 ? '' : 'es'}` : '';
+    $('#rows').innerHTML = list.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Customer</th><th>Contact</th><th class="num">Invoices</th><th class="num">Billed</th><th class="num">Outstanding</th><th class="num">Overdue</th></tr></thead><tbody>
+      ${list.map(c => { const s = custStats(c.id); return `<tr class="link" data-href="#/customer/${c.id}"><td class="strong">${esc(c.name)}</td><td class="muted">${esc(c.contact || c.email || c.phone || '')}</td><td class="num">${s.inv.length}</td><td class="num">${money(s.billed)}</td><td class="num">${s.outstanding ? money(s.outstanding) : '<span class="muted">—</span>'}</td><td class="num" style="${s.overdue ? 'color:var(--danger)' : ''}">${s.overdue ? money(s.overdue) : '<span class="muted">—</span>'}</td></tr>`; }).join('')}
+    </tbody></table></div>` : db.customers.length ? empty('No matches', 'Try a different search.') : empty('No customers yet', 'Customers keep their quotations, invoices and payments together.', `<button class="btn primary" data-act="new-customer">${ICON.plus}Add your first customer</button>`);
+  };
+  $('#q').oninput = e => { custState.q = e.target.value; draw(); };
+  draw();
+  if (sub === 'new') { history.replaceState(null, '', '#/customers'); customerDialog({}, c => (location.hash = `#/customer/${c.id}`)); }
+}
+function vCustomer(id, tab = 'invoices') {
+  const c = db.customers.find(x => x.id === id);
+  if (!c) return notFound();
+  const s = custStats(id);
+  const invoices = s.docs.filter(d => d.type === 'invoice').sort(byDateDesc);
+  const pays = invoices.filter(isBilled).flatMap(d => (d.payments || []).map(p => ({ ...p, doc: d }))).sort((a, b) => b.date.localeCompare(a.date));
+  const tabs = { invoices: ['Invoices', invoices.length], quotes: ['Quotations', s.quotes.length], payments: ['Payments', pays.length], details: ['Details', null] };
+  const body = {
+    invoices: () => invoices.length ? `<div class="card">${docTable(invoices, 'invoice', { showCustomer: false })}</div>` : `<div class="card">${empty('No invoices', `Nothing billed to ${esc(c.name)} yet.`, `<a class="btn primary" href="#/new/invoice/${id}">${ICON.plus}New invoice</a>`)}</div>`,
+    quotes: () => s.quotes.length ? `<div class="card">${docTable(s.quotes.sort(byDateDesc), 'quote', { showCustomer: false })}</div>` : `<div class="card">${empty('No quotations', 'Quotations you send this customer appear here.', `<a class="btn primary" href="#/new/quote/${id}">${ICON.plus}New quotation</a>`)}</div>`,
+    payments: () => `<div class="card">${pays.length ? `<table class="t"><thead><tr><th>Date</th><th>Invoice</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead><tbody>${pays.map(p => `<tr class="link" data-href="#/doc/${p.doc.id}"><td>${fmtDate(p.date)}</td><td class="strong">${esc(p.doc.number)}</td><td>${esc(p.method)}</td><td class="muted">${esc(p.ref || '—')}</td><td class="num">${money(p.amount)}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">Total received</td><td class="num">${money(sum(pays, p => p.amount))}</td></tr></tfoot></table>` : empty('No payments', 'Payments recorded against this customer’s invoices appear here.')}</div>`,
+    details: () => `<div class="card"><div class="card-body grid2" style="line-height:1.6">
+      <div><div class="kpi-label">Billing address</div>${c.address ? br(c.address) : '<span class="muted">—</span>'}</div>
+      <div><div class="kpi-label">Contact</div>${[c.contact, c.email, c.phone].filter(Boolean).map(esc).join('<br>') || '<span class="muted">—</span>'}</div>
+      <div><div class="kpi-label">Tax ID</div>${esc(c.taxId || '—')}</div>
+      <div><div class="kpi-label">Internal notes</div>${c.notes ? br(c.notes) : '<span class="muted">—</span>'}</div>
+    </div></div>`,
+  };
+  if (!body[tab]) tab = 'invoices';
+  main().innerHTML = head(esc(c.name), [c.contact, c.email, c.phone].filter(Boolean).map(esc).join(' · ') || 'No contact details',
+    `<a class="btn" href="#/report/${id}">Customer report</a><a class="btn" href="#/new/quote/${id}">New quotation</a><a class="btn primary" href="#/new/invoice/${id}">${ICON.plus}New invoice</a>
+     <details class="menu"><summary class="btn" aria-label="More">${ICON.more}</summary><div class="menu-list"><button data-act="edit-customer">Edit customer</button><hr><button class="danger" data-act="delete-customer">Delete customer</button></div></details>`,
+    `<a href="#/customers">Customers</a> / ${esc(c.name)}`) + `
+    <div class="kpis">${kpi('Total billed', money(s.billed), `${s.inv.length} invoice${s.inv.length === 1 ? '' : 's'}`)}${kpi('Received', money(s.paid))}${kpi('Outstanding', money(s.outstanding))}${kpi('Overdue', money(s.overdue), s.last ? `Last invoice ${fmtDate(s.last)}` : '', s.overdue > 0)}</div>
+    <nav class="tabs">${Object.entries(tabs).map(([k, [n, cnt]]) => `<a href="#/customer/${id}/${k}" class="${k === tab ? 'on' : ''}">${n}${cnt !== null ? `<span class="c">${cnt}</span>` : ''}</a>`).join('')}</nav>
+    ${body[tab]()}`;
+  vCustomer.current = c;
+}
+
+/* Reports */
+const period = { preset: 'year', from: '', to: '' };
+const PRESETS = { month: 'This month', 'last-month': 'Last month', quarter: 'This quarter', year: 'This year', 'last-year': 'Last year', all: 'All time', custom: 'Custom range' };
+function presetRange(p) {
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth();
+  if (p === 'month') return [ymd(y, m, 1), ymd(y, m + 1, 0)];
+  if (p === 'last-month') return [ymd(y, m - 1, 1), ymd(y, m, 0)];
+  if (p === 'quarter') { const q = m - m % 3; return [ymd(y, q, 1), ymd(y, q + 3, 0)]; }
+  if (p === 'year') return [ymd(y, 0, 1), ymd(y, 11, 31)];
+  if (p === 'last-year') return [ymd(y - 1, 0, 1), ymd(y - 1, 11, 31)];
+  return ['', ''];
+}
+if (!period.from) [period.from, period.to] = presetRange(period.preset);
+const inRange = date => (!period.from || date >= period.from) && (!period.to || date <= period.to);
+const rangeText = () => period.from || period.to ? `${fmtDate(period.from) === '—' ? 'Start' : fmtDate(period.from)} – ${fmtDate(period.to) === '—' ? 'today' : fmtDate(period.to)}` : 'All time';
+const periodBar = () => `<div class="card" style="margin-bottom:18px"><div class="toolbar" style="border:0">
+  <select class="inp" style="width:auto" id="preset">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}" ${period.preset === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+  <input class="inp" type="date" id="from" style="width:auto" value="${period.from}"><span class="muted">to</span><input class="inp" type="date" id="to" style="width:auto" value="${period.to}">
+  <div class="grow"></div><span class="muted small">${rangeText()}</span></div></div>`;
+function bindPeriod() {
+  $('#preset').onchange = e => { period.preset = e.target.value; if (period.preset !== 'custom') [period.from, period.to] = presetRange(period.preset); route(); };
+  $('#from').onchange = e => { period.from = e.target.value; period.preset = 'custom'; route(); };
+  $('#to').onchange = e => { period.to = e.target.value; period.preset = 'custom'; route(); };
+}
+function summaryRows() {
+  return db.customers.map(c => {
+    const docs = db.docs.filter(d => d.customerId === c.id);
+    const inv = docs.filter(d => isBilled(d) && inRange(d.date));
+    const quotes = docs.filter(d => d.type === 'quote' && d.status !== 'draft' && inRange(d.date));
+    const paid = sum(docs.filter(isBilled).flatMap(d => d.payments || []).filter(p => inRange(p.date)), p => p.amount);
+    const open = docs.filter(isOpen);
+    return {
+      c, count: inv.length, billed: sum(inv, d => totals(d).total), paid,
+      quotes: quotes.length, won: quotes.filter(d => ['accepted', 'invoiced'].includes(d.status)).length,
+      outstanding: sum(open, d => totals(d).balance), age: aging(docs),
+    };
+  }).filter(r => r.count || r.paid || r.quotes || r.outstanding).sort((a, b) => b.billed - a.billed || b.outstanding - a.outstanding);
+}
+function vReports() {
+  const rows = summaryRows();
+  const tot = k => sum(rows, r => r[k]);
+  const ageTot = [0, 1, 2, 3, 4].map(i => sum(rows, r => r.age[i]));
+  main().innerHTML = head('Reports', 'Billing, collections and receivables by customer',
+    `<select class="inp" style="width:220px" id="pick"><option value="">Customer report…</option>${[...db.customers].sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+     <button class="btn" data-act="csv-summary">${ICON.down}Export CSV</button>`) + periodBar() + `
+    <div class="kpis">${kpi('Invoiced', money(tot('billed')), `${tot('count')} invoices · ${rangeText()}`)}${kpi('Collected', money(tot('paid')), rangeText())}${kpi('Outstanding now', money(tot('outstanding')), 'All open invoices')}${kpi('Overdue now', money(r2(tot('outstanding') - ageTot[0])), '', tot('outstanding') - ageTot[0] > 0)}</div>
+    <div class="stack">
+      <div class="card"><div class="card-head"><h2>Customer summary</h2><span class="muted small">Invoiced and collected within the period</span></div>
+        ${rows.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Customer</th><th class="num">Invoices</th><th class="num">Invoiced</th><th class="num">Collected</th><th class="num">Quotes won</th><th class="num">Outstanding</th></tr></thead><tbody>
+          ${rows.map(r => `<tr class="link" data-href="#/report/${r.c.id}"><td class="strong">${esc(r.c.name)}</td><td class="num">${r.count}</td><td class="num">${money(r.billed)}</td><td class="num">${money(r.paid)}</td><td class="num">${r.quotes ? `${r.won}/${r.quotes}` : '<span class="muted">—</span>'}</td><td class="num">${money(r.outstanding)}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td>Total</td><td class="num">${tot('count')}</td><td class="num">${money(tot('billed'))}</td><td class="num">${money(tot('paid'))}</td><td class="num">${tot('won')}/${tot('quotes')}</td><td class="num">${money(tot('outstanding'))}</td></tr></tfoot></table></div>` : empty('No activity in this period', 'Pick a wider date range.')}
+      </div>
+      <div class="card"><div class="card-head"><h2>Aged receivables</h2><span class="muted small">As of ${fmtDate(today())}, by days past due</span><button class="btn sm" data-act="csv-aging">${ICON.down}CSV</button></div>
+        ${rows.some(r => r.outstanding) ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>Customer</th>${BUCKETS.map(b => `<th class="num">${b}</th>`).join('')}<th class="num">Total</th></tr></thead><tbody>
+          ${rows.filter(r => r.outstanding).sort((a, b) => b.outstanding - a.outstanding).map(r => `<tr class="link" data-href="#/report/${r.c.id}"><td class="strong">${esc(r.c.name)}</td>${r.age.map((v, i) => `<td class="num" style="${v && i >= 2 ? 'color:var(--danger)' : ''}">${v ? money(v) : '<span class="muted">—</span>'}</td>`).join('')}<td class="num strong">${money(r.outstanding)}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td>Total</td>${ageTot.map(v => `<td class="num">${money(v)}</td>`).join('')}<td class="num">${money(tot('outstanding'))}</td></tr></tfoot></table></div>` : empty('Nothing outstanding', 'All invoices are settled.')}
+      </div>
+    </div>`;
+  bindPeriod();
+  $('#pick').onchange = e => e.target.value && (location.hash = `#/report/${e.target.value}`);
+  vReports.rows = rows;
+}
+function customerReport(c) {
+  const st = statement(c.id, period.from, period.to);
+  const docs = db.docs.filter(d => d.customerId === c.id);
+  const inv = docs.filter(d => isBilled(d) && inRange(d.date)).sort((a, b) => a.date.localeCompare(b.date));
+  const quotes = docs.filter(d => d.type === 'quote' && d.status !== 'draft' && inRange(d.date));
+  return { st, inv, quotes, age: aging(docs), open: docs.filter(isOpen).sort((a, b) => a.due.localeCompare(b.due)) };
+}
+function vReport(id) {
+  const c = db.customers.find(x => x.id === id);
+  if (!c) return notFound();
+  const { st, inv, quotes, age, open } = customerReport(c);
+  const outstanding = sum(open, d => totals(d).balance);
+  main().innerHTML = head(`${esc(c.name)}`, `Customer report · ${rangeText()}`,
+    `<button class="btn" data-act="csv-statement">${ICON.down}Export CSV</button><button class="btn primary" data-act="print-report">${ICON.print}Print statement</button>`,
+    `<a href="#/reports">Reports</a> / <a href="#/customer/${id}">${esc(c.name)}</a>`) + periodBar() + `
+    <div class="kpis">${kpi('Invoiced', money(st.debit), `${inv.length} invoice${inv.length === 1 ? '' : 's'}`)}${kpi('Received', money(st.credit))}${kpi('Balance at period end', money(st.closing), `Opening ${money(st.opening)}`)}${kpi('Outstanding now', money(outstanding), `${quotes.length} quote${quotes.length === 1 ? '' : 's'} · ${quotes.filter(q => ['accepted', 'invoiced'].includes(q.status)).length} won`, age.slice(1).some(Boolean))}</div>
+    <div class="stack">
+      <div class="card"><div class="card-head"><h2>Statement of account</h2></div>
+        <div class="tbl-wrap"><table class="t"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="num">Charges</th><th class="num">Payments</th><th class="num">Balance</th></tr></thead><tbody>
+          <tr><td>${period.from ? fmtDate(period.from) : '—'}</td><td colspan="4" class="muted">Opening balance</td><td class="num">${money(st.opening)}</td></tr>
+          ${st.rows.map(r => `<tr class="link" data-href="#/doc/${r.doc.id}"><td>${fmtDate(r.date)}</td><td>${r.kind}</td><td>${esc(r.ref)}</td><td class="num">${r.debit ? money(r.debit) : ''}</td><td class="num">${r.credit ? money(r.credit) : ''}</td><td class="num">${money(r.balance)}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td colspan="3">Closing balance</td><td class="num">${money(st.debit)}</td><td class="num">${money(st.credit)}</td><td class="num">${money(st.closing)}</td></tr></tfoot></table></div></div>
+      <div class="card"><div class="card-head"><h2>Open invoices</h2><span class="muted small">As of ${fmtDate(today())}</span></div>
+        ${open.length ? docTable(open, 'invoice', { showCustomer: false }) : empty('Nothing outstanding', `${esc(c.name)} is fully paid up.`)}
+        <div class="toolbar" style="border-top:1px solid var(--line);border-bottom:0;gap:18px">${BUCKETS.map((b, i) => `<span class="small"><span class="muted">${b}</span> <strong>${money(age[i])}</strong></span>`).join('')}</div>
+      </div>
+    </div>`;
+  bindPeriod();
+  vReport.current = c;
+}
+function reportPaper(c) {
+  const s = S(), { st, age } = customerReport(c);
+  return `<div class="paper tpl-report">
+    <div class="hd"><div>${logoImg(s)}<div class="bname">${esc(s.name)}</div><div style="color:#6b6b66;font-size:9pt">${s.address ? br(s.address) + '<br>' : ''}${contactLine(s)}</div></div>
+      <div><h1>Statement of account</h1><div style="text-align:right;color:#55554f;margin-top:2mm">${rangeText()}<br>Issued ${fmtDate(today())}</div></div></div>
+    <div style="display:flex;justify-content:space-between;gap:10mm"><div><h3 style="margin-top:0">Customer</h3>${billTo(c)}</div>
+      <div style="text-align:right"><h3 style="margin-top:0">Balance due</h3><div style="font-size:18pt;font-weight:700">${money(st.closing)}</div></div></div>
+    <div class="boxes"><div><span>Opening balance</span><b>${money(st.opening)}</b></div><div><span>Invoiced</span><b>${money(st.debit)}</b></div><div><span>Received</span><b>${money(st.credit)}</b></div><div><span>Closing balance</span><b>${money(st.closing)}</b></div></div>
+    <h3>Transactions</h3>
+    <table class="rt"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="r">Charges</th><th class="r">Payments</th><th class="r">Balance</th></tr></thead><tbody>
+      <tr><td>${period.from ? fmtDate(period.from) : ''}</td><td colspan="4">Opening balance</td><td class="r">${plain(st.opening)}</td></tr>
+      ${st.rows.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${r.kind}</td><td>${esc(r.ref)}</td><td class="r">${r.debit ? plain(r.debit) : ''}</td><td class="r">${r.credit ? plain(r.credit) : ''}</td><td class="r">${plain(r.balance)}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="3">Closing balance (${esc(s.currency)})</td><td class="r">${plain(st.debit)}</td><td class="r">${plain(st.credit)}</td><td class="r">${plain(st.closing)}</td></tr></tfoot></table>
+    <h3>Ageing of current balance</h3>
+    <table class="rt"><thead><tr>${BUCKETS.map(b => `<th class="r">${b}</th>`).join('')}<th class="r">Total</th></tr></thead><tbody><tr>${age.map(v => `<td class="r">${plain(v)}</td>`).join('')}<td class="r"><strong>${plain(sum(age, v => v))}</strong></td></tr></tbody></table>
+    ${s.bank ? `<h3>Payment details</h3><div class="pre" style="font-size:9pt">${esc(s.bank)}</div>` : ''}
+  </div>`;
+}
+function reportAction(act) {
+  const stamp = today();
+  if (act === 'csv-summary') return downloadCSV(`customer-summary-${stamp}.csv`, [
+    ['Customer', 'Invoices', 'Invoiced', 'Collected', 'Quotes sent', 'Quotes won', 'Outstanding'],
+    ...vReports.rows.map(r => [r.c.name, r.count, plain(r.billed), plain(r.paid), r.quotes, r.won, plain(r.outstanding)])]);
+  if (act === 'csv-aging') return downloadCSV(`aged-receivables-${stamp}.csv`, [
+    ['Customer', ...BUCKETS, 'Total'], ...vReports.rows.filter(r => r.outstanding).map(r => [r.c.name, ...r.age.map(plain), plain(r.outstanding)])]);
+  const c = vReport.current;
+  if (act === 'csv-statement') {
+    const { st } = customerReport(c);
+    return downloadCSV(`statement-${c.name.replace(/[^\w]+/g, '-')}-${stamp}.csv`, [
+      ['Date', 'Type', 'Reference', 'Charges', 'Payments', 'Balance'], [period.from, 'Opening balance', '', '', '', plain(st.opening)],
+      ...st.rows.map(r => [r.date, r.kind, r.ref, r.debit ? plain(r.debit) : '', r.credit ? plain(r.credit) : '', plain(r.balance)]),
+      [period.to || stamp, 'Closing balance', '', plain(st.debit), plain(st.credit), plain(st.closing)]]);
+  }
+  if (act === 'print-report') printPaper(reportPaper(c), `Statement - ${c.name}`);
+}
+
+/* Templates */
+const SAMPLE_CUSTOMER = { name: 'Harbour View Resorts Pvt Ltd', contact: 'Aminath Shareef', address: 'H. Seaside Building, 4th Floor\nBoduthakurufaanu Magu, Malé', email: 'accounts@harbourview.mv', phone: '+960 330 1122', taxId: '1012345GST501' };
+function sampleDoc(type) {
+  const d = today();
+  return { id: 'sample', type, number: type === 'quote' ? S().quotePrefix + '0042' : S().invoicePrefix + '0107', date: d, due: addDays(d, type === 'quote' ? 14 : 30), ref: 'PO-7781', status: 'sent',
+    items: [{ desc: 'Website redesign\nDiscovery, wireframes and visual design for 12 pages', qty: 1, rate: 18500 }, { desc: 'Content migration', qty: 40, rate: 150 }, { desc: 'Hosting & maintenance (monthly)', qty: 12, rate: 950 }],
+    discount: 5, taxRate: S().taxRate, notes: S().notes, terms: S().terms || 'Payment due within 30 days. Late payments may incur a 2% monthly charge.', payments: [] };
+}
+let tplType = 'invoice';
+function vTemplates() {
+  const s = S(), key = tplType === 'quote' ? 'quoteTemplate' : 'invoiceTemplate';
+  main().innerHTML = head('Templates', 'Professionally laid out A4 documents. They pick up your logo, details and accent colour from Business settings.',
+    `<div class="seg"><button data-act="tpl-type" data-v="invoice" class="${tplType === 'invoice' ? 'on' : ''}">Invoice</button><button data-act="tpl-type" data-v="quote" class="${tplType === 'quote' ? 'on' : ''}">Quotation</button></div>`) + `
+    <div class="thumbs">${Object.entries(TEMPLATES).map(([k, v]) => `<div class="card">
+      <div class="thumb">${renderDoc(sampleDoc(tplType), k, SAMPLE_CUSTOMER)}</div>
+      <div class="thumb-foot"><div><div class="strong">${v} ${s[key] === k ? '<span class="pill paid" style="margin-left:4px">Default</span>' : ''}</div><div class="muted small" style="max-width:260px">${TEMPLATE_NOTES[k]}</div></div>
+        <div class="actions"><button class="btn sm" data-act="tpl-preview" data-v="${k}">Preview</button>${s[key] === k ? '' : `<button class="btn sm primary" data-act="tpl-default" data-v="${k}">Use as default</button>`}</div></div>
+    </div>`).join('')}</div>
+    <p class="muted small" style="margin-top:18px">Each document can switch template from its own page. The default applies to new ${tplType === 'quote' ? 'quotations' : 'invoices'}.</p>`;
+}
+
+/* Settings */
+function vSettings() {
+  const s = S(), v = k => esc(s[k]);
+  main().innerHTML = head('Business settings', 'These details print on every quotation, invoice and statement.', `<button class="btn primary" data-act="save-settings">Save settings</button>`) + `
+    <form id="settings" class="stack" onsubmit="return false">
+      <div class="card"><div class="card-head"><h2>Business</h2></div><div class="card-body grid2">
+        <label class="f">Business name<input name="name" value="${v('name')}" required></label>
+        <label class="f">Tax ID (TIN)<input name="taxId" value="${v('taxId')}"></label>
+        <label class="f">Email<input name="email" type="email" value="${v('email')}"></label>
+        <label class="f">Phone<input name="phone" value="${v('phone')}"></label>
+        <label class="f">Website<input name="website" value="${v('website')}"></label>
+        <label class="f">Accent colour <span class="hint">Used by the Modern template</span><input name="accent" type="color" value="${v('accent')}" style="padding:2px 4px"></label>
+        <label class="f">Address<textarea name="address" rows="3">${v('address')}</textarea></label>
+        <div class="f"><span style="font-size:12px;font-weight:500;color:var(--ink-2)">Logo <span class="hint">PNG or JPG, up to 300 KB</span></span>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:5px"><div id="logo-prev" style="width:120px;height:56px;border:1px dashed var(--line-2);border-radius:6px;display:grid;place-items:center;background:#fafaf8">${s.logo ? `<img src="${esc(s.logo)}" style="max-width:110px;max-height:48px">` : '<span class="muted small">No logo</span>'}</div>
+          <label class="btn sm">Upload<input type="file" accept="image/png,image/jpeg,image/webp" id="logo" hidden></label>${s.logo ? '<button type="button" class="btn sm ghost" data-act="logo-clear">Remove</button>' : ''}</div></div>
+      </div></div>
+      <div class="card"><div class="card-head"><h2>Tax &amp; currency</h2></div><div class="card-body grid4">
+        <label class="f">Currency code<input name="currency" value="${v('currency')}" maxlength="3" style="text-transform:uppercase"></label>
+        <label class="f">Tax name<input name="taxLabel" value="${v('taxLabel')}"></label>
+        <label class="f">Default tax rate %<input name="taxRate" type="number" step="0.01" min="0" value="${v('taxRate')}"></label>
+      </div></div>
+      <div class="card"><div class="card-head"><h2>Numbering &amp; terms</h2></div><div class="card-body grid4">
+        <label class="f">Invoice prefix<input name="invoicePrefix" value="${v('invoicePrefix')}"></label>
+        <label class="f">Payment terms (days)<input name="dueDays" type="number" min="0" value="${v('dueDays')}"></label>
+        <label class="f">Quotation prefix<input name="quotePrefix" value="${v('quotePrefix')}"></label>
+        <label class="f">Quotes valid for (days)<input name="validDays" type="number" min="0" value="${v('validDays')}"></label>
+      </div></div>
+      <div class="card"><div class="card-head"><h2>Defaults on new documents</h2></div><div class="card-body grid2">
+        <label class="f">Notes<textarea name="notes" rows="3">${v('notes')}</textarea></label>
+        <label class="f">Terms &amp; conditions<textarea name="terms" rows="3">${v('terms')}</textarea></label>
+        <label class="f span2">Payment details <span class="hint">Bank name, account number, SWIFT. Printed on invoices and statements.</span><textarea name="bank" rows="3">${v('bank')}</textarea></label>
+      </div></div>
+      <div class="card"><div class="card-head"><h2>Data</h2></div><div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <span class="muted">${db.customers.length} customers, ${db.docs.length} documents stored.</span><button type="button" class="btn" data-act="backup">${ICON.down}Download backup (JSON)</button></div></div>
+    </form>`;
+  let logo = s.logo;
+  $('#logo').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 300 * 1024) return toast('That logo is over 300 KB. Export a smaller PNG or JPG.');
+    const r = new FileReader();
+    r.onload = () => { logo = r.result; $('#logo-prev').innerHTML = `<img src="${esc(logo)}" style="max-width:110px;max-height:48px">`; dirty = true; };
+    r.readAsDataURL(f);
+  };
+  $('#settings').oninput = () => (dirty = true);
+  vSettings.logo = () => logo;
+  vSettings.clearLogo = () => { logo = ''; $('#logo-prev').innerHTML = '<span class="muted small">No logo</span>'; dirty = true; };
+}
+async function saveSettings(patch) {
+  let rec;
+  if (patch) rec = { ...db.settings, ...patch };
+  else {
+    const f = Object.fromEntries(new FormData($('#settings')));
+    f.currency = f.currency.trim().toUpperCase();
+    if (!f.name.trim()) return toast('Enter your business name.');
+    try { new Intl.NumberFormat('en', { style: 'currency', currency: f.currency }); } catch { return toast(`“${f.currency}” isn’t a currency code. Use ISO codes like MVR, USD or EUR.`); }
+    for (const k of ['taxRate', 'dueDays', 'validDays']) f[k] = Math.max(0, +f[k] || 0);
+    rec = { ...db.settings, ...f, logo: vSettings.logo() };
+  }
+  if (!await persist('settings', { ...rec, id: 'main' })) return;
+  db.settings = rec; dirty = false;
+  paintBrand(); toast('Settings saved'); route();
+}
+
+function notFound() { main().innerHTML = empty('Not found', 'This record may have been deleted.', '<a class="btn" href="#/">Back to overview</a>'); }
+
+/* ---------- routing and events ---------- */
+function paintBrand() {
+  const s = S();
+  $('#biz-name').textContent = s.name;
+  $('#biz-mark').innerHTML = s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc((s.name.match(/\b\w/g) || ['B']).slice(0, 2).join('').toUpperCase());
+  document.title = `${s.name} · Billing`;
+}
+function route() {
+  const [view = '', a = '', b = ''] = location.hash.replace(/^#\/?/, '').split('/');
+  const navKey = view === 'doc' || view === 'edit' || view === 'new' ? `doc-${(db.docs.find(d => d.id === a) || { type: a }).type}` : view;
+  $$('#nav a').forEach(el => el.classList.toggle('on', el.dataset.nav.split(' ').includes(navKey)));
+  main().oninput = main().onkeydown = null;
+  const views = {
+    '': vOverview, invoices: () => vList('invoice', a), quotes: () => vList('quote', a),
+    new: () => ['invoice', 'quote'].includes(a) ? vEdit(null, a, b) : notFound(), edit: () => vEdit(a), doc: () => vDoc(a),
+    customers: () => vCustomers(a), customer: () => vCustomer(a, b), reports: vReports, report: () => vReport(a),
+    templates: vTemplates, settings: vSettings,
+  };
+  (views[view] || notFound)();
+  window.scrollTo(0, 0);
+}
+
+let lastHash = location.hash;
+window.addEventListener('hashchange', () => {
+  if (dirty && !confirm('You have unsaved changes. Leave without saving?')) { history.replaceState(null, '', lastHash); return; }
+  dirty = false; lastHash = location.hash; route();
+});
+window.addEventListener('beforeunload', e => { if (dirty) e.preventDefault(); });
+
+document.addEventListener('click', async e => {
+  const row = e.target.closest('tr[data-href]');
+  if (row && !e.target.closest('a,button')) return (location.hash = row.dataset.href);
+  const el = e.target.closest('[data-act]');
+  if (!el) {
+    if (!e.target.closest('details.menu')) $$('details.menu[open]').forEach(m => m.open = false);
+    return;
+  }
+  el.closest('details.menu')?.removeAttribute('open');
+  const act = el.dataset.act, v = el.dataset.v;
+  if (act === 'save-doc') return saveDoc();
+  if (act === 'add-item') return vEdit.addItem();
+  if (act === 'del-item') return vEdit.delItem(+el.closest('tr').dataset.i);
+  if (act === 'new-customer') return customerDialog({}, c => (location.hash = `#/customer/${c.id}`));
+  if (act === 'edit-customer') return customerDialog(vCustomer.current, () => route());
+  if (act === 'delete-customer') {
+    const c = vCustomer.current;
+    if (db.docs.some(d => d.customerId === c.id)) return modal('Can’t delete this customer', `<p style="margin:0">${esc(c.name)} has quotations or invoices on record. Delete those first, so your books stay complete.</p>`, { ok: 'OK' });
+    if (!await confirmBox(`Delete ${esc(c.name)}?`, 'This removes the customer record permanently.')) return;
+    if (!await destroy('customer', c.id)) return;
+    db.customers = db.customers.filter(x => x.id !== c.id);
+    toast('Customer deleted'); return (location.hash = '#/customers');
+  }
+  if (act.startsWith('csv-') || act === 'print-report') return reportAction(act);
+  if (act === 'tpl-type') { tplType = v; return vTemplates(); }
+  if (act === 'tpl-default') return saveSettings({ [tplType === 'quote' ? 'quoteTemplate' : 'invoiceTemplate']: v });
+  if (act === 'tpl-preview') return printPaper(renderDoc(sampleDoc(tplType), v, SAMPLE_CUSTOMER), `${TEMPLATES[v]} ${docLabel(tplType)} sample`);
+  if (act === 'save-settings') return saveSettings();
+  if (act === 'logo-clear') return vSettings.clearLogo();
+  if (act === 'backup') {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }));
+    a.download = `billing-backup-${today()}.json`; a.click(); return;
+  }
+  return docAction(act, v);
+});
+
+(async function boot() {
+  try {
+    const d = await api();
+    db = { customers: d.customers || [], docs: d.docs || [], settings: d.settings || {} };
+  } catch {
+    main().innerHTML = empty('Can’t reach the server', 'Your data is safe. Check your connection and reload the page.', '<button class="btn" onclick="location.reload()">Reload</button>');
+    return;
+  }
+  paintBrand();
+  $('#side-foot').textContent = `${S().currency} · ${S().taxLabel} ${S().taxRate}%`;
+  route();
+})();
+</script>
+</body>
+</html>

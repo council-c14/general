@@ -266,6 +266,10 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .opt-row{display:flex;align-items:center;gap:10px;margin:6px 0}
 .opt-row input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);padding:8px 2px;outline:none}
 .opt-row input:focus{border-bottom-color:var(--teal-700)}
+/* Dropdown options hidden from respondents stay in the editor, dimmed */
+.opt-row.off input{color:var(--muted);text-decoration:line-through}
+.opt-row .icon svg{width:18px;height:18px;fill:currentColor;vertical-align:middle}
+.opt-row .icon.on{color:var(--teal-700)}
 .marker{width:18px;height:18px;border:2px solid var(--muted);border-radius:50%;flex:none}
 .marker.sq{border-radius:5px}
 .faux{border-bottom:1px dotted #9fbdb8;padding:8px 2px;color:var(--muted)}
@@ -919,6 +923,7 @@ const ICONS = {
   section: svg('M5 11q-.825 0-1.413-.588T3 9V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v4q0 .825-.588 1.413T19 11H5Zm0-2h14V5H5v4Zm0 12q-.825 0-1.413-.588T3 19v-4q0-.825.588-1.413T5 13h14q.825 0 1.413.588T21 15v4q0 .825-.588 1.413T19 21H5Zm0-2h14v-4H5v4Z'),
   copy: svg('M9 18q-.825 0-1.413-.588T7 16V4q0-.825.588-1.413T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.588 1.413T18 18H9Zm0-2h9V4H9v12Zm-4 6q-.825 0-1.413-.588T3 20V6h2v14h11v2H5Z'),
   del: svg('M7 21q-.825 0-1.413-.588T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.588 1.413T17 21H7ZM17 6H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z'),
+  eyeOff: svg('M12 6.5c2.76 0 5 2.24 5 5 0 .51-.1 1-.24 1.46l3.06 3.06c1.39-1.23 2.49-2.77 3.18-4.53C21.27 7.11 17 4 12 4c-1.27 0-2.49.2-3.64.57l2.17 2.17c.47-.14.96-.24 1.47-.24zM2.71 3.16a.996.996 0 0 0 0 1.41l1.97 1.97A11.892 11.892 0 0 0 1 11.5C2.73 15.89 7 19 12 19c1.52 0 2.97-.3 4.31-.82l2.72 2.72a.996.996 0 1 0 1.41-1.41L4.13 3.16c-.39-.39-1.03-.39-1.42 0zM12 16.5c-2.76 0-5-2.24-5-5 0-.77.18-1.5.49-2.14l1.57 1.57c-.03.18-.06.37-.06.57 0 1.66 1.34 3 3 3 .2 0 .38-.03.57-.07L14.14 16c-.65.32-1.37.5-2.14.5zm2.97-5.33a2.97 2.97 0 0 0-2.64-2.64l2.64 2.64z'),
   eye: svg('M12 16q1.875 0 3.188-1.312T16.5 11.5q0-1.875-1.312-3.187T12 7q-1.875 0-3.187 1.313T7.5 11.5q0 1.875 1.313 3.188T12 16Zm0-1.8q-1.125 0-1.912-.788T9.3 11.5q0-1.125.788-1.912T12 8.8q1.125 0 1.913.788T14.7 11.5q0 1.125-.787 1.913T12 14.2Zm0 4.8q-3.65 0-6.65-2.037T1 11.5q1.35-3.425 4.35-5.463T12 4q3.65 0 6.65 2.038T23 11.5q-1.35 3.425-4.35 5.463T12 19Zm0-2q2.825 0 5.188-1.487T20.8 11.5q-1.25-2.525-3.613-4.012T12 6Q9.175 6 6.812 7.488T3.2 11.5q1.25 2.525 3.613 4.013T12 17Z'),
   download: svg('M12 16l-5-5 1.4-1.45 2.6 2.6V4h2v8.15l2.6-2.6L17 11l-5 5Zm-6 4q-.825 0-1.413-.588T4 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T18 20H6Z'),
   more: svg('M12 20q-.825 0-1.413-.588T10 18q0-.825.588-1.413T12 16q.825 0 1.413.588T14 18q0 .825-.588 1.413T12 20Zm0-6q-.825 0-1.413-.588T10 12q0-.825.588-1.413T12 10q.825 0 1.413.588T14 12q0 .825-.588 1.413T12 14Zm0-6q-.825 0-1.413-.588T10 6q0-.825.588-1.413T12 4q.825 0 1.413.588T14 6q0 .825-.588 1.413T12 8Z'),
@@ -933,12 +938,16 @@ function questionHTML(q, i) {
   const quiz = opts(f).quiz && GRADED.includes(q.type);
   const mark = (key, j) => quiz && key === 'options'
     ? `<button class="icon key ${q.key?.includes(j) ? 'on' : ''}" data-act="key" data-idx="${j}" title="Correct answer" aria-pressed="${!!q.key?.includes(j)}">✓</button>` : '';
+  // Dropdown options can be hidden from respondents (kept in q.hidden as indexes) without deleting them.
+  const hide = (key, j) => q.type === 'dropdown' && key === 'options'
+    ? `<button class="icon ${q.hidden?.includes(j) ? 'on' : ''}" data-act="hide-opt" data-idx="${j}" title="${q.hidden?.includes(j) ? 'Hidden from respondents. Show' : 'Hide from respondents'}" aria-pressed="${!!q.hidden?.includes(j)}">${q.hidden?.includes(j) ? ICONS.eyeOff : ICONS.eye}</button>` : '';
   const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
-    <div class="opt-row">
+    <div class="opt-row ${key === 'options' && q.type === 'dropdown' && q.hidden?.includes(j) ? 'off' : ''}">
       ${marker}
       <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${dvText(label)} ${j + 1}">
       ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
       ${mark(key, j)}
+      ${hide(key, j)}
       <button class="icon" data-act="del-opt" data-list="${key}" data-idx="${j}" title="Remove">×</button>
     </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ Add ${label.toLowerCase()}</button>`;
   const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
@@ -1183,7 +1192,13 @@ app.addEventListener('click', e => {
       const j = +btn.dataset.idx;
       q[btn.dataset.list].splice(j, 1);
       q[`${btn.dataset.list}Dv`]?.splice(j, 1);
-      if (btn.dataset.list === 'options' && q.key) q.key = q.key.filter(k => k !== j).map(k => k > j ? k - 1 : k);
+      const shift = a => a?.filter(k => k !== j).map(k => k > j ? k - 1 : k);
+      if (btn.dataset.list === 'options') Object.assign(q, q.key && { key: shift(q.key) }, q.hidden && { hidden: shift(q.hidden) });
+      return refresh();
+    }
+    case 'hide-opt': {
+      const j = +btn.dataset.idx;
+      q.hidden = q.hidden?.includes(j) ? q.hidden.filter(k => k !== j) : [...(q.hidden ?? []), j];
       return refresh();
     }
     case 'key': {
@@ -1391,7 +1406,7 @@ function answerHTML(q, pre = '') {
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" title="Choose date"></button></div>`,
     dropdown: `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</summary>
-      <div class="dd-list">${q.options.map((o, j) => `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${q.id}" value="${esc(optLabel(q, j))}">${esc(optLabel(q, j))}</label>`).join('')}</div></details>`,
+      <div class="dd-list">${q.options.map((o, j) => q.hidden?.includes(j) ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${q.id}" value="${esc(optLabel(q, j))}">${esc(optLabel(q, j))}</label>`).join('')}</div></details>`,
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,

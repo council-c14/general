@@ -364,6 +364,8 @@ th{color:var(--teal-800)}
 .resp-nav{display:flex;align-items:center;justify-content:center;gap:6px}
 .resp-nav select{flex:1;min-width:0}
 .resp-nav .of{white-space:nowrap;margin-inline:6px}
+.resp-nav .sp{flex:1;display:flex;justify-content:flex-end}
+.resp-nav [data-act=resp-del]:hover{color:var(--danger);background:#fbe9e7}
 .icon-btn:disabled{opacity:.35;cursor:default;background:none}
 .ind-meta{margin-top:10px}
 
@@ -1726,9 +1728,11 @@ function individualView(f, qs, list) {
   const dv = f.lang === 'dv' ? 'dv' : '';
   return `<section class="card resp-card">
     <div class="resp-nav">
+      <span class="sp"></span>
       <button class="icon-btn" data-act="resp-prev" aria-label="Previous response" ${resp.i ? '' : 'disabled'}>${PREV}</button>
       <span class="of">${resp.i + 1} of ${list.length}</span>
       <button class="icon-btn" data-act="resp-next" aria-label="Next response" ${resp.i < list.length - 1 ? '' : 'disabled'}>${NEXT}</button>
+      <span class="sp">${btn('resp-del', 'Delete response', ICONS.del)}</span>
     </div>
     <p class="meta ind-meta">Submitted ${esc(new Date(r.at).toLocaleString())}${g ? ` · Score ${g.score} / ${g.total}` : ''}</p>
   </section>
@@ -1749,8 +1753,19 @@ app.addEventListener('click', e => {
   if (b.dataset.act === 'resp-tab') resp.tab = b.dataset.tab;
   if (b.dataset.act === 'resp-prev') resp[key]--;
   if (b.dataset.act === 'resp-next') resp[key]++;
+  if (b.dataset.act === 'resp-del') return deleteResponse();
   rerenderResponses();
 });
+async function deleteResponse() {
+  const r = resp.list[resp.i];
+  if (!confirm('Delete this response? This cannot be undone.')) return;
+  try { await api(`forms/${current.id}/responses/${r.id}`, { method: 'DELETE' }); } catch { return failed(); }
+  resp.list = resp.list.filter(x => x !== r);
+  current.responseCount = resp.list.length;
+  app.querySelector('.edit-bar .count').textContent = resp.list.length;
+  rerenderResponses();
+  toast('Response deleted');
+}
 app.addEventListener('change', e => {
   if (e.target.matches('[data-act=resp-q]')) { resp.q = +e.target.value; rerenderResponses(); }
 });

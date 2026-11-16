@@ -1,5 +1,5 @@
 // Shared storage for forms and responses, backed by the D1 binding `DB`.
-// Routes: GET/PUT/DELETE /api/forms/:id, GET/POST /api/forms/:id/responses, GET /api/forms,
+// Routes: GET/PUT/DELETE /api/forms/:id, GET/POST /api/forms/:id/responses, DELETE /api/forms/:id/responses/:rid, GET /api/forms,
 //         POST /api/forms/:id/files (raw body), GET /api/files/:fileId
 
 const json = (data, status = 200) => Response.json(data, { status });
@@ -9,7 +9,7 @@ const FILES = 'CREATE TABLE IF NOT EXISTS files (id TEXT PRIMARY KEY, form_id TE
 const MAX_FILE = 1.5 * 1024 * 1024;
 
 export async function onRequest({ request, env, params }) {
-  const [kind, id, sub] = [].concat(params.route || []);
+  const [kind, id, sub, rid] = [].concat(params.route || []);
   const db = env.DB;
   const method = request.method;
 
@@ -40,6 +40,19 @@ export async function onRequest({ request, env, params }) {
   }
 
   if (sub === 'responses') {
+    if (rid) {
+      if (method !== 'DELETE') return json({ error: 'Method not allowed' }, 405);
+      const row = await db.prepare('SELECT answers FROM responses WHERE id = ? AND form_id = ?').bind(rid, id).first();
+      if (!row) return json({ error: 'Not found' }, 404);
+      // Files uploaded with this response go too.
+      const fileIds = [...row.answers.matchAll(/\/api\/files\/([\w-]+)/g)].map(m => m[1]);
+      await db.prepare(FILES).run();
+      await db.batch([
+        ...fileIds.map(f => db.prepare('DELETE FROM files WHERE id = ? AND form_id = ?').bind(f, id)),
+        db.prepare('DELETE FROM responses WHERE id = ?').bind(rid),
+      ]);
+      return json({ ok: true });
+    }
     if (method === 'GET') {
       const { results } = await db.prepare(
         'SELECT id, submitted_at AS at, answers FROM responses WHERE form_id = ? ORDER BY submitted_at'

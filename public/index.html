@@ -940,11 +940,11 @@ function questionHTML(q, i) {
   const quiz = opts(f).quiz && GRADED.includes(q.type);
   const mark = (key, j) => quiz && key === 'options'
     ? `<button class="icon key ${q.key?.includes(j) ? 'on' : ''}" data-act="key" data-idx="${j}" title="Correct answer" aria-pressed="${!!q.key?.includes(j)}">✓</button>` : '';
-  // Dropdown options can be hidden from respondents (kept in q.hidden as indexes) without deleting them.
-  const hide = (key, j) => q.type === 'dropdown' && key === 'options'
+  // Multiple choice, checkbox and dropdown options can be hidden from respondents (kept in q.hidden as indexes) without deleting them.
+  const hide = (key, j) => HIDEABLE.includes(q.type) && key === 'options'
     ? `<button class="icon ${q.hidden?.includes(j) ? 'on' : ''}" data-act="hide-opt" data-idx="${j}" title="${q.hidden?.includes(j) ? 'Hidden from respondents. Show' : 'Hide from respondents'}" aria-pressed="${!!q.hidden?.includes(j)}">${q.hidden?.includes(j) ? ICONS.eyeOff : ICONS.eye}</button>` : '';
   const list = (key, label, marker = '') => (q[key] ?? []).map((o, j) => `
-    <div class="opt-row ${key === 'options' && q.type === 'dropdown' && q.hidden?.includes(j) ? 'off' : ''}">
+    <div class="opt-row ${key === 'options' && HIDEABLE.includes(q.type) && q.hidden?.includes(j) ? 'off' : ''}">
       ${marker}
       <input class="${pc}" data-field="option" data-list="${key}" data-idx="${j}" value="${esc(o)}" placeholder="${dvText(label)} ${j + 1}">
       ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="${key}" data-idx="${j}" value="${esc(q[`${key}Dv`]?.[j])}" placeholder="${label} ${j + 1} (Dhivehi)">` : ''}
@@ -1358,7 +1358,8 @@ async function copyLink(view = 'fill', msg = 'Responder link copied') {
 
 /* ---------- respondent view ---------- */
 
-const choice = (f, q, type, o, j) =>
+const HIDEABLE = ['radio', 'checkbox', 'dropdown'];
+const choice = (f, q, type, o, j) => q.hidden?.includes(j) ? '' :
   `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}"><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
 
 const colHeads = q => (q.cols ?? []).map((c, k) => `<th>${esc(optLabel(q, k, 'cols'))}</th>`).join('');

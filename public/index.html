@@ -357,10 +357,14 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .legend{display:grid;gap:6px;font-size:14px}
 .legend span{display:flex;align-items:center;gap:8px}
 .legend i{width:12px;height:12px;border-radius:50%;flex:none}
-.bars{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;font-size:14px}
-.bars > span{unicode-bidi:plaintext}
-.bar{background:var(--teal-700);height:22px;border-radius:0 4px 4px 0;min-width:2px;color:#fff;font-size:12px;line-height:22px;padding-inline-start:6px;white-space:nowrap}
-.bar.zero{background:none;color:var(--muted);padding:0}
+.bars{display:grid;grid-template-columns:minmax(0,45%) 1fr auto;gap:8px 12px;align-items:center;font-size:14px}
+.bars > span{unicode-bidi:plaintext;overflow-wrap:anywhere}
+.bars .n{color:var(--muted);font-size:12px;white-space:nowrap}
+.bar{background:var(--teal-700);height:22px;border-radius:0 4px 4px 0;min-width:2px}
+.bar.zero{background:none}
+.legend span{overflow-wrap:anywhere}
+.resp-filter{display:grid;gap:8px}
+.resp-filter select{width:100%;min-width:0}
 .grid-tbl{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -1629,7 +1633,7 @@ const answerCols = (f, responses) =>
   [EMAIL_Q, ...f.questions].filter(q => isQuestion(q) && (q !== EMAIL_Q || responses.some(r => r.answers._email)));
 
 // Which Responses sub-tab is open, the question and response it shows, and the responses last fetched.
-const resp = { id: null, tab: 'summary', q: 0, i: 0, list: [] };
+const resp = { id: null, tab: 'summary', q: 0, i: 0, list: [], fq: '', fv: 0 };
 const PALETTE = ['#0d6666', '#e8a33d', '#d1495b', '#3d7ad1', '#7a5cc4', '#5aa469', '#c46b9e', '#8d6e63'];
 // Answered at all: grids count once any row is answered; missing answers (older forms) don't.
 const has = v => v != null && (v.constructor === Object ? Object.values(v).some(has) : !blank(v));
@@ -1640,7 +1644,7 @@ const fileLink = v => `<a href="${esc(v.url)}" target="_blank" rel="noopener">${
 
 async function responsesHTML() {
   const f = current;
-  if (resp.id !== f.id) Object.assign(resp, { id: f.id, tab: 'summary', q: 0, i: 0 });
+  if (resp.id !== f.id) Object.assign(resp, { id: f.id, tab: 'summary', q: 0, i: 0, fq: '', fv: 0 });
   resp.list = await api(`forms/${f.id}/responses`).catch(() => { failed(); return []; });
   return respHTML();
 }
@@ -1663,7 +1667,25 @@ function respHTML() {
   const qs = answerCols(f, list);
   if (resp.tab === 'question') return head + questionView(f, qs, list);
   if (resp.tab === 'individual') return head + individualView(f, qs, list);
-  return head + qs.map(q => summaryCard(f, q, list)).join('');
+  const fq = qs.find(q => q.id === resp.fq && FILTERABLE.includes(q.type));
+  const shown = fq ? list.filter(r => [r.answers[fq.id]].flat().some(v => optIndex(fq, v) === resp.fv)) : list;
+  return head + filterBar(qs, fq, shown.length, list.length) + qs.map(q => summaryCard(f, q, shown)).join('');
+}
+
+// Summary filter: pick a choice question, then one of its options; only matching responses are summarised.
+const FILTERABLE = ['radio', 'dropdown', 'checkbox'];
+function filterBar(qs, fq, n, total) {
+  const fqs = qs.filter(q => FILTERABLE.includes(q.type));
+  if (!fqs.length) return '';
+  return `<section class="card resp-card">
+    <div class="resp-filter">
+      <select data-act="resp-fq" aria-label="Filter by question"><option value="">Filter by: all responses</option>${fqs.map(q =>
+        `<option value="${q.id}" ${q === fq ? 'selected' : ''}>${esc(qLabel(q))}</option>`).join('')}</select>
+      ${fq ? `<select data-act="resp-fv" aria-label="Answer">${fq.options.map((o, j) =>
+        `<option value="${j}" ${j === resp.fv ? 'selected' : ''}>${esc(optLabel(fq, j))}</option>`).join('')}</select>
+      <p class="meta" style="margin:0">Showing ${n} of ${plural(total, 'response')}</p>` : ''}
+    </div>
+  </section>`;
 }
 
 // Distinct answers with how many gave each, most common first.
@@ -1705,7 +1727,7 @@ function summaryCard(f, q, list) {
     const rows = choiceCounts(q, vals);
     const max = Math.max(...rows.map(r => r[1]));
     body = `<div class="bars">${rows.map(([l, n]) => `<span>${esc(l)}</span>
-      <div class="bar ${n ? '' : 'zero'}" style="width:${n / max * 100}%">${n} (${Math.round(n / vals.length * 100)}%)</div>`).join('')}</div>`;
+      <div><div class="bar ${n ? '' : 'zero'}" style="width:${n / max * 100}%"></div></div><span class="n">${n} (${Math.round(n / vals.length * 100)}%)</span>`).join('')}</div>`;
   } else if (GRIDS.includes(q.type)) {
     // ponytail: grids get a count table rather than Google's grouped bar chart.
     body = `<div class="grid-tbl"><table><thead><tr><th></th>${q.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${q.options.map(r =>
@@ -1784,6 +1806,8 @@ async function deleteResponse() {
 }
 app.addEventListener('change', e => {
   if (e.target.matches('[data-act=resp-q]')) { resp.q = +e.target.value; rerenderResponses(); }
+  if (e.target.matches('[data-act=resp-fq]')) { resp.fq = e.target.value; resp.fv = 0; rerenderResponses(); }
+  if (e.target.matches('[data-act=resp-fv]')) { resp.fv = +e.target.value; rerenderResponses(); }
 });
 
 async function downloadCSV() {

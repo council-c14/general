@@ -976,7 +976,7 @@ function questionHTML(q, i) {
         <select data-field="fieldType" data-idx="${j}" aria-label="Field ${j + 1} type">${FIELD_TYPES.map(t => `<option value="${t}" ${t === fieldType(q, j) ? 'selected' : ''}>${TYPES[t]}</option>`).join('')}</select>
         ${q.cols.length > 2 ? `<button class="icon" data-act="del-opt" data-list="cols" data-idx="${j}" title="Remove">×</button>` : ''}
       </div>
-      ${fieldType(q, j) === 'dropdown' ? `<textarea class="key-text ${pc}" data-field="fieldOptions" data-idx="${j}" rows="3" placeholder="Dropdown choices, one per line">${esc(q.fieldOptions?.[j])}</textarea>` : ''}`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
+      ${fieldType(q, j) === 'dropdown' ? `<textarea class="key-text ${pc}" data-field="fieldOptions" data-idx="${j}" rows="3" placeholder="${f.lang === 'dv' ? `${DV.Option} 1&#10;${DV.Option} 2` : 'Dropdown choices, one per line'}">${esc(q.fieldOptions?.[j])}</textarea>` : ''}`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
     : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `

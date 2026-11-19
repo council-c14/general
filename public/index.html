@@ -462,10 +462,12 @@ const TYPES = {
   time: 'Time',
   multi: 'Multiple fields',
 };
-// Multiple fields: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes.
-const FIELD_TYPES = ['short', 'paragraph', 'date', 'time'];
+// Multiple fields: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes,
+// a dropdown field's choices in q.fieldOptions[k] as text, one per line.
+const FIELD_TYPES = ['short', 'paragraph', 'dropdown', 'date', 'time'];
 const MAX_FIELDS = 3;
 const fieldType = (q, k) => FIELD_TYPES.includes(q.fieldTypes?.[k]) ? q.fieldTypes[k] : 'short';
+const fieldChoices = (q, k) => (q.fieldOptions?.[k] ?? '').split('\n').map(o => o.trim()).filter(Boolean);
 // The type menu, split into groups by dividers.
 const TYPE_GROUPS = [['short', 'paragraph', 'multi'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
 const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
@@ -478,7 +480,7 @@ const DV = {
   Option: 'އިޚްތިޔާރީ ޖަވާބު',
   Row: 'އިޚްތިޔާރީ ސުވާލު',
   Column: 'އިޚްތިޔާރީ ޖަވާބު',
-  Field: 'ބައި',
+  Field: 'ޖަވާބު',
   'Short answer text': 'ކުރު ޖަވާބު',
   'Long answer text': 'ދިގު ޖަވާބު',
   'File upload (up to 1.5 MB)': 'ފައިލް އަޕްލޯޑް',
@@ -973,7 +975,8 @@ function questionHTML(q, i) {
         ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="cols" data-idx="${j}" value="${esc(q.colsDv?.[j])}" placeholder="Field ${j + 1} (Dhivehi)">` : ''}
         <select data-field="fieldType" data-idx="${j}" aria-label="Field ${j + 1} type">${FIELD_TYPES.map(t => `<option value="${t}" ${t === fieldType(q, j) ? 'selected' : ''}>${TYPES[t]}</option>`).join('')}</select>
         ${q.cols.length > 2 ? `<button class="icon" data-act="del-opt" data-list="cols" data-idx="${j}" title="Remove">×</button>` : ''}
-      </div>`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
+      </div>
+      ${fieldType(q, j) === 'dropdown' ? `<textarea class="key-text ${pc}" data-field="fieldOptions" data-idx="${j}" rows="3" placeholder="Dropdown choices, one per line">${esc(q.fieldOptions?.[j])}</textarea>` : ''}`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
     : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
@@ -1121,6 +1124,7 @@ function onFieldEdit(el) {
     else if (field === 'option') q[key][idx] = val;
     else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
     else if (field === 'fieldType') (q.fieldTypes ||= [])[idx] = val;
+    else if (field === 'fieldOptions') (q.fieldOptions ||= [])[idx] = val;
     else if (field === 'type') {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
@@ -1170,7 +1174,7 @@ app.addEventListener('change', e => {
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
   if (e.target.dataset.field === 'type') setRuleDefaults(current.questions.find(x => x.id === e.target.closest('[data-qid]').dataset.qid));
-  if (['type', 'url', 'newPage', 'vType', 'vOp'].includes(e.target.dataset.field)) renderEditor('questions');
+  if (['type', 'url', 'newPage', 'vType', 'vOp', 'fieldType'].includes(e.target.dataset.field)) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -1216,7 +1220,7 @@ app.addEventListener('click', e => {
       const j = +btn.dataset.idx;
       q[btn.dataset.list].splice(j, 1);
       q[`${btn.dataset.list}Dv`]?.splice(j, 1);
-      if (btn.dataset.list === 'cols') q.fieldTypes?.splice(j, 1);
+      if (btn.dataset.list === 'cols') { q.fieldTypes?.splice(j, 1); q.fieldOptions?.splice(j, 1); }
       const shift = a => a?.filter(k => k !== j).map(k => k > j ? k - 1 : k);
       if (btn.dataset.list === 'options') Object.assign(q, q.key && { key: shift(q.key) }, q.hidden && { hidden: shift(q.hidden) });
       return refresh();
@@ -1426,13 +1430,16 @@ function itemHTML(q, fold = false, pre = '') {
 function answerHTML(q, pre = '') {
   const f = current;
   const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl" lang="dv"' : '';
+  const choose = f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose';
+  // A dropdown named `name` with these choices (null ones are hidden).
+  const dd = (name, labels) => `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${choose}">${choose}</summary>
+      <div class="dd-list">${labels.map(l => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}">${esc(l)}</label>`).join('')}</div></details>`;
   const inputs = {
     short: `<input type="text"${dvAttr}>`,
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
     date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" title="Choose date"></button></div>`,
-    dropdown: `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}">${f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose'}</summary>
-      <div class="dd-list">${q.options.map((o, j) => q.hidden?.includes(j) ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${q.id}" value="${esc(optLabel(q, j))}">${esc(optLabel(q, j))}</label>`).join('')}</div></details>`,
+    dropdown: dd(q.id, q.options.map((o, j) => q.hidden?.includes(j) ? null : optLabel(q, j))),
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
     checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
@@ -1447,7 +1454,7 @@ function answerHTML(q, pre = '') {
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
       <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvAttr ? 'ރޯއެއް އިތުރުކުރޭ' : 'Add row'}</button>`,
   };
-  inputs.multi = (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${inputs[fieldType(q, k)]}</div>`).join('');
+  inputs.multi = (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${fieldType(q, k) === 'dropdown' ? dd(`${q.id}:${k}`, fieldChoices(q, k)) : inputs[fieldType(q, k)]}</div>`).join('');
   const field = inputs[q.type];
   // Optional questions are marked instead of required ones.
   const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;
@@ -1583,7 +1590,7 @@ function collect(scope) {
       table: () => [...wrap.querySelectorAll('tbody tr')]
         .map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean)),
       file: () => wrap.querySelector('input').files[0] ?? '',
-      multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('input, textarea').value.trim()])),
+      multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('.dd') ? el.querySelector('input:checked')?.value ?? '' : el.querySelector('input, textarea').value.trim()])),
     }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
     const tooBig = v instanceof File && v.size > MAX_FILE;
     const rule = ruleError(q, v);

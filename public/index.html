@@ -305,6 +305,9 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .file-field:hover .file-btn,.file-field:has(input:focus-visible) .file-btn{border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
 .file-name{color:var(--muted);font-size:14px;min-width:0;overflow-wrap:anywhere}
 .file-field.picked .file-name{color:var(--ink)}
+.mf{margin-bottom:14px}
+.mf-label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.opt-row select{flex:none;padding-block:6px}
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea{padding:10px 14px}
@@ -457,9 +460,14 @@ const TYPES = {
   table: 'Table input',
   date: 'Date',
   time: 'Time',
+  multi: 'Multiple fields',
 };
+// Multiple fields: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes.
+const FIELD_TYPES = ['short', 'paragraph', 'date', 'time'];
+const MAX_FIELDS = 3;
+const fieldType = (q, k) => FIELD_TYPES.includes(q.fieldTypes?.[k]) ? q.fieldTypes[k] : 'short';
 // The type menu, split into groups by dividers.
-const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
+const TYPE_GROUPS = [['short', 'paragraph', 'multi'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
 const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
 // Placeholder text on Dhivehi forms. dvText() picks the Dhivehi wording when the open form is Dhivehi.
 const DV = {
@@ -470,6 +478,7 @@ const DV = {
   Option: 'އިޚްތިޔާރީ ޖަވާބު',
   Row: 'އިޚްތިޔާރީ ސުވާލު',
   Column: 'އިޚްތިޔާރީ ޖަވާބު',
+  Field: 'ބައި',
   'Short answer text': 'ކުރު ޖަވާބު',
   'Long answer text': 'ދިގު ޖަވާބު',
   'File upload (up to 1.5 MB)': 'ފައިލް އަޕްލޯޑް',
@@ -489,7 +498,7 @@ const DV = {
 };
 // Options, rows and columns left empty in the editor read as their placeholder ("Option 2") everywhere else.
 function withPlaceholders(f) {
-  const name = (q, key) => key === 'cols' ? 'Column' : GRIDS.includes(q.type) ? 'Row' : 'Option';
+  const name = (q, key) => key === 'cols' ? (q.type === 'multi' ? 'Field' : 'Column') : GRIDS.includes(q.type) ? 'Row' : 'Option';
   const fill = (q, key) => q[key]?.map((o, j) => o || `${f.lang === 'dv' ? DV[name(q, key)] : name(q, key)} ${j + 1}`);
   return { ...f, questions: f.questions.map(q => ({ ...q, options: fill(q, 'options') ?? [], ...(q.cols && { cols: fill(q, 'cols') }) })) };
 }
@@ -497,7 +506,7 @@ const untitled = f => f.lang === 'dv' ? DV['Untitled form'] : 'Untitled form';
 const dvText = en => current?.lang === 'dv' ? DV[en] ?? en : en;
 const GRIDS = ['mcgrid', 'cbgrid'];
 const hasOptions = t => ['radio', 'checkbox', 'dropdown', ...GRIDS].includes(t); // grids keep their rows in options
-const hasCols = t => [...GRIDS, 'table'].includes(t);
+const hasCols = t => [...GRIDS, 'table', 'multi'].includes(t);
 // Items that sit between questions but take no answer.
 const BLOCKS = { text: 'Title and description', image: 'Image', video: 'Video', section: 'Section' };
 const isQuestion = q => !(q.type in BLOCKS);
@@ -958,6 +967,13 @@ function questionHTML(q, i) {
     </div>`).join('') + `<button class="link" data-act="add-opt" data-list="${key}">+ Add ${label.toLowerCase()}</button>`;
   const body = GRIDS.includes(q.type) ? `<div class="list-head">Rows</div>${list('options', 'Row')}<div class="list-head">Columns</div>${list('cols', 'Column')}`
     : q.type === 'table' ? `<div class="list-head">Columns</div>${list('cols', 'Column')}`
+    : q.type === 'multi' ? `<div class="list-head">Fields</div>${q.cols.map((c, j) => `
+      <div class="opt-row">
+        <input class="${pc}" data-field="option" data-list="cols" data-idx="${j}" value="${esc(c)}" placeholder="${dvText('Field')} ${j + 1}">
+        ${dual ? `<input class="dv" dir="rtl" lang="dv" data-field="optionDv" data-list="cols" data-idx="${j}" value="${esc(q.colsDv?.[j])}" placeholder="Field ${j + 1} (Dhivehi)">` : ''}
+        <select data-field="fieldType" data-idx="${j}" aria-label="Field ${j + 1} type">${FIELD_TYPES.map(t => `<option value="${t}" ${t === fieldType(q, j) ? 'selected' : ''}>${TYPES[t]}</option>`).join('')}</select>
+        ${q.cols.length > 2 ? `<button class="icon" data-act="del-opt" data-list="cols" data-idx="${j}" title="Remove">×</button>` : ''}
+      </div>`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
     : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
@@ -1104,12 +1120,14 @@ function onFieldEdit(el) {
     if (field === 'vType') { q.vType = val; q.vOp = Object.keys(RULES[val])[0]; }
     else if (field === 'option') q[key][idx] = val;
     else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
+    else if (field === 'fieldType') (q.fieldTypes ||= [])[idx] = val;
     else if (field === 'type') {
       q.type = val;
       if (!hasOptions(val)) q.options = [];
       // Fresh lists start with one empty entry; "Option 1" / "Row 1" is only its placeholder.
       else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [''];
       q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['']) : [];
+      if (val === 'multi') q.cols = (q.cols.length >= 2 ? q.cols : ['', '']).slice(0, MAX_FIELDS);
     } else q[field] = val;
   }
   saveForms();
@@ -1198,6 +1216,7 @@ app.addEventListener('click', e => {
       const j = +btn.dataset.idx;
       q[btn.dataset.list].splice(j, 1);
       q[`${btn.dataset.list}Dv`]?.splice(j, 1);
+      if (btn.dataset.list === 'cols') q.fieldTypes?.splice(j, 1);
       const shift = a => a?.filter(k => k !== j).map(k => k > j ? k - 1 : k);
       if (btn.dataset.list === 'options') Object.assign(q, q.key && { key: shift(q.key) }, q.hidden && { hidden: shift(q.hidden) });
       return refresh();
@@ -1427,7 +1446,9 @@ function answerHTML(q, pre = '') {
     table: `<div class="tbl-wrap"><table class="gridq"><thead><tr>${colHeads(q)}</tr></thead>
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
       <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvAttr ? 'ރޯއެއް އިތުރުކުރޭ' : 'Add row'}</button>`,
-  }[q.type];
+  };
+  inputs.multi = (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${inputs[fieldType(q, k)]}</div>`).join('');
+  const field = inputs[q.type];
   // Optional questions are marked instead of required ones.
   const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;
   const bare = ['radio', 'checkbox', 'dropdown'].includes(q.type) && !plain(q.text) && !plain(q.textDv);
@@ -1435,14 +1456,14 @@ function answerHTML(q, pre = '') {
     <section class="card question answer bare" data-qid="${q.id}">
       ${pre}
       ${tag ? `<div class="q-label">${tag}</div>` : ''}
-      ${inputs}
+      ${field}
       <div class="q-error" hidden></div>
     </section>`;
   return `
     <section class="card question answer" data-qid="${q.id}">
       ${pre}
       ${localized(f, 'div', q.text || (f.lang === 'dv' ? DV.Question : 'Untitled question'), q.textDv, 'q-label', tag && ` ${tag}`, clean)}
-      ${inputs}
+      ${field}
       <div class="q-error" hidden></div>
     </section>`;
 }
@@ -1562,13 +1583,15 @@ function collect(scope) {
       table: () => [...wrap.querySelectorAll('tbody tr')]
         .map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean)),
       file: () => wrap.querySelector('input').files[0] ?? '',
+      multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('input, textarea').value.trim()])),
     }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
     const tooBig = v instanceof File && v.size > MAX_FILE;
     const rule = ruleError(q, v);
     const qe = wrap.querySelector('.q-error');
     if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
     const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
-      || (q.type === 'date' && v && !validDate(v)) || !!rule;
+      || (q.type === 'date' && v && !validDate(v)) || !!rule
+      || (q.type === 'multi' && q.cols.some((c, k) => fieldType(q, k) === 'date' && v[c] && !validDate(v[c])));
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;

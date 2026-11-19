@@ -460,16 +460,16 @@ const TYPES = {
   table: 'Table input',
   date: 'Date',
   time: 'Time',
-  multi: 'Multiple fields',
+  multi: 'Multi-type',
 };
-// Multiple fields: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes,
+// Multi-type: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes,
 // a dropdown field's choices in q.fieldOptions[k] as text, one per line.
 const FIELD_TYPES = ['short', 'paragraph', 'dropdown', 'date', 'time'];
 const MAX_FIELDS = 3;
 const fieldType = (q, k) => FIELD_TYPES.includes(q.fieldTypes?.[k]) ? q.fieldTypes[k] : 'short';
 const fieldChoices = (q, k) => (q.fieldOptions?.[k] ?? '').split('\n').map(o => o.trim()).filter(Boolean);
 // The type menu, split into groups by dividers.
-const TYPE_GROUPS = [['short', 'paragraph', 'multi'], ['radio', 'checkbox', 'dropdown'], ['file'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
+const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file', 'multi'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
 const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
 // Placeholder text on Dhivehi forms. dvText() picks the Dhivehi wording when the open form is Dhivehi.
 const DV = {

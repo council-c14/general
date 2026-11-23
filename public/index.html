@@ -60,15 +60,18 @@ h1{font-size:24px;margin:0}
 .preview-bar span{font-weight:700;color:var(--teal-800)}
 .preview-bar .btn.exit{flex:none;padding:5px 12px;font-size:12px}
 
-/* Editor header: icon actions, form title, tabs */
-.edit-bar{position:sticky;top:0;z-index:5;background:#fff;padding:8px 16px 0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
-.eb-row{display:flex;align-items:center;gap:2px}
-.eb-row .brand-mini{margin-inline-end:auto}
+/* Editor header, Fillout style: home and title | Edit / Results / Settings | tools, Preview, Publish */
+.edit-bar{position:sticky;top:0;z-index:5;background:#fff;height:60px;padding:0 12px;border-bottom:1px solid #e5e7eb;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.eb-left{display:flex;align-items:center;gap:8px;min-width:0}
+.eb-right{display:flex;align-items:center;justify-content:flex-end;gap:2px}
+.eb-right .btn{margin-inline-start:6px;border-radius:8px;padding:8px 14px}
+.btn.dark{background:#1f2328;color:#fff}
+.btn.dark:hover{background:#000}
 /* Quick access buttons keep their left-to-right order on Dhivehi forms. */
-:is(.eb-row,.add-bar){direction:ltr}
-.icon-btn{background:none;border:0;color:#5f6368;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
+:is(.edit-bar,.add-bar){direction:ltr}
+.icon-btn{background:none;border:0;color:#5f6368;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer;list-style:none}
 .icon-btn:hover{background:var(--teal-100);color:var(--teal-800)}
-.icon-btn svg{width:26px;height:26px;fill:currentColor}
+.icon-btn svg{width:22px;height:22px;fill:currentColor}
 .more{position:relative}
 .more summary::-webkit-details-marker{display:none}
 .menu{position:absolute;inset-inline-end:0;top:100%;z-index:6;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px 0;min-width:230px}
@@ -96,11 +99,54 @@ h1{font-size:24px;margin:0}
 .merged + .card{border-start-start-radius:0;border-start-end-radius:0}
 .merged-img{margin-bottom:14px}
 .merged-img .block-img{margin-top:0}
-.eb-title{font-size:22px;padding:10px 4px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.edit-bar .tabs{margin:0;gap:28px;justify-content:center;direction:ltr} /* same order on Dhivehi forms */
-.count{background:var(--teal-700);color:#fff;border-radius:999px;min-width:22px;padding:1px 7px;font-size:13px;text-align:center}
-.edit-bar .tab{display:flex;align-items:center;gap:8px;border-radius:0;padding:10px 0;background:none;font-size:16px;border-bottom:3px solid transparent}
-.edit-bar .tab.on{background:none;color:var(--teal-700);border-bottom-color:var(--teal-700)}
+.eb-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.eb-title.dv{font-size:18px;font-weight:400}
+.edit-bar .tabs{margin:0;gap:2px;background:#f1f3f4;border-radius:10px;padding:3px}
+.count{background:var(--teal-700);color:#fff;border-radius:999px;min-width:20px;padding:0 6px;font-size:12px;text-align:center}
+.edit-bar .tab{display:flex;align-items:center;gap:6px;border-radius:8px;padding:6px 14px;color:#5f6368}
+.edit-bar .tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+/* Editor workspace: field sidebar on the left, the form on a light grey canvas */
+.ed{background:#f4f5f7}
+.ed .foot{display:none}
+.ed-wrap{flex:1;display:flex;align-items:flex-start;direction:ltr} /* sidebar stays on the left on Dhivehi forms */
+[dir=rtl] .ed-wrap > main{direction:rtl}
+.ed main{flex:1;min-width:0;max-width:760px;margin:24px auto;padding:0 16px;width:auto}
+.ed .card{box-shadow:none;border:1px solid #e3e6ea;border-radius:12px}
+.ed .question{border-inline-start-width:1px}
+.ed .question:is(:focus-within,.sel){border-color:var(--teal-700);box-shadow:0 0 0 2px var(--teal-100)}
+.ed .after-sec{color:var(--ink)}
+.palette{position:sticky;top:60px;width:272px;flex:none;height:calc(100vh - 60px);overflow-y:auto;background:#fff;border-inline-end:1px solid #e5e7eb;padding:14px 14px 24px}
+.pal-search{width:100%;border:1px solid #dfe3e7;border-radius:8px;padding:9px 12px;font-size:14px}
+.pal-search:focus{outline:none;border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
+.pal-group{font-size:13px;color:#6b7280;margin:18px 2px 8px}
+.pal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pal-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;font:inherit;font-size:12px;line-height:1.2;color:var(--ink);text-align:center;cursor:pointer}
+.pal-tile:hover{border-color:var(--teal-700);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pal-ico{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,#fff)}
+.pal-ico svg{width:20px;height:20px;fill:var(--c)}
+.props{position:sticky;top:60px;width:300px;flex:none;height:calc(100vh - 60px);overflow-y:auto;background:#fff;border-inline-start:1px solid #e5e7eb}
+.props-head{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid #e5e7eb;font-weight:600}
+.props-head span{margin-inline-end:auto}
+.props details{border-bottom:1px solid #e5e7eb}
+.props summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:600;color:#374151;display:flex;justify-content:space-between}
+.props summary::-webkit-details-marker{display:none}
+.props summary::after{content:"⌄";color:#9ca3af}
+.props details[open] summary::after{transform:rotate(180deg)}
+.props .pbody{padding:0 16px 16px;display:grid;gap:12px;font-size:14px}
+.props .pbody label:not(.switch){display:grid;gap:6px;color:#4b5563}
+.props :is(select,input:not([type=checkbox])){width:100%;min-width:0;border:1px solid #dfe3e7;border-radius:8px;padding:8px 10px;font-size:14px}
+.props select{padding-inline-end:32px}
+.props .switch{margin:0;justify-content:space-between;color:#4b5563}
+.props .valid-row{margin:0;padding:0;border:0}
+.props .empty{color:var(--muted);padding:24px 16px;font-size:14px}
+@media (max-width:1100px){.props{display:none}}
+@media (min-width:901px){.ed-wrap .add-bar{display:none}} /* the sidebar does its job on wide screens */
+@media (max-width:900px){
+  .palette{display:none}
+  .edit-bar{height:auto;grid-template-columns:1fr auto;padding:8px 12px}
+  .edit-bar .tabs{grid-row:2;grid-column:1 / -1;justify-self:center}
+}
 .pub-row{margin:16px 0 4px;justify-content:space-between;width:100%}
 
 /* Settings tab */
@@ -401,7 +447,6 @@ th{color:var(--teal-800)}
 @media (max-width:600px){
   .brand-card{padding:10px 16px 14px}
   .brand-card img{height:44px}
-  .edit-bar .brand-mini span{display:none}
   .org{font-size:3.7vw;white-space:nowrap;text-align:center;text-align-last:center}
   .org.dv{font-size:18px;line-height:1.2}
   .org-sub{font-size:3.3vw;white-space:nowrap}
@@ -741,13 +786,15 @@ async function route() {
 }
 window.addEventListener('hashchange', route);
 
-function shell(inner, head = '') {
+// side: editor sidebars around main (null outside the editor).
+function shell(inner, head = '', side = null) {
+  document.body.classList.toggle('ed', side !== null);
   // Dhivehi forms lay out right to left in the editor's Questions tab and for respondents;
   // the Responses and Settings tabs keep the usual left-to-right layout.
   document.documentElement.dir = current?.lang === 'dv' && !/^#\/(responses|settings)\//.test(location.hash) ? 'rtl' : 'ltr';
   app.innerHTML = `
     ${head}
-    <main>${inner}</main>
+    ${side === null ? `<main>${inner}</main>` : `<div class="ed-wrap">${side.split('<main/>')[0]}<main>${inner}</main>${side.split('<main/>')[1] ?? ''}</div>`}
     <footer class="foot">
       <span>${ICONS.place}Karankaa Magu, Sh. Maaungoodhoo (03140)</span>
       <span>${ICONS.phone}654-0056</span>
@@ -862,13 +909,19 @@ async function renderEditor(tab) {
     </div>`;
   shell(body, `
     <header class="edit-bar">
-      <div class="eb-row">
-        <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"><span>Council Forms</span></a>
+      <div class="eb-left">
+        <a class="brand-mini" href="#/" title="All forms"><img src="emblem.png" alt="All forms"></a>
+        <div class="eb-title ${f.lang === 'dv' ? 'dv head' : ''}">${esc(barTitle(f))}</div>
+      </div>
+      <nav class="tabs">
+        <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Edit</a>
+        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Results <span class="count">${f.responseCount}</span></a>
+        <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">Settings</a>
+      </nav>
+      <div class="eb-right">
         ${btn('undo', 'Undo', ICONS.undo)}
-        <a class="icon-btn" href="#/preview/${f.id}" title="Preview" aria-label="Preview">${ICONS.eye}</a>
         ${btn('share', 'Copy responder link', RT_CMDS.createLink[1])}
         ${btn('collab', 'Share editor link', ICONS.share)}
-        ${btn('publish', 'Publish options', ICONS.publish)}
         <details class="more">
           <summary class="icon-btn" title="More" aria-label="More">${ICONS.more}</summary>
           <div class="menu">
@@ -876,14 +929,82 @@ async function renderEditor(tab) {
             <button data-act="del-form" data-id="${f.id}">${ICONS.del}Delete form</button>
           </div>
         </details>
+        <a class="btn ghost small" href="#/preview/${f.id}">Preview</a>
+        <button class="btn dark small" data-act="publish">Publish</button>
       </div>
-      <div class="eb-title ${f.lang === 'dv' ? 'dv head' : ''}">${esc(barTitle(f))}</div>
-      <nav class="tabs">
-        <a class="tab ${tab === 'questions' ? 'on' : ''}" href="#/edit/${f.id}">Questions</a>
-        <a class="tab ${tab === 'responses' ? 'on' : ''}" href="#/responses/${f.id}">Responses <span class="count">${f.responseCount}</span></a>
-        <a class="tab ${tab === 'settings' ? 'on' : ''}" href="#/settings/${f.id}">Settings</a>
-      </nav>
-    </header>`);
+    </header>`, tab === 'questions' ? `${paletteHTML()}<main/><aside class="props"></aside>` : '');
+  renderProps();
+}
+
+// Field sidebar: grouped tiles that add an item after the selected one. Search filters by name.
+const P = d => svg(d);
+const FIELD_GROUPS = () => [ // a function: ICONS is defined further down
+  ['Text', '#16a34a', [['short', P('M4 9h16v2H4zm0 4h10v2H4z')], ['paragraph', P('M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z')]]],
+  ['Choices', '#e8a33d', [['radio', P('M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z')],
+    ['checkbox', P('M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z')],
+    ['dropdown', P('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 12l-4-4h8l-4 4z')]]],
+  ['Time', '#9333ea', [['date', P('M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z')],
+    ['time', P('M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z')]]],
+  ['Rating', '#dc2626', [['scale', P('M19.5 9.5c-1.03 0-1.9.62-2.29 1.5h-2.92c-.39-.88-1.26-1.5-2.29-1.5s-1.9.62-2.29 1.5H6.79c-.39-.88-1.26-1.5-2.29-1.5C3.12 9.5 2 10.62 2 12s1.12 2.5 2.5 2.5c1.03 0 1.9-.62 2.29-1.5h2.92c.39.88 1.26 1.5 2.29 1.5s1.9-.62 2.29-1.5h2.92c.39.88 1.26 1.5 2.29 1.5 1.38 0 2.5-1.12 2.5-2.5s-1.12-2.5-2.5-2.5z')],
+    ['rating', P('M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z')]]],
+  ['Grids', '#2563eb', [['mcgrid', P('M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z')],
+    ['cbgrid', ICONS.check], ['table', P('M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10H3v9z')]]],
+  ['Upload', '#0d6666', [['file', ICONS.upload], ['multi', P('M10 18h5V5h-5v13zm-6 0h5V5H4v13zM16 5v13h5V5h-5z')]]],
+  ['Layout', '#6b7280', [['text', ICONS.text], ['image', ICONS.image], ['video', ICONS.video], ['section', ICONS.section], ['import', ICONS.import]]],
+];
+const paletteHTML = () => `
+  <aside class="palette">
+    <input class="pal-search" type="search" placeholder="Search fields" aria-label="Search fields">
+    ${FIELD_GROUPS().map(([g, c, items]) => `
+      <div class="pal-sec"><div class="pal-group">${g}</div><div class="pal-grid">${items.map(([t, ico]) => {
+        const label = TYPES[t] ?? BLOCKS[t] ?? 'Import';
+        const act = t === 'import' ? 'import' : t in BLOCKS ? `add-${t}` : 'add-type';
+        return `<button class="pal-tile" data-act="${act}" data-type="${t}" style="--c:${c}"><span class="pal-ico">${ico}</span>${label.replace(/ \(.*/, '')}</button>`;
+      }).join('')}</div></div>`).join('')}
+  </aside>`;
+
+// Properties of the selected item, in collapsible sections like Fillout: Basic, Logic, Validation, Advanced.
+function propsHTML() {
+  const q = current.questions.find(x => x.id === focusQ);
+  if (!q) return '<p class="empty">Select a field on the form to see its properties.</p>';
+  const sec = (title, body, open = true) => body ? `<details ${open ? 'open' : ''}><summary>${title}</summary><div class="pbody">${body}</div></details>` : '';
+  const head = `<div class="props-head"><span>${TYPES[q.type] ?? BLOCKS[q.type]}</span>${btn('dup-q', 'Duplicate', ICONS.copy)}${btn('del-q', 'Delete', ICONS.del)}</div>`;
+  if (!isQuestion(q)) return `<div data-qid="${q.id}">${head}</div>`;
+  const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${esc(label)}</option>`;
+  // Logic: only earlier questions can be the condition's source.
+  const f = withPlaceholders(current);
+  const before = f.questions.slice(0, f.questions.findIndex(x => x.id === q.id)).filter(isQuestion);
+  const c = q.showIf ?? {};
+  const src = before.find(x => x.id === c.q);
+  const choices = src && HIDEABLE.includes(src.type);
+  const logic = `
+    <label>Show this field
+      <select data-field="ifQ">${opt('', 'Always')}${before.map(x => opt(x.id, `Only when: ${qLabel(x)}`, c.q)).join('')}</select>
+    </label>
+    ${src ? `<select data-field="ifOp" aria-label="Condition">${Object.entries(choices ? COND_CHOICE : COND_TEXT).map(([v, l]) => opt(v, l, c.op)).join('')}</select>
+      ${c.op === 'answered' ? '' : choices
+        ? `<select data-field="ifV" aria-label="Answer">${src.options.map((o, j) => opt(j, optLabel(src, j), c.v)).join('')}</select>`
+        : `<input data-field="ifV" placeholder="Value" value="${esc(c.v)}">`}` : ''}`;
+  const types = RULE_TYPES[q.type];
+  const pc = current.lang === 'dv' ? 'class="dv" lang="dv"' : '';
+  return `<div data-qid="${q.id}">
+    ${head}
+    ${sec('Basic', `
+      <label>Field type<select data-field="type">${TYPE_GROUPS.flat().map(v => opt(v, TYPES[v], q.type)).join('')}</select></label>
+      <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>`)}
+    ${sec('Logic', logic, !!src)}
+    ${types ? sec('Validation', `<label class="switch">Response validation <input type="checkbox" data-field="validate" ${q.validate ? 'checked' : ''}></label>${ruleRow(q)}`, !!q.validate) : ''}
+    ${sec('Advanced', `
+      ${['short', 'paragraph'].includes(q.type) ? `<label>Placeholder<input ${pc} data-field="placeholder" value="${esc(q.placeholder)}"></label>` : ''}
+      ${opts(current).quiz && GRADED.includes(q.type) ? `<label>Points<input type="number" min="0" data-field="points" value="${esc(q.points ?? 1)}"></label>` : ''}`, false)}
+  </div>`;
+}
+const COND_CHOICE = { is: 'Is', not: 'Is not', answered: 'Is answered' };
+const COND_TEXT = { is: 'Is', not: 'Is not', contains: 'Contains', answered: 'Is answered' };
+function renderProps() {
+  const p = app.querySelector('.props');
+  if (p) p.innerHTML = propsHTML();
+  app.querySelectorAll('.questions [data-qid]').forEach(c => c.classList.toggle('sel', c.dataset.qid === focusQ));
 }
 function settingsHTML() {
   const s = opts(current);
@@ -1058,7 +1179,13 @@ function blockHTML(q, i) {
 
 // New items go after the item last worked on, or at the end.
 let focusQ = null;
-app.addEventListener('focusin', e => { focusQ = e.target.closest('[data-qid]')?.dataset.qid ?? focusQ; });
+function selectQ(id) {
+  if (!id || id === focusQ) return;
+  focusQ = id;
+  renderProps();
+}
+app.addEventListener('focusin', e => { if (!e.target.closest('.fill')) selectQ(e.target.closest('[data-qid]')?.dataset.qid); });
+app.addEventListener('click', e => { if (!e.target.closest('.fill')) selectQ(e.target.closest('.questions [data-qid]')?.dataset.qid); });
 function insertItems(items) {
   const at = current.questions.findIndex(x => x.id === focusQ);
   current.questions.splice(at < 0 ? current.questions.length : at + 1, 0, ...items);
@@ -1108,6 +1235,15 @@ async function pickImage(input) {
   renderEditor('questions');
 }
 
+function setType(q, val) {
+  q.type = val;
+  if (!hasOptions(val)) q.options = [];
+  // Fresh lists start with one empty entry; "Option 1" / "Row 1" is only its placeholder.
+  else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [''];
+  q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['']) : [];
+  if (val === 'multi') q.cols = (q.cols.length >= 2 ? q.cols : ['', '']).slice(0, MAX_FIELDS);
+  setRuleDefaults(q);
+}
 function onFieldEdit(el) {
   const field = el.dataset.field;
   // Emptied editors keep a stray <br>; clear it so the placeholder shows again.
@@ -1126,19 +1262,22 @@ function onFieldEdit(el) {
     else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
     else if (field === 'fieldType') (q.fieldTypes ||= [])[idx] = val;
     else if (field === 'fieldOptions') (q.fieldOptions ||= [])[idx] = val;
-    else if (field === 'type') {
-      q.type = val;
-      if (!hasOptions(val)) q.options = [];
-      // Fresh lists start with one empty entry; "Option 1" / "Row 1" is only its placeholder.
-      else if (!q.options.length || ['Option', 'Row'].flatMap(l => [`${l} 1`, `${DV[l]} 1`]).includes(q.options.join('|'))) q.options = [''];
-      q.cols = hasCols(val) ? (q.cols?.length ? q.cols : ['']) : [];
-      if (val === 'multi') q.cols = (q.cols.length >= 2 ? q.cols : ['', '']).slice(0, MAX_FIELDS);
+    else if (field === 'type') setType(q, val);
+    else if (field.startsWith('if')) { // Logic: ifQ, ifOp, ifV -> q.showIf.q / .op / .v
+      q.showIf = { op: 'is', ...q.showIf, [field.slice(2).toLowerCase()]: val };
+      if (field === 'ifQ') q.showIf = val ? { q: val, op: 'is', v: '' } : undefined;
     } else q[field] = val;
   }
   saveForms();
 }
 
 app.addEventListener('input', e => {
+  if (e.target.matches('.pal-search')) {
+    const term = e.target.value.trim().toLowerCase();
+    app.querySelectorAll('.pal-tile').forEach(t => { t.hidden = !t.textContent.toLowerCase().includes(term); });
+    return app.querySelectorAll('.pal-sec').forEach(s => { s.hidden = !s.querySelector('.pal-tile:not([hidden])'); });
+  }
+  if (e.target.closest('.fill')) applyLogic(e.target.closest('.fill'));
   if (e.target.matches('[data-setting]')) {
     const key = e.target.dataset.setting;
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -1174,8 +1313,9 @@ app.addEventListener('change', e => {
   }
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
-  if (e.target.dataset.field === 'type') setRuleDefaults(current.questions.find(x => x.id === e.target.closest('[data-qid]').dataset.qid));
-  if (['type', 'url', 'newPage', 'vType', 'vOp', 'fieldType'].includes(e.target.dataset.field)) renderEditor('questions');
+  if (e.target.dataset.field === 'validate') setRuleDefaults(current.questions.find(x => x.id === e.target.closest('[data-qid]').dataset.qid));
+  // Panel edits also show on the card, so the editor redraws (text fields wait for change, not every keystroke).
+  if (['type', 'url', 'newPage', 'vType', 'vOp', 'fieldType'].includes(e.target.dataset.field) || e.target.closest('.props')) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -1193,6 +1333,7 @@ app.addEventListener('click', e => {
       return api(`forms/${btn.dataset.id}`, { method: 'DELETE' })
         .then(() => { history.replaceState(null, '', '#/'); renderHome(); }).catch(failed);
     case 'add-q': return insertItems([newQ()]);
+    case 'add-type': { const n = newQ(); setType(n, btn.dataset.type); return insertItems([n]); }
     case 'add-text': case 'add-image': case 'add-video': case 'add-section':
       return insertItems([newBlock(btn.dataset.act.slice(4))]);
     case 'import': return openImport();
@@ -1306,6 +1447,7 @@ app.addEventListener('click', e => {
 
 // Clear form puts dropdowns and file fields back to their placeholder.
 app.addEventListener('reset', e => {
+  setTimeout(() => applyLogic(e.target)); // after the fields have cleared
   e.target.querySelectorAll('.dd summary').forEach(sum => {
     sum.textContent = sum.dataset.ph;
     sum.classList.add('ph');
@@ -1436,9 +1578,9 @@ function answerHTML(q, pre = '') {
   const dd = (name, labels) => `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${choose}">${choose}</summary>
       <div class="dd-list">${labels.map(l => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}">${esc(l)}</label>`).join('')}</div></details>`;
   const inputs = {
-    short: `<input type="text"${dvAttr}>`,
+    short: `<input type="text"${dvAttr} placeholder="${esc(q.placeholder)}">`,
     email: '<input type="email" autocomplete="email">',
-    paragraph: `<textarea rows="3"${dvAttr}></textarea>`,
+    paragraph: `<textarea rows="3"${dvAttr} placeholder="${esc(q.placeholder)}"></textarea>`,
     date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" title="Choose date"></button></div>`,
     dropdown: dd(q.id, q.options.map((o, j) => q.hidden?.includes(j) ? null : optLabel(q, j))),
     radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
@@ -1555,6 +1697,7 @@ function renderFill(done = false, answers = null) {
       </div>
     </form>`, fillBar());
   showPage(app.querySelector('.fill'), 0);
+  applyLogic(app.querySelector('.fill'));
 }
 
 const scoreHTML = g => `
@@ -1573,6 +1716,41 @@ function validDate(v) {
 }
 const blank = v => v === '' || (Array.isArray(v) ? !v.length
   : !!v && typeof v === 'object' && !(v instanceof File) && Object.values(v).some(blank));
+// The answer in a question's card on the form.
+function readAnswer(q, wrap) {
+  const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
+  const row = j => picked(`[name="${q.id}:${j}"]`);
+  const one = () => picked('input')[0] ?? '';
+  return {
+    checkbox: () => picked('input'),
+    radio: one, scale: one, rating: one, dropdown: one,
+    mcgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)[0] ?? ''])),
+    cbgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)])),
+    table: () => [...wrap.querySelectorAll('tbody tr')]
+      .map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean)),
+    file: () => wrap.querySelector('input').files[0] ?? '',
+    multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('.dd') ? el.querySelector('input:checked')?.value ?? '' : el.querySelector('input, textarea').value.trim()])),
+  }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
+}
+// Logic: does question q's condition (q.showIf) hold for answer v of its source question src?
+function condHolds(c, src, v) {
+  if (c.op === 'answered') return !blank(v ?? '');
+  const hit = HIDEABLE.includes(src.type)
+    ? [v ?? []].flat().some(x => optIndex(src, x) === +c.v)
+    : c.op === 'contains' ? show(v).toLowerCase().includes(String(c.v ?? '').toLowerCase())
+    : show(v).trim().toLowerCase() === String(c.v ?? '').trim().toLowerCase();
+  return c.op === 'not' ? !hit : hit;
+}
+// Shows or hides each card with a condition. In form order, so a hidden source counts as unanswered.
+function applyLogic(form) {
+  current.questions.forEach(q => {
+    const card = form.querySelector(`[data-qid="${q.id}"]`);
+    const src = current.questions.find(x => x.id === q.showIf?.q);
+    if (!card || !src) return;
+    const sc = form.querySelector(`[data-qid="${src.id}"]`);
+    card.hidden = !condHolds(q.showIf, src, sc && !sc.hidden ? readAnswer(src, sc) : '');
+  });
+}
 function collect(scope) {
   const answers = {};
   let firstBad = null;
@@ -1580,19 +1758,8 @@ function collect(scope) {
   [EMAIL_Q, ...current.questions].filter(isQuestion).forEach(q => {
     const wrap = scope.querySelector(`[data-qid="${q.id}"]`);
     if (!wrap || wrap.closest('.page:not([data-seen])')) return; // skipped by a section jump
-    const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
-    const row = j => picked(`[name="${q.id}:${j}"]`);
-    const one = () => picked('input')[0] ?? '';
-    const v = {
-      checkbox: () => picked('input'),
-      radio: one, scale: one, rating: one, dropdown: one,
-      mcgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)[0] ?? ''])),
-      cbgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)])),
-      table: () => [...wrap.querySelectorAll('tbody tr')]
-        .map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean)),
-      file: () => wrap.querySelector('input').files[0] ?? '',
-      multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('.dd') ? el.querySelector('input:checked')?.value ?? '' : el.querySelector('input, textarea').value.trim()])),
-    }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
+    if (wrap.hidden) return; // hidden by logic: not checked, not sent
+    const v = readAnswer(q, wrap);
     const tooBig = v instanceof File && v.size > MAX_FILE;
     const rule = ruleError(q, v);
     const qe = wrap.querySelector('.q-error');

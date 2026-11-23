@@ -305,8 +305,9 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .file-field:hover .file-btn,.file-field:has(input:focus-visible) .file-btn{border-color:var(--teal-700);box-shadow:0 0 0 3px var(--teal-100)}
 .file-name{color:var(--muted);font-size:14px;min-width:0;overflow-wrap:anywhere}
 .file-field.picked .file-name{color:var(--ink)}
-.mf{margin-bottom:14px}
-.mf-label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.multi{display:flex;flex-wrap:wrap;gap:12px} /* fields side by side; on narrow phones they wrap */
+.mf{flex:1 1 140px;min-width:0}
+.mf-label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
 .opt-row select{flex:none;padding-block:6px}
 .opt-tag{color:var(--muted);font-size:13px;font-weight:400}
 .answer input[type=text],.answer input[type=email],.answer input[type=date],.answer input[type=time],.answer textarea,.answer select{width:100%;border:1px solid var(--line);border-radius:12px;background-color:#fff}
@@ -1454,7 +1455,7 @@ function answerHTML(q, pre = '') {
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
       <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvAttr ? 'ރޯއެއް އިތުރުކުރޭ' : 'Add row'}</button>`,
   };
-  inputs.multi = (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${fieldType(q, k) === 'dropdown' ? dd(`${q.id}:${k}`, fieldChoices(q, k)) : inputs[fieldType(q, k)]}</div>`).join('');
+  inputs.multi = '<div class="multi">' + (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${fieldType(q, k) === 'dropdown' ? dd(`${q.id}:${k}`, fieldChoices(q, k)) : inputs[fieldType(q, k)]}</div>`).join('') + '</div>';
   const field = inputs[q.type];
   // Optional questions are marked instead of required ones.
   const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;

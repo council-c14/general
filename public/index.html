@@ -149,6 +149,9 @@ h1{font-size:24px;margin:0}
 .drag-handle svg{width:22px;height:22px;fill:currentColor;transform:rotate(90deg)}
 .question:is(:hover,.sel,:focus-within) > .drag-handle{opacity:1}
 .ed .dragging{opacity:.4}
+/* Move up / down: on phones and touch screens, where dragging doesn't work */
+.move-btn{display:none}
+@media (hover:none),(max-width:900px){.move-btn{display:grid}.drag-handle{display:none}}
 .ed .drop-before{box-shadow:0 -9px 0 -6px var(--teal-700)}
 .questions.drop-end{box-shadow:0 9px 0 -6px var(--teal-700)}
 /* Half-width questions: two side by side, stacked on narrow screens */
@@ -1131,6 +1134,7 @@ function questionHTML(q, i) {
         <label class="switch"><input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}> <span class="${pc}">${dvText('Required')}</span></label>
         ${quiz ? `<label class="pts"><input type="number" min="0" inputmode="numeric" data-field="points" value="${esc(q.points ?? 1)}"> points</label>` : ''}
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
+        ${moveBtns(i)}
         ${cardMenu(RULE_TYPES[q.type] ? [menuToggle('validate', 'Response validation', q.validate)] : [])}
       </div>
     </section>`;
@@ -1188,6 +1192,7 @@ function blockHTML(q, i) {
       <div class="q-foot">
         ${k ? `<label class="switch"><input type="checkbox" data-field="newPage" ${newPage ? 'checked' : ''}> <span class="${pc}">${dvText('Start on a new page')}</span></label>` : ''}
         ${btn('dup-q', 'Duplicate', ICONS.copy)}
+        ${moveBtns(i)}
         ${cardMenu(q.type === 'image' ? [menuToggle('merge', 'Merge with item below', q.merge)] : [])}
       </div>
     </section>`;
@@ -1279,6 +1284,9 @@ app.addEventListener('dragstart', e => {
   e.dataTransfer.setData('text/plain', dragType);
   e.dataTransfer.effectAllowed = 'copy';
 });
+const moveBtns = i => `
+  <button class="icon-btn move-btn" data-act="move-up" title="Move up" aria-label="Move up" ${i ? '' : 'disabled'}>${svg('M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z')}</button>
+  <button class="icon-btn move-btn" data-act="move-down" title="Move down" aria-label="Move down" ${i < current.questions.length - 1 ? '' : 'disabled'}>${svg('M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z')}</button>`;
 function moveItem(id, at) {
   const from = current.questions.findIndex(x => x.id === id);
   if (at > from) at--; // the item's own slot closes up first
@@ -1287,6 +1295,7 @@ function moveItem(id, at) {
   focusQ = id;
   saveForms();
   renderEditor('questions');
+  app.querySelector(`.questions [data-qid="${id}"]`)?.scrollIntoView({ block: 'center' });
 }
 const clearDrop = () => app.querySelectorAll('.drop-before, .drop-end').forEach(el => el.classList.remove('drop-before', 'drop-end'));
 function dropTarget(y) {
@@ -1410,6 +1419,8 @@ app.addEventListener('click', e => {
       return api(`forms/${btn.dataset.id}`, { method: 'DELETE' })
         .then(() => { history.replaceState(null, '', '#/'); renderHome(); }).catch(failed);
     case 'add-q': return insertItems([newQ()]);
+    case 'move-up': return moveItem(q.id, idx - 1);
+    case 'move-down': return moveItem(q.id, idx + 2); // moveItem counts the slot the item leaves
     case 'add-type': return insertItems([typedItem(btn.dataset.type)]);
     case 'add-text': case 'add-image': case 'add-video': case 'add-section':
       return insertItems([newBlock(btn.dataset.act.slice(4))]);

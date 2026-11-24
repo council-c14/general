@@ -141,6 +141,13 @@ h1{font-size:24px;margin:0}
 .props .valid-row{margin:0;padding:0;border:0}
 .props .empty{color:var(--muted);padding:24px 16px;font-size:14px}
 @media (max-width:1100px){.props{display:none}}
+/* Dragging a field from the sidebar: a line shows where it will land */
+.pal-tile{cursor:grab}
+.ed .drop-before{box-shadow:0 -9px 0 -6px var(--teal-700)}
+.questions.drop-end{box-shadow:0 9px 0 -6px var(--teal-700)}
+/* Half-width questions: two side by side, stacked on narrow screens */
+.half-row{display:flex;flex-wrap:wrap;gap:0 14px}
+.half-row > *{flex:1 1 240px;min-width:0}
 @media (min-width:901px){.ed-wrap .add-bar{display:none}} /* the sidebar does its job on wide screens */
 @media (max-width:900px){
   .palette{display:none}
@@ -898,7 +905,7 @@ async function renderEditor(tab) {
       ${richField('description', f.description, dvText('Form description'), `desc-input ${justCls(f.descJustify)} ${f.lang === 'dv' ? 'dv" lang="dv' : ''}`, true, '', justifyOpt('descJustify', f.descJustify, 'description descriptionDv'))}
       ${dual ? richField('descriptionDv', f.descriptionDv, 'Description (Dhivehi)', `desc-input ${justCls(f.descJustify)} dv" dir="rtl" lang="dv`, true, '', justifyOpt('descJustify', f.descJustify, 'description descriptionDv')) : ''}
     </section>
-    <div class="questions">${f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q, i) : questionHTML(q, i)).join('')}</div>
+    <div class="questions">${pairHalves(f.questions, f.questions.map((q, i) => q.type in BLOCKS ? blockHTML(q, i) : questionHTML(q, i)))}</div>
     <div class="add-bar">
       ${btn('add-q', 'Add question', ICONS.add)}
       ${btn('import', 'Import questions', ICONS.import)}
@@ -959,7 +966,7 @@ const paletteHTML = () => `
       <div class="pal-sec"><div class="pal-group">${g}</div><div class="pal-grid">${items.map(([t, ico]) => {
         const label = TYPES[t] ?? BLOCKS[t] ?? 'Import';
         const act = t === 'import' ? 'import' : t in BLOCKS ? `add-${t}` : 'add-type';
-        return `<button class="pal-tile" data-act="${act}" data-type="${t}" style="--c:${c}"><span class="pal-ico">${ico}</span>${label.replace(/ \(.*/, '')}</button>`;
+        return `<button class="pal-tile" draggable="${t !== 'import'}" data-act="${act}" data-type="${t}" style="--c:${c}"><span class="pal-ico">${ico}</span>${label.replace(/ \(.*/, '')}</button>`;
       }).join('')}</div></div>`).join('')}
   </aside>`;
 
@@ -991,7 +998,8 @@ function propsHTML() {
     ${head}
     ${sec('Basic', `
       <label>Field type<select data-field="type">${TYPE_GROUPS.flat().map(v => opt(v, TYPES[v], q.type)).join('')}</select></label>
-      <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>`)}
+      <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>
+      <label class="switch">Half width <input type="checkbox" data-field="half" ${q.half ? 'checked' : ''}></label>`)}
     ${sec('Logic', logic, !!src)}
     ${types ? sec('Validation', `<label class="switch">Response validation <input type="checkbox" data-field="validate" ${q.validate ? 'checked' : ''}></label>${ruleRow(q)}`, !!q.validate) : ''}
     ${sec('Advanced', `
@@ -1186,9 +1194,10 @@ function selectQ(id) {
 }
 app.addEventListener('focusin', e => { if (!e.target.closest('.fill')) selectQ(e.target.closest('[data-qid]')?.dataset.qid); });
 app.addEventListener('click', e => { if (!e.target.closest('.fill')) selectQ(e.target.closest('.questions [data-qid]')?.dataset.qid); });
-function insertItems(items) {
-  const at = current.questions.findIndex(x => x.id === focusQ);
-  current.questions.splice(at < 0 ? current.questions.length : at + 1, 0, ...items);
+// at: index to insert at (a drop from the sidebar); otherwise after the selected item.
+function insertItems(items, at = null) {
+  const sel = current.questions.findIndex(x => x.id === focusQ);
+  current.questions.splice(at ?? (sel < 0 ? current.questions.length : sel + 1), 0, ...items);
   focusQ = items.at(-1).id;
   saveForms();
   renderEditor('questions');
@@ -1235,6 +1244,43 @@ async function pickImage(input) {
   renderEditor('questions');
 }
 
+// A new question or block of a sidebar tile's type.
+function typedItem(type) {
+  if (type in BLOCKS) return newBlock(type);
+  const n = newQ();
+  setType(n, type);
+  return n;
+}
+// Drag a sidebar tile onto the form: it lands before the first card whose middle is below the pointer.
+let dragType = null;
+app.addEventListener('dragstart', e => {
+  const t = e.target.closest?.('.pal-tile');
+  if (!t || t.dataset.type === 'import') return e.preventDefault();
+  dragType = t.dataset.type;
+  e.dataTransfer.setData('text/plain', dragType);
+  e.dataTransfer.effectAllowed = 'copy';
+});
+const clearDrop = () => app.querySelectorAll('.drop-before, .drop-end').forEach(el => el.classList.remove('drop-before', 'drop-end'));
+function dropTarget(y) {
+  const cards = [...app.querySelectorAll('.questions section.card[data-qid]')];
+  return cards.find(c => { const r = c.getBoundingClientRect(); return r.top + r.height / 2 > y; });
+}
+app.addEventListener('dragover', e => {
+  if (!dragType || !e.target.closest('.ed-wrap > main')) return;
+  e.preventDefault();
+  clearDrop();
+  const card = dropTarget(e.clientY);
+  if (card) card.classList.add('drop-before');
+  else app.querySelector('.questions')?.classList.add('drop-end');
+});
+app.addEventListener('drop', e => {
+  if (!dragType || !e.target.closest('.ed-wrap > main')) return;
+  e.preventDefault();
+  const card = dropTarget(e.clientY);
+  const at = card ? current.questions.findIndex(x => x.id === card.dataset.qid) : current.questions.length;
+  insertItems([typedItem(dragType)], at);
+});
+app.addEventListener('dragend', () => { dragType = null; clearDrop(); });
 function setType(q, val) {
   q.type = val;
   if (!hasOptions(val)) q.options = [];
@@ -1333,7 +1379,7 @@ app.addEventListener('click', e => {
       return api(`forms/${btn.dataset.id}`, { method: 'DELETE' })
         .then(() => { history.replaceState(null, '', '#/'); renderHome(); }).catch(failed);
     case 'add-q': return insertItems([newQ()]);
-    case 'add-type': { const n = newQ(); setType(n, btn.dataset.type); return insertItems([n]); }
+    case 'add-type': return insertItems([typedItem(btn.dataset.type)]);
     case 'add-text': case 'add-image': case 'add-video': case 'add-section':
       return insertItems([newBlock(btn.dataset.act.slice(4))]);
     case 'import': return openImport();
@@ -1546,12 +1592,27 @@ const secDesc = q => q.desc || q.descDv ? `<section class="card block">${localiz
 const mergedImage = q => `<div class="merged-img">${q.text || q.textDv ? localized(current, 'div', q.text, q.textDv, `q-label ${headCls(q, 'font', 'faruma')}`, '', clean) : ''}${safeSrc(q.src) ? `<img class="block-img" src="${esc(q.src)}" alt="${esc(plain(q.text))}">` : ''}</div>`;
 function itemsHTML(list) {
   let pre = '';
-  return list.map((q, i) => {
+  return pairHalves(list, list.map((q, i) => {
     if (q.type === 'image' && q.merge && list[i + 1] && list[i + 1].type !== 'section') { pre += mergedImage(q); return ''; }
     const html = itemHTML(q, false, pre);
     pre = '';
     return html;
-  }).join('');
+  }));
+}
+// Half-width questions next to each other sit side by side, two to a row. parts[i] is list[i]'s HTML.
+function pairHalves(list, parts) {
+  let out = '', run = [];
+  const flush = () => {
+    for (let i = 0; i < run.length; i += 2) out += i + 1 < run.length ? `<div class="half-row">${run[i]}${run[i + 1]}</div>` : run[i];
+    run = [];
+  };
+  list.forEach((q, i) => {
+    if (!parts[i]) return; // a merged image, shown inside the next card
+    if (q.half && isQuestion(q)) run.push(parts[i]);
+    else { flush(); out += parts[i]; }
+  });
+  flush();
+  return out;
 }
 
 function itemHTML(q, fold = false, pre = '') {

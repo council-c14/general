@@ -143,6 +143,11 @@ h1{font-size:24px;margin:0}
 @media (max-width:1100px){.props{display:none}}
 /* Dragging a field from the sidebar: a line shows where it will land */
 .pal-tile{cursor:grab}
+.ed .question{position:relative}
+.drag-handle{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:0 10px;color:#9ca3af;cursor:grab;opacity:0;line-height:0}
+.drag-handle svg{width:22px;height:22px;fill:currentColor;transform:rotate(90deg)}
+.question:is(:hover,.sel,:focus-within) > .drag-handle{opacity:1}
+.ed .dragging{opacity:.4}
 .ed .drop-before{box-shadow:0 -9px 0 -6px var(--teal-700)}
 .questions.drop-end{box-shadow:0 9px 0 -6px var(--teal-700)}
 /* Half-width questions: two side by side, stacked on narrow screens */
@@ -1111,6 +1116,7 @@ function questionHTML(q, i) {
     : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
     <section class="card question" data-qid="${q.id}">
+      ${DRAG_HANDLE}
       <div class="q-top">
         ${richField('text', q.text, `${dvText('Question')} ${num}`, `q-text ${pc}`)}
         <select class="q-type" data-field="type">
@@ -1170,6 +1176,7 @@ function blockHTML(q, i) {
     ${k && newPage ? afterSection(q, k) : ''}
     ${k ? secTab(k) : ''}
     <section class="card question block ${q.type} ${q.type === 'image' && q.merge ? 'merged' : ''}" data-qid="${q.id}">
+      ${DRAG_HANDLE}
       ${k ? '' : `<div class="block-kind ${pc}">${dvText(BLOCKS[q.type])}</div>`}
       ${richField('text', q.text, dvText(k ? 'Untitled section' : 'Title'), `q-text ${pc ? headCls(q, 'font', defFont) : ''} ${pc}`, false, '', pc ? fontOpts('font', fontOf(q, 'font', defFont)) : '')}
       ${dv('text', 'Title', `q-text ${headCls(q, 'font', defFont)}`, false, fontOpts('font', fontOf(q, 'font', defFont)))}
@@ -1251,15 +1258,35 @@ function typedItem(type) {
   setType(n, type);
   return n;
 }
-// Drag a sidebar tile onto the form: it lands before the first card whose middle is below the pointer.
-let dragType = null;
+// Drag a sidebar tile onto the form, or a card by its handle to reorder:
+// it lands before the first card whose middle is below the pointer.
+const DRAG_HANDLE = `<span class="drag-handle" draggable="true" title="Drag to reorder">${svg('M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z')}</span>`;
+let dragType = null; // a tile's type, or { id } for a card being moved
 app.addEventListener('dragstart', e => {
+  const handle = e.target.closest?.('.drag-handle');
+  if (handle) {
+    const card = handle.closest('[data-qid]');
+    dragType = { id: card.dataset.qid };
+    e.dataTransfer.setData('text/plain', '');
+    e.dataTransfer.setDragImage(card, 20, 20);
+    e.dataTransfer.effectAllowed = 'move';
+    return setTimeout(() => card.classList.add('dragging')); // after the drag image is taken
+  }
   const t = e.target.closest?.('.pal-tile');
   if (!t || t.dataset.type === 'import') return e.preventDefault();
   dragType = t.dataset.type;
   e.dataTransfer.setData('text/plain', dragType);
   e.dataTransfer.effectAllowed = 'copy';
 });
+function moveItem(id, at) {
+  const from = current.questions.findIndex(x => x.id === id);
+  if (at > from) at--; // the item's own slot closes up first
+  if (at === from) return renderEditor('questions');
+  current.questions.splice(at, 0, ...current.questions.splice(from, 1));
+  focusQ = id;
+  saveForms();
+  renderEditor('questions');
+}
 const clearDrop = () => app.querySelectorAll('.drop-before, .drop-end').forEach(el => el.classList.remove('drop-before', 'drop-end'));
 function dropTarget(y) {
   const cards = [...app.querySelectorAll('.questions section.card[data-qid]')];
@@ -1278,9 +1305,12 @@ app.addEventListener('drop', e => {
   e.preventDefault();
   const card = dropTarget(e.clientY);
   const at = card ? current.questions.findIndex(x => x.id === card.dataset.qid) : current.questions.length;
-  insertItems([typedItem(dragType)], at);
+  const moving = dragType.id;
+  dragType = null;
+  if (moving) moveItem(moving, at);
+  else insertItems([typedItem(e.dataTransfer.getData('text/plain'))], at);
 });
-app.addEventListener('dragend', () => { dragType = null; clearDrop(); });
+app.addEventListener('dragend', () => { dragType = null; clearDrop(); app.querySelector('.dragging')?.classList.remove('dragging'); });
 function setType(q, val) {
   q.type = val;
   if (!hasOptions(val)) q.options = [];

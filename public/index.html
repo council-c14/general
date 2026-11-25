@@ -142,6 +142,25 @@ h1{font-size:24px;margin:0}
 .props .valid-row{margin:0;padding:0;border:0}
 .props .empty{color:var(--muted);padding:24px 16px;font-size:14px}
 @media (max-width:1100px){.props{display:none}}
+.props .plabel{color:#4b5563;display:flex;align-items:center;gap:6px}
+.props .hint{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#4b5563;color:#fff;font-size:11px;cursor:help}
+.props .plist{display:grid;gap:6px}
+.props .prow{display:flex;align-items:center;gap:6px}
+.props .prow .link{padding:4px 0;margin-inline-end:12px}
+.props .seg{display:flex;border:1px solid #dfe3e7;border-radius:8px;overflow:hidden}
+.props .seg button{flex:1;border:0;background:#fff;padding:8px;font:inherit;cursor:pointer;color:#4b5563}
+.props .seg button[aria-pressed=true]{outline:1.5px solid #111827;outline-offset:-1.5px;border-radius:8px;color:#111827}
+.props .lc-open{width:100%;justify-content:center}
+.props .lc-pop{border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:12px;display:grid;gap:10px}
+.props .lc-pop .meta{margin:0;color:#9ca3af}
+.props .lc-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-bottom:8px;border-bottom:1px dashed #e5e7eb}
+.props .lc-row select:first-child{flex-basis:calc(100% - 36px)}
+.props .lc-row :is(select,input):not(:first-child){flex:1 1 90px;width:auto}
+.props .lc-group{border:1px solid #dfe3e7;border-radius:8px;padding:8px;display:grid;gap:8px;background:#f9fafb}
+.props .lc-join{display:flex!important;align-items:center;gap:6px}
+.props .lc-join select{width:auto;min-width:76px}
+.props .lc-foot{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}
+.props .lc-foot .done{margin-inline-start:auto;color:#6b7280}
 /* Dragging a field from the sidebar: a line shows where it will land */
 .pal-tile{cursor:grab}
 .ed .question{position:relative}
@@ -382,9 +401,23 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 /* Date: typed as dd/mm/yyyy; the button opens the browser's calendar on a hidden date input */
 .date-field{position:relative;direction:ltr}
 .answer input.date-text{padding-inline-end:52px;cursor:text}
-.answer .date-pick{position:absolute;inset:auto 0 0;height:0;padding:0;border:0;opacity:0;pointer-events:none}
+.answer .time-pick{position:absolute;inset:auto 0 0;height:0;padding:0;border:0;opacity:0;pointer-events:none}
 .date-btn{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;cursor:pointer;background:var(--teal-100) center/18px no-repeat}
 .date-btn:hover{background-color:#cfe9e5}
+.time-field .date-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")!important}
+.cal{position:absolute;z-index:20;top:calc(100% + 6px);left:0;width:280px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cal-head button,.cal-grid button{border:0;background:none;border-radius:50%;cursor:pointer;font:inherit}
+.cal-head button{width:32px;height:32px;font-size:20px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-grid i{font-style:normal;font-size:12px;color:var(--muted);padding:4px 0}
+.cal-grid button{aspect-ratio:1}
+.cal :is(button:hover,button:focus-visible){background:var(--teal-100)}
+.cal-grid button.on{background:var(--teal-700);color:#fff}
+.choice.other{align-items:center}
+.link.add-other{margin-inline-start:16px}
+.choice.other .other-text,.answer > .other-text{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:4px 2px;margin-top:-4px}
+.answer > .other-text{display:block;width:100%;margin-top:10px}
 .date-btn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E")}
 .answer input[type=time]::-webkit-calendar-picker-indicator{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d6666' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")}
 .answer textarea{resize:vertical}
@@ -631,17 +664,22 @@ const RULES = {
   length: { max: 'Maximum character count', min: 'Minimum character count' },
   regex: { contains: 'Contains', ncontains: "Doesn't contain", matches: 'Matches', nmatches: "Doesn't match" },
   select: { atleast: 'Select at least', atmost: 'Select at most', exactly: 'Select exactly' },
+  date: { dvalid: 'Is a valid date', dafter: 'After', dbefore: 'Before', dbetween: 'Between' },
+  email: { evalid: 'Is a valid email' },
 };
-const RULE_TYPES = { short: ['number', 'text', 'length', 'regex'], paragraph: ['length', 'regex'], checkbox: ['select'] };
-const RULE_NAMES = { number: 'Number', text: 'Text', length: 'Length', regex: 'Regular expression', select: 'Selection' };
-const NO_ARG = ['isnum', 'whole', 'email', 'url'];
-const TWO_ARGS = ['between', 'nbetween'];
+const RULE_TYPES = { short: ['number', 'text', 'length', 'regex', 'date', 'email'], paragraph: ['length', 'regex'], checkbox: ['select'], date: ['date'] };
+const RULE_NAMES = { number: 'Number', text: 'Text', length: 'Length', regex: 'Regular expression', select: 'Selection', date: 'Date', email: 'Email' };
+const NO_ARG = ['isnum', 'whole', 'email', 'url', 'dvalid', 'evalid'];
+const TWO_ARGS = ['between', 'nbetween', 'dbetween'];
 // Error text for an answer that breaks the question's rule, or '' when it passes (empty answers are left to Required).
 function ruleError(q, v) {
   if (!q.validate || !RULE_TYPES[q.type]?.includes(q.vType) || !RULES[q.vType][q.vOp] || blank(v)) return '';
   const a = String(q.vA ?? ''), b = String(q.vB ?? ''), A = Number(a), B = Number(b), n = Number(v);
   const num = typeof v === 'string' && v.trim() !== '' && !isNaN(n);
   const lo = Math.min(A, B), hi = Math.max(A, B);
+  // Date rules read the answer in the field's format (date fields) or the rule's own (vFmt); limits come from date pickers.
+  const dfmt = (q.type === 'date' ? q.fmt : q.vFmt) || DEF_FMT.date;
+  const t = q.vType === 'date' ? parseDate(v, dfmt) : null, dA = parseDate(a, 'yyyy-mm-dd'), dB = parseDate(b, 'yyyy-mm-dd');
   const re = whole => { try { return new RegExp(whole ? `^(?:${a})$` : a); } catch { return null; } }; // a bad pattern lets answers through
   const ok = {
     'number:gt': num && n > A, 'number:gte': num && n >= A, 'number:lt': num && n < A, 'number:lte': num && n <= A,
@@ -653,11 +691,15 @@ function ruleError(q, v) {
     'length:max': v.length <= A, 'length:min': v.length >= A,
     'regex:contains': re()?.test(v) ?? true, 'regex:ncontains': !(re()?.test(v) ?? false),
     'regex:matches': re(true)?.test(v) ?? true, 'regex:nmatches': !(re(true)?.test(v) ?? false),
+    'date:dvalid': !!t, 'date:dafter': !!t && (!dA || t > dA), 'date:dbefore': !!t && (!dA || t < dA),
+    'date:dbetween': !!t && (!dA || !dB || (t >= Math.min(dA, dB) && t <= Math.max(dA, dB))),
+    'email:evalid': /^\S+@\S+\.\S+$/.test(v),
     'select:atleast': v.length >= A, 'select:atmost': v.length <= A, 'select:exactly': v.length === A,
   }[`${q.vType}:${q.vOp}`];
   if (ok) return '';
   const label = RULES[q.vType][q.vOp];
   const what = { number: 'Enter a number', text: 'Enter text', length: 'Use a', regex: 'Answer must', select: '' }[q.vType];
+  const day = d => d ? fmtDate(d, dfmt) : '';
   return q.vMsg?.trim() || {
     number: NO_ARG.includes(q.vOp) ? (q.vOp === 'whole' ? 'Enter a whole number' : 'Enter a number')
       : `${what} ${label.toLowerCase()} ${a}${TWO_ARGS.includes(q.vOp) ? ` and ${b}` : ''}`,
@@ -666,8 +708,90 @@ function ruleError(q, v) {
     length: `${q.vOp === 'max' ? 'Use at most' : 'Use at least'} ${a} characters`,
     regex: `Answer ${{ contains: 'must contain', ncontains: "can't contain", matches: 'must match', nmatches: "can't match" }[q.vOp]} the required pattern`,
     select: `${label} ${a}`,
+    date: !t ? `Enter a date as ${dfmt}` : `Enter a date ${{ dafter: `after ${day(dA)}`, dbefore: `before ${day(dA)}`, dbetween: `between ${day(dA)} and ${day(dB)}` }[q.vOp]}`,
+    email: 'Enter a valid email address',
   }[q.vType];
 }
+// Dates and times typed in a format. Date tokens: yyyy yy dd d mm m. Time tokens: HH H (24-hour), hh h (12-hour), mm, a (am/pm).
+// Anything else in the format is literal. Answers are stored as typed.
+const DEF_FMT = { date: 'dd/mm/yyyy', time: 'HH:mm' };
+const FMTS = { date: ['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd.mm.yyyy', 'dd-mm-yyyy'], time: ['HH:mm', 'hh:mm a'] };
+const DATE_TOK = /yyyy|yy|dd|d|mm|m/g, TIME_TOK = /HH|H|hh|h|mm|a|A/g;
+const pad = n => String(n).padStart(2, '0');
+function readFmt(v, fmt, tok) {
+  const keys = [];
+  const src = fmt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(tok, k => { keys.push(k); return /a/i.test(k) ? '([ap]m)' : k.length === 1 ? '(\\d{1,2})' : `(\\d{${k.length}})`; });
+  const m = new RegExp(`^${src}$`, 'i').exec(String(v ?? '').trim());
+  return m && Object.fromEntries(keys.map((k, i) => [k, m[i + 1]]));
+}
+function parseDate(v, fmt = DEF_FMT.date) {
+  const g = readFmt(v, fmt, DATE_TOK);
+  if (!g) return null;
+  const y = g.yyyy ? +g.yyyy : g.yy ? 2000 + +g.yy : 2000, m = +(g.mm ?? g.m ?? 1), d = +(g.dd ?? g.d ?? 1);
+  const t = new Date(y, m - 1, d);
+  return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d ? t : null;
+}
+// Minutes after midnight, or null.
+function parseTime(v, fmt = DEF_FMT.time) {
+  const g = readFmt(v, fmt, TIME_TOK);
+  if (!g) return null;
+  const twelve = 'hh' in g || 'h' in g, h = +(g.HH ?? g.H ?? g.hh ?? g.h ?? 0), min = +(g.mm ?? 0);
+  const pm = /p/i.test(g.a ?? g.A ?? '');
+  if (min > 59 || (twelve ? h < 1 || h > 12 : h > 23)) return null;
+  return (twelve ? h % 12 + (pm ? 12 : 0) : h) * 60 + min;
+}
+const fmtDate = (t, fmt) => fmt.replace(DATE_TOK, k => ({ yyyy: t.getFullYear(), yy: pad(t.getFullYear() % 100), dd: pad(t.getDate()), d: t.getDate(), mm: pad(t.getMonth() + 1), m: t.getMonth() + 1 })[k]);
+const fmtTime = (n, fmt) => {
+  const h = Math.floor(n / 60), h12 = h % 12 || 12;
+  return fmt.replace(TIME_TOK, k => ({ HH: pad(h), H: h, hh: pad(h12), h: h12, mm: pad(n % 60), a: h < 12 ? 'am' : 'pm', A: h < 12 ? 'AM' : 'PM' })[k]);
+};
+const okStamp = (type, v, fmt) => (type === 'date' ? parseDate : parseTime)(v, fmt || DEF_FMT[type]) !== null;
+// Formats of fixed-width numbers only (dd/mm/yyyy, HH:mm) fill in their separators as digits are typed; others are typed freely.
+const maskTpl = fmt => fmt.replace(/yyyy|yy|dd|mm|HH|hh/g, k => '#'.repeat(k.length));
+const masked = fmt => !/[dmyha]/i.test(maskTpl(fmt));
+function mask(v, fmt) {
+  if (!masked(fmt)) return v;
+  const ds = [...v.replace(/\D/g, '')];
+  let out = '';
+  for (const ch of maskTpl(fmt)) { if (!ds.length) break; out += ch === '#' ? ds.shift() : ch; }
+  return out;
+}
+const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${esc(label)}</option>`;
+// Format choice: presets with an example, or Custom with a text box. Stored in q[field].
+const fmtPicker = (field, cur, type) => {
+  const custom = !FMTS[type].includes(cur);
+  const sample = p => type === 'date' ? fmtDate(new Date(2026, 11, 31), p) : fmtTime(13 * 60 + 30, p);
+  return `<select data-field="${field}" data-fmtsel aria-label="Format">${FMTS[type].map(p => opt(p, `${p}  (${sample(p)})`, custom ? '' : cur)).join('')}${opt('custom', 'Custom…', custom ? 'custom' : '')}</select>
+    ${custom ? `<input data-field="${field}" value="${esc(cur)}" placeholder="e.g. ${type === 'date' ? 'd.m.yyyy' : 'h:mm a'}" aria-label="Custom format">` : ''}`;
+};
+// Month calendar under a date field; weeks start on `start` (0 Sunday, 1 Monday, 6 Saturday).
+function calHTML(y, m, start, sel) {
+  const first = new Date(y, m, 1), lead = (first.getDay() - start + 7) % 7, days = new Date(y, m + 1, 0).getDate();
+  const names = [...Array(7)].map((_, i) => 'SuMoTuWeThFrSa'.substr((i + start) % 7 * 2, 2));
+  const on = d => sel && sel.getFullYear() === y && sel.getMonth() === m && sel.getDate() === d;
+  return `<div class="cal" data-y="${y}" data-m="${m}">
+    <div class="cal-head"><button type="button" data-act="cal-nav" data-step="-1" aria-label="Previous month">‹</button>
+      <b>${first.toLocaleString('en', { month: 'long', year: 'numeric' })}</b>
+      <button type="button" data-act="cal-nav" data-step="1" aria-label="Next month">›</button></div>
+    <div class="cal-grid">${names.map(n => `<i>${n}</i>`).join('')}${'<span></span>'.repeat(lead)}${[...Array(days)].map((_, i) =>
+      `<button type="button" data-act="cal-day" data-d="${i + 1}" class="${on(i + 1) ? 'on' : ''}">${i + 1}</button>`).join('')}</div>
+  </div>`;
+}
+// Date and time answers: a text box in the field's format, with a calendar (dates) or the browser's time picker (times).
+function stampField(type, q = {}) {
+  const fmt = q.fmt || DEF_FMT[type];
+  const date = type === 'date';
+  return `<div class="date-field ${date ? '' : 'time-field'}" data-fmt="${esc(fmt)}" data-type="${type}" data-week="${+q.weekStart || 0}">
+    <input type="text" class="date-text" ${masked(fmt) ? `inputmode="numeric" maxlength="${maskTpl(fmt).length}"` : ''} placeholder="${esc(q.placeholder || fmt)}" value="${esc(q.def)}" autocomplete="off">
+    ${q.noPicker ? '' : `${date ? '' : '<input type="time" class="time-pick" tabindex="-1" aria-hidden="true">'}<button type="button" class="date-btn" data-act="pick-${type}" title="Choose ${type}"></button>`}
+  </div>`;
+}
+// Conditional logic on q.logic: { hide: always hidden, when: 'show' | 'hide', join: 'and' | 'or', items: [condition or group] }.
+// A condition is { q, op, v }; a group is { join, items: [conditions] }. Older forms kept one condition in q.showIf.
+const logicOf = q => q.logic ?? (q.showIf?.q ? { when: 'show', join: 'and', items: [q.showIf] } : {});
+const editLogic = q => { q.logic = { when: 'show', join: 'and', items: [], ...logicOf(q) }; delete q.showIf; return q.logic; };
+const nodeAt = (L, path) => path === '' ? L : path.split('.').reduce((n, i) => n.items[+i], L);
 // Editor row for a question's rule.
 function ruleRow(q) {
   const types = RULE_TYPES[q.type];
@@ -676,12 +800,16 @@ function ruleRow(q) {
   const sel = (field, entries, cur) => `<select data-field="${field}">${entries.map(([v, label]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
   const numeric = ['number', 'length', 'select'].includes(q.vType);
   const ph = numeric ? 'Number' : q.vType === 'regex' ? 'Pattern' : 'Text';
+  const isDate = q.vType === 'date';
+  const arg = k => isDate ? `<input data-field="${k}" type="date" value="${esc(q[k])}">`
+    : `<input data-field="${k}" type="number" inputmode="decimal" placeholder="Number" value="${esc(q[k])}">`;
   return `
     <div class="valid-row">
       ${types.length > 1 ? sel('vType', types.map(t => [t, RULE_NAMES[t]]), q.vType) : ''}
       ${sel('vOp', Object.entries(ops), q.vOp)}
-      ${NO_ARG.includes(q.vOp) ? '' : `<input data-field="vA" ${numeric ? 'type="number" inputmode="decimal"' : ''} placeholder="${ph}" value="${esc(q.vA)}">`}
-      ${TWO_ARGS.includes(q.vOp) ? `<input data-field="vB" type="number" inputmode="decimal" placeholder="Number" value="${esc(q.vB)}">` : ''}
+      ${isDate && q.type !== 'date' ? fmtPicker('vFmt', q.vFmt ?? DEF_FMT.date, 'date') : ''}
+      ${NO_ARG.includes(q.vOp) ? '' : isDate ? arg('vA') : `<input data-field="vA" ${numeric ? 'type="number" inputmode="decimal"' : ''} placeholder="${ph}" value="${esc(q.vA)}">`}
+      ${TWO_ARGS.includes(q.vOp) ? arg('vB') : ''}
       <input class="msg" data-field="vMsg" placeholder="Custom error text" value="${esc(q.vMsg)}">
     </div>`;
 }
@@ -986,36 +1114,73 @@ function propsHTML() {
   const sec = (title, body, open = true) => body ? `<details ${open ? 'open' : ''}><summary>${title}</summary><div class="pbody">${body}</div></details>` : '';
   const head = `<div class="props-head"><span>${TYPES[q.type] ?? BLOCKS[q.type]}</span>${btn('dup-q', 'Duplicate', ICONS.copy)}${btn('del-q', 'Delete', ICONS.del)}</div>`;
   if (!isQuestion(q)) return `<div data-qid="${q.id}">${head}</div>`;
-  const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${esc(label)}</option>`;
-  // Logic: only earlier questions can be the condition's source.
   const f = withPlaceholders(current);
   const before = f.questions.slice(0, f.questions.findIndex(x => x.id === q.id)).filter(isQuestion);
-  const c = q.showIf ?? {};
-  const src = before.find(x => x.id === c.q);
-  const choices = src && HIDEABLE.includes(src.type);
-  const logic = `
-    <label>Show this field
-      <select data-field="ifQ">${opt('', 'Always')}${before.map(x => opt(x.id, `Only when: ${qLabel(x)}`, c.q)).join('')}</select>
-    </label>
-    ${src ? `<select data-field="ifOp" aria-label="Condition">${Object.entries(choices ? COND_CHOICE : COND_TEXT).map(([v, l]) => opt(v, l, c.op)).join('')}</select>
-      ${c.op === 'answered' ? '' : choices
-        ? `<select data-field="ifV" aria-label="Answer">${src.options.map((o, j) => opt(j, optLabel(src, j), c.v)).join('')}</select>`
-        : `<input data-field="ifV" placeholder="Value" value="${esc(c.v)}">`}` : ''}`;
   const types = RULE_TYPES[q.type];
   const pc = current.lang === 'dv' ? 'class="dv" lang="dv"' : '';
+  const choices = HIDEABLE.includes(q.type);
+  const stamp = ['date', 'time'].includes(q.type);
+  // Basic: placeholder, default value and the choices themselves.
+  const ph = ['short', 'paragraph', 'dropdown', 'date', 'time'].includes(q.type)
+    ? `<label>Placeholder<input ${pc} data-field="placeholder" value="${esc(q.placeholder)}" placeholder="${stamp ? esc(q.fmt || DEF_FMT[q.type]) : q.type === 'dropdown' ? 'Choose' : ''}"></label>` : '';
+  const fq = f.questions.find(x => x.id === q.id); // options with "Option 1" placeholders filled in
+  const def = choices ? `<label>Default value<select data-field="def">${opt('', 'None')}${fq.options.map((o, j) => opt(j, optLabel(fq, j), q.def)).join('')}</select></label>`
+    : ['short', 'paragraph'].includes(q.type) || stamp ? `<label>Default value<input ${stamp ? '' : pc} data-field="def" value="${esc(q.def)}" placeholder="${stamp ? esc(q.fmt || DEF_FMT[q.type]) : ''}"></label>` : '';
+  const choiceList = choices ? `<div class="plist"><span class="plabel">Choices</span>
+    ${q.options.map((o, j) => `<div class="prow"><input ${pc} data-field="option" data-list="options" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}" aria-label="Choice ${j + 1}">
+      <button type="button" class="icon" data-act="del-opt" data-list="options" data-idx="${j}" title="Remove">×</button></div>`).join('')}
+    ${q.other ? `<div class="prow"><input value="${otherLabel(current)}…" disabled aria-label="Other"><button type="button" class="icon" data-act="other" title="Remove">×</button></div>` : ''}
+    <div class="prow"><button type="button" class="link" data-act="add-opt" data-list="options">+ Add choice</button>${q.other ? '' : '<button type="button" class="link" data-act="other">+ Add "Other"</button>'}</div></div>` : '';
+  // Logic: Hide always, or show / hide when the conditions hold. Conditions use earlier fields only.
+  const L = logicOf(q);
+  const cond = (c, path) => {
+    const src = before.find(x => x.id === c.q), choice = src && HIDEABLE.includes(src.type);
+    const a = `data-field="lc" data-path="${path}"`;
+    return `<div class="lc-row">
+      <select ${a} data-key="q" aria-label="Field">${opt('', 'Select field')}${before.map(x => opt(x.id, qLabel(x), c.q)).join('')}</select>
+      ${src ? `<select ${a} data-key="op" aria-label="Condition">${Object.entries(choice ? COND_CHOICE : COND_TEXT).map(([v, l]) => opt(v, l, c.op)).join('')}</select>
+        ${c.op === 'answered' ? '' : choice ? `<select ${a} data-key="v" aria-label="Answer">${src.options.map((o, j) => opt(j, optLabel(src, j), c.v)).join('')}</select>`
+        : `<input ${a} data-key="v" placeholder="Value" value="${esc(c.v)}" aria-label="Value">`}` : ''}
+      <button type="button" class="icon" data-act="lc-del" data-path="${path}" title="Remove condition">×</button>
+    </div>`;
+  };
+  const list = (node, path) => {
+    const items = node.items ?? [];
+    return `${items.length > 1 ? `<label class="lc-join">Match <select data-field="lcJoin" data-path="${path}">${opt('and', 'all', node.join)}${opt('or', 'any', node.join)}</select> of these</label>` : ''}
+      ${items.map((c, j) => { const p = path === '' ? `${j}` : `${path}.${j}`; return c.items
+        ? `<div class="lc-group">${list(c, p)}<div class="lc-foot"><button type="button" class="link" data-act="lc-add" data-path="${p}">+ Add condition</button><button type="button" class="link" data-act="lc-del" data-path="${p}">Remove group</button></div></div>`
+        : cond(c, p); }).join('')}`;
+  };
+  const n = (L.items ?? []).length;
+  const logic = `
+    <label class="switch">Hide always <input type="checkbox" data-field="lHide" ${L.hide ? 'checked' : ''}></label>
+    ${L.hide ? '' : `<span class="plabel">Hide conditionally <span class="hint" title="Show or hide this field depending on answers to earlier fields.">?</span></span>
+    <div class="seg" role="group" aria-label="Mode">${['show', 'hide'].map(w => `<button type="button" data-act="lc-when" data-when="${w}" aria-pressed="${(L.when ?? 'show') === w}">${w === 'show' ? 'Show' : 'Hide'} when</button>`).join('')}</div>
+    <button type="button" class="btn ghost small lc-open" data-act="lc-open">${ICONS.branch ?? ''}${n ? `Edit conditional logic (${n})` : 'Set conditional logic'}</button>
+    ${logicOpen === q.id ? `<div class="lc-pop">
+      ${n ? list(L, '') : '<p class="meta">No conditions specified yet</p>'}
+      <div class="lc-foot"><button type="button" class="link" data-act="lc-add" data-path="">+ Add condition</button><button type="button" class="link" data-act="lc-group">+ Add condition group</button><button type="button" class="link done" data-act="lc-done">Done</button></div>
+    </div>` : ''}`}`;
+  // Format: dates and times.
+  const format = stamp ? `
+    <label>Format${fmtPicker('fmt', q.fmt ?? DEF_FMT[q.type], q.type)}</label>
+    ${q.type === 'date' ? `<label>First day of week<select data-field="weekStart">${[[0, 'Sunday'], [1, 'Monday'], [6, 'Saturday']].map(([v, l]) => opt(v, l, +q.weekStart || 0)).join('')}</select></label>` : ''}
+    <label class="switch">Show ${q.type} picker <input type="checkbox" data-field="picker" ${q.noPicker ? '' : 'checked'}></label>` : '';
   return `<div data-qid="${q.id}">
     ${head}
     ${sec('Basic', `
       <label>Field type<select data-field="type">${TYPE_GROUPS.flat().map(v => opt(v, TYPES[v], q.type)).join('')}</select></label>
+      ${ph}${def}${choiceList}
       <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>
       <label class="switch">Half width <input type="checkbox" data-field="half" ${q.half ? 'checked' : ''}></label>`)}
-    ${sec('Logic', logic, !!src)}
+    ${sec('Logic', logic, !!n || !!L.hide || logicOpen === q.id)}
+    ${sec('Format', format)}
     ${types ? sec('Validation', `<label class="switch">Response validation <input type="checkbox" data-field="validate" ${q.validate ? 'checked' : ''}></label>${ruleRow(q)}`, !!q.validate) : ''}
-    ${sec('Advanced', `
-      ${['short', 'paragraph'].includes(q.type) ? `<label>Placeholder<input ${pc} data-field="placeholder" value="${esc(q.placeholder)}"></label>` : ''}
-      ${opts(current).quiz && GRADED.includes(q.type) ? `<label>Points<input type="number" min="0" data-field="points" value="${esc(q.points ?? 1)}"></label>` : ''}`, false)}
+    ${opts(current).quiz && GRADED.includes(q.type) ? sec('Advanced', `<label>Points<input type="number" min="0" data-field="points" value="${esc(q.points ?? 1)}"></label>`, false) : ''}
   </div>`;
 }
+let logicOpen = null; // the field whose condition list is open in the panel
+const otherLabel = f => ({ dv: 'އެހެނިހެން', dual: 'Other / އެހެނިހެން' })[f.lang] ?? 'Other';
 const COND_CHOICE = { is: 'Is', not: 'Is not', answered: 'Is answered' };
 const COND_TEXT = { is: 'Is', not: 'Is not', contains: 'Contains', answered: 'Is answered' };
 function renderProps() {
@@ -1117,6 +1282,8 @@ function questionHTML(q, i) {
       </div>
       ${fieldType(q, j) === 'dropdown' ? `<textarea class="key-text ${pc}" data-field="fieldOptions" data-idx="${j}" rows="3" placeholder="${f.lang === 'dv' ? `${DV.Option} 1&#10;${DV.Option} 2` : 'Dropdown choices, one per line'}">${esc(q.fieldOptions?.[j])}</textarea>` : ''}`).join('')}${q.cols.length < MAX_FIELDS ? '<button class="link" data-act="add-opt" data-list="cols">+ Add field</button>' : ''}`
     : hasOptions(q.type) ? list('options', 'Option', `<span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span>`)
+      + (!HIDEABLE.includes(q.type) ? '' : q.other ? `<div class="opt-row"><span class="marker ${q.type === 'checkbox' ? 'sq' : ''}"></span><input value="${otherLabel(f)}…" disabled><button class="icon" data-act="other" title="Remove">×</button></div>`
+        : `<button class="link add-other" data-act="other">+ Add "${otherLabel(f)}"</button>`)
     : `<div class="faux ${pc}">${dvText(FAUX[q.type])}</div>${quiz ? `<textarea class="key-text ${pc}" data-field="keyText" rows="2" placeholder="Correct answers, one per line">${esc(q.keyText)}</textarea>` : ''}`;
   return `
     <section class="card question" data-qid="${q.id}">
@@ -1322,6 +1489,7 @@ app.addEventListener('drop', e => {
 });
 app.addEventListener('dragend', () => { dragType = null; clearDrop(); app.querySelector('.dragging')?.classList.remove('dragging'); });
 function setType(q, val) {
+  if (val !== q.type) { delete q.fmt; delete q.def; }
   q.type = val;
   if (!hasOptions(val)) q.options = [];
   // Fresh lists start with one empty entry; "Option 1" / "Row 1" is only its placeholder.
@@ -1349,9 +1517,13 @@ function onFieldEdit(el) {
     else if (field === 'fieldType') (q.fieldTypes ||= [])[idx] = val;
     else if (field === 'fieldOptions') (q.fieldOptions ||= [])[idx] = val;
     else if (field === 'type') setType(q, val);
-    else if (field.startsWith('if')) { // Logic: ifQ, ifOp, ifV -> q.showIf.q / .op / .v
-      q.showIf = { op: 'is', ...q.showIf, [field.slice(2).toLowerCase()]: val };
-      if (field === 'ifQ') q.showIf = val ? { q: val, op: 'is', v: '' } : undefined;
+    else if (el.hasAttribute('data-fmtsel')) q[field] = val === 'custom' ? '' : val;
+    else if (field === 'picker') q.noPicker = !val;
+    else if (['lc', 'lcJoin', 'lHide'].includes(field)) { // Logic, kept in q.logic
+      const L = editLogic(q);
+      if (field === 'lHide') L.hide = val;
+      else if (field === 'lcJoin') nodeAt(L, el.dataset.path).join = val;
+      else Object.assign(nodeAt(L, el.dataset.path), el.dataset.key === 'q' ? { q: val, op: 'is', v: '' } : { [el.dataset.key]: val });
     } else q[field] = val;
   }
   saveForms();
@@ -1372,10 +1544,12 @@ app.addEventListener('input', e => {
     return saveForms();
   }
   if (e.target.matches('[data-field]') && e.target.tagName !== 'SELECT') onFieldEdit(e.target);
-  // Typed dates: digits only, slashes added as dd/mm/yyyy. ponytail: caret jumps to the end on mid-field edits.
-  if (e.target.matches('.date-text')) {
-    const d = e.target.value.replace(/\D/g, '').slice(0, 8);
-    e.target.value = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join('/');
+  // Typed dates and times: separators added as digits are typed. ponytail: caret jumps to the end on mid-field edits.
+  if (e.target.matches('.date-text')) e.target.value = mask(e.target.value, e.target.closest('.date-field').dataset.fmt);
+  // Typing an "Other" answer picks the Other choice.
+  if (e.target.matches('.other-text') && e.target.value) {
+    const pick = e.target.closest('.choice')?.querySelector('input');
+    if (pick) pick.checked = true;
   }
 });
 app.addEventListener('change', e => {
@@ -1388,20 +1562,23 @@ app.addEventListener('change', e => {
   const dd = e.target.closest('.dd');
   if (dd) { // picked from a dropdown: show it in the field and close the list
     const sum = dd.querySelector('summary');
-    sum.textContent = e.target.value;
+    sum.textContent = e.target.parentElement.textContent;
     sum.classList.remove('ph');
+    const other = dd.nextElementSibling?.matches('.other-text') && dd.nextElementSibling;
+    if (other) { other.hidden = e.target.value !== OTHER; if (!other.hidden) other.focus(); }
     return dd.open = false;
   }
   if (e.target.matches('[data-image]')) return pickImage(e.target);
-  if (e.target.matches('.date-pick')) {
-    const [y, m, d] = e.target.value.split('-');
-    return e.target.previousElementSibling.value = y ? `${d}/${m}/${y}` : '';
+  if (e.target.matches('.time-pick')) {
+    const [h, m] = e.target.value.split(':'), text = e.target.previousElementSibling;
+    text.value = h ? fmtTime(h * 60 + +m, e.target.closest('.date-field').dataset.fmt) : '';
+    return text.dispatchEvent(new Event('input', { bubbles: true }));
   }
   if (!e.target.matches('[data-field]')) return;
   onFieldEdit(e.target);
   if (e.target.dataset.field === 'validate') setRuleDefaults(current.questions.find(x => x.id === e.target.closest('[data-qid]').dataset.qid));
   // Panel edits also show on the card, so the editor redraws (text fields wait for change, not every keystroke).
-  if (['type', 'url', 'newPage', 'vType', 'vOp', 'fieldType'].includes(e.target.dataset.field) || e.target.closest('.props')) renderEditor('questions');
+  if (['type', 'url', 'newPage', 'vType', 'vOp', 'fieldType', 'vFmt'].includes(e.target.dataset.field) || e.target.closest('.props')) renderEditor('questions');
 });
 
 app.addEventListener('click', e => {
@@ -1467,11 +1644,45 @@ app.addEventListener('click', e => {
       q.key = q.type === 'checkbox' ? (on ? q.key.filter(k => k !== j) : [...(q.key ?? []), j]) : (on ? [] : [j]);
       return refresh();
     }
+    case 'other': // "Other" choice with a text box
+      q.other = !q.other;
+      return refresh();
+    case 'lc-open': case 'lc-done':
+      logicOpen = btn.dataset.act === 'lc-open' && logicOpen !== q.id ? q.id : null;
+      return renderProps();
+    case 'lc-when': editLogic(q).when = btn.dataset.when; return refresh();
+    case 'lc-add': nodeAt(editLogic(q), btn.dataset.path).items.push({ q: '', op: 'is', v: '' }); return refresh();
+    case 'lc-group': editLogic(q).items.push({ join: 'and', items: [{ q: '', op: 'is', v: '' }] }); return refresh();
+    case 'lc-del': {
+      const path = btn.dataset.path.split('.');
+      const j = +path.pop();
+      nodeAt(editLogic(q), path.join('.')).items.splice(j, 1);
+      return refresh();
+    }
     case 'pick-date': {
-      const pick = btn.previousElementSibling;
-      const [d, m, y] = pick.previousElementSibling.value.split('/');
-      pick.value = validDate(`${d}/${m}/${y}`) ? `${y}-${m}-${d}` : '';
-      try { return pick.showPicker(); } catch { return pick.previousElementSibling.focus(); }
+      const field = btn.closest('.date-field');
+      if (field.querySelector('.cal')) return field.querySelector('.cal').remove();
+      const t = parseDate(field.querySelector('.date-text').value, field.dataset.fmt) ?? new Date();
+      field.insertAdjacentHTML('beforeend', calHTML(t.getFullYear(), t.getMonth(), +field.dataset.week, parseDate(field.querySelector('.date-text').value, field.dataset.fmt)));
+      return (field.querySelector('.cal .on') ?? field.querySelector('.cal-grid button')).focus();
+    }
+    case 'cal-nav': case 'cal-day': {
+      const field = btn.closest('.date-field'), cal = btn.closest('.cal'), text = field.querySelector('.date-text');
+      if (btn.dataset.act === 'cal-day') {
+        text.value = fmtDate(new Date(+cal.dataset.y, +cal.dataset.m, +btn.dataset.d), field.dataset.fmt);
+        cal.remove();
+        text.focus();
+        return text.dispatchEvent(new Event('input', { bubbles: true })); // logic may depend on it
+      }
+      const t = new Date(+cal.dataset.y, +cal.dataset.m + +btn.dataset.step, 1);
+      cal.outerHTML = calHTML(t.getFullYear(), t.getMonth(), +field.dataset.week, parseDate(text.value, field.dataset.fmt));
+      return field.querySelector(`[data-step="${btn.dataset.step}"]`).focus();
+    }
+    case 'pick-time': {
+      const pick = btn.previousElementSibling, field = btn.closest('.date-field');
+      const n = parseTime(field.querySelector('.date-text').value, field.dataset.fmt);
+      pick.value = n === null ? '' : `${pad(Math.floor(n / 60))}:${pad(n % 60)}`;
+      try { return pick.showPicker(); } catch { return field.querySelector('.date-text').focus(); }
     }
     case 'add-row': {
       const tbody = qEl.querySelector('tbody');
@@ -1535,11 +1746,17 @@ app.addEventListener('click', e => {
 
 // Clear form puts dropdowns and file fields back to their placeholder.
 app.addEventListener('reset', e => {
-  setTimeout(() => applyLogic(e.target)); // after the fields have cleared
-  e.target.querySelectorAll('.dd summary').forEach(sum => {
-    sum.textContent = sum.dataset.ph;
-    sum.classList.add('ph');
-    sum.parentElement.open = false;
+  setTimeout(() => { // after the fields have cleared: dropdowns show their default, or the placeholder
+    applyLogic(e.target);
+    e.target.querySelectorAll('.dd summary').forEach(sum => {
+      const on = sum.parentElement.querySelector('input:checked');
+      sum.textContent = on ? on.parentElement.textContent : sum.dataset.ph;
+      sum.classList.toggle('ph', !on);
+      sum.parentElement.open = false;
+      const other = sum.parentElement.nextElementSibling;
+      if (other?.matches('.other-text')) other.hidden = on?.value !== OTHER;
+    });
+    e.target.querySelectorAll('.cal').forEach(c => c.remove());
   });
   e.target.querySelectorAll('.file-field').forEach(ff => {
     ff.classList.remove('picked');
@@ -1548,6 +1765,9 @@ app.addEventListener('reset', e => {
 });
 // Dropdown lists close when tapping elsewhere.
 document.addEventListener('click', e => app.querySelectorAll('.dd[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }));
+// Calendars close on a tap outside their field (the path is kept, as month buttons redraw the calendar) or on Escape.
+document.addEventListener('click', e => app.querySelectorAll('.cal').forEach(c => { if (!e.composedPath().includes(c.parentElement)) c.remove(); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') app.querySelectorAll('.cal').forEach(c => c.remove()); });
 // Tooltips: any tool with a title. The title moves to data-tip so the browser's own tooltip doesn't show too.
 const tip = document.getElementById('tip');
 let tipTimer;
@@ -1617,8 +1837,11 @@ async function copyLink(view = 'fill', msg = 'Responder link copied') {
 /* ---------- respondent view ---------- */
 
 const HIDEABLE = ['radio', 'checkbox', 'dropdown'];
+const OTHER = '__other'; // value of the "Other" choice; the answer is the text typed next to it
 const choice = (f, q, type, o, j) => q.hidden?.includes(j) ? '' :
-  `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}"><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
+  `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}" ${String(q.def ?? '') === String(j) ? 'checked' : ''}><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
+const otherChoice = (f, q, type) => q.other ? `<label class="choice other"><input type="${type}" name="${q.id}" value="${OTHER}"><span>${otherLabel(f)}:</span>
+  <input type="text" class="other-text${f.lang === 'dv' ? ' dv" dir="rtl' : ''}" aria-label="${otherLabel(f)}"></label>` : '';
 
 const colHeads = q => (q.cols ?? []).map((c, k) => `<th>${esc(optLabel(q, k, 'cols'))}</th>`).join('');
 const gridHTML = q => `<div class="tbl-wrap"><table class="gridq"><thead><tr><th></th>${colHeads(q)}</tr></thead><tbody>
@@ -1676,20 +1899,22 @@ function itemHTML(q, fold = false, pre = '') {
 function answerHTML(q, pre = '') {
   const f = current;
   const dvAttr = f.lang === 'dv' ? ' class="dv" dir="rtl" lang="dv"' : '';
-  const choose = f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose';
-  // A dropdown named `name` with these choices (null ones are hidden).
-  const dd = (name, labels) => `<details class="dd"><summary class="ph${dvAttr ? ' dv' : ''}" data-ph="${choose}">${choose}</summary>
-      <div class="dd-list">${labels.map(l => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}">${esc(l)}</label>`).join('')}</div></details>`;
+  const choose = esc(q.placeholder) || (f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose');
+  // A dropdown named `name` with these choices (null ones are hidden), `def` picked at the start.
+  const dd = (name, labels, def = -1, other = false) => `<details class="dd"><summary class="${def < 0 || labels[def] === null ? 'ph' : ''}${dvAttr ? ' dv' : ''}" data-ph="${choose}">${labels[def] == null ? choose : esc(labels[def])}</summary>
+      <div class="dd-list">${labels.map((l, j) => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}" ${j === def ? 'checked' : ''}>${esc(l)}</label>`).join('')}${other
+        ? `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${OTHER}">${otherLabel(f)}</label>` : ''}</div></details>${other
+        ? `<input type="text" class="other-text"${dvAttr} hidden aria-label="${otherLabel(f)}">` : ''}`;
   const inputs = {
-    short: `<input type="text"${dvAttr} placeholder="${esc(q.placeholder)}">`,
+    short: `<input type="text"${dvAttr} placeholder="${esc(q.placeholder)}" value="${esc(q.def)}">`,
     email: '<input type="email" autocomplete="email">',
-    paragraph: `<textarea rows="3"${dvAttr} placeholder="${esc(q.placeholder)}"></textarea>`,
-    date: `<div class="date-field"><input type="text" class="date-text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><input type="date" class="date-pick" tabindex="-1" aria-hidden="true"><button type="button" class="date-btn" data-act="pick-date" title="Choose date"></button></div>`,
-    dropdown: dd(q.id, q.options.map((o, j) => q.hidden?.includes(j) ? null : optLabel(q, j))),
-    radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join(''),
-    checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join(''),
+    paragraph: `<textarea rows="3"${dvAttr} placeholder="${esc(q.placeholder)}">${esc(q.def)}</textarea>`,
+    date: stampField('date', q.type === 'date' ? q : {}),
+    dropdown: dd(q.id, q.options.map((o, j) => q.hidden?.includes(j) ? null : optLabel(q, j)), q.def === '' || q.def == null ? -1 : +q.def, q.other),
+    radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join('') + otherChoice(f, q, 'radio'),
+    checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join('') + otherChoice(f, q, 'checkbox'),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
-    time: '<input type="time">',
+    time: stampField('time', q.type === 'time' ? q : {}),
     file: `<label class="file-field"><input type="file"><span class="btn ghost small file-btn ${dvAttr ? 'dv' : ''}">${ICONS.upload}${dvAttr ? 'ފައިލް ނަންގަވާ' : 'Choose file'}</span>
       <span class="file-name ${dvAttr ? 'dv' : ''}" data-ph="${dvAttr ? 'އެއްވެސް ފައިލެއް ނަންގަވާފައި ނެތް' : 'No file chosen'}">${dvAttr ? 'އެއްވެސް ފައިލެއް ނަންގަވާފައި ނެތް' : 'No file chosen'}</span></label>`,
     // Stars in reverse so CSS can light up a star and every star before it.
@@ -1811,22 +2036,18 @@ const scoreHTML = g => `
 
 // Reads the answers inside `scope` and marks required questions left empty.
 // Returns null (and shows the error) when something needs fixing.
-// dd/mm/yyyy that names a real day.
-function validDate(v) {
-  const [d, m, y] = v.split('/').map(Number);
-  const t = new Date(y, m - 1, d);
-  return /^\d\d\/\d\d\/\d{4}$/.test(v) && t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d;
-}
 const blank = v => v === '' || (Array.isArray(v) ? !v.length
   : !!v && typeof v === 'object' && !(v instanceof File) && Object.values(v).some(blank));
 // The answer in a question's card on the form.
 function readAnswer(q, wrap) {
-  const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)].map(i => i.value);
+  // "Other" answers are the text typed next to it; picked with nothing typed counts as unanswered.
+  const picked = sel => [...wrap.querySelectorAll(`${sel}:checked`)]
+    .map(i => i.value === OTHER ? wrap.querySelector('.other-text').value.trim() : i.value).filter(v => v !== '');
   const row = j => picked(`[name="${q.id}:${j}"]`);
   const one = () => picked('input')[0] ?? '';
   return {
     checkbox: () => picked('input'),
-    radio: one, scale: one, rating: one, dropdown: one,
+    radio: one, scale: one, rating: one, dropdown: () => picked('.dd input')[0] ?? '',
     mcgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)[0] ?? ''])),
     cbgrid: () => Object.fromEntries(q.options.map((r, j) => [r, row(j)])),
     table: () => [...wrap.querySelectorAll('tbody tr')]
@@ -1835,7 +2056,7 @@ function readAnswer(q, wrap) {
     multi: () => Object.fromEntries([...wrap.querySelectorAll('.mf')].map((el, k) => [q.cols[k], el.querySelector('.dd') ? el.querySelector('input:checked')?.value ?? '' : el.querySelector('input, textarea').value.trim()])),
   }[q.type]?.() ?? wrap.querySelector('input, textarea, select').value.trim();
 }
-// Logic: does question q's condition (q.showIf) hold for answer v of its source question src?
+// Logic: does condition c hold for answer v of its source question src?
 function condHolds(c, src, v) {
   if (c.op === 'answered') return !blank(v ?? '');
   const hit = HIDEABLE.includes(src.type)
@@ -1845,13 +2066,22 @@ function condHolds(c, src, v) {
   return c.op === 'not' ? !hit : hit;
 }
 // Shows or hides each card with a condition. In form order, so a hidden source counts as unanswered.
+// Groups match all (and) or any (or) of their conditions; conditions on deleted fields are left out.
 function applyLogic(form) {
+  const srcOf = c => current.questions.find(x => x.id === c.q);
+  const live = c => c.items ? c.items.some(live) : !!srcOf(c);
+  const holds = c => {
+    if (c.items) return c.items.filter(live)[c.join === 'or' ? 'some' : 'every'](holds);
+    const src = srcOf(c), sc = form.querySelector(`[data-qid="${src.id}"]`);
+    return condHolds(c, src, sc && !sc.hidden ? readAnswer(src, sc) : '');
+  };
   current.questions.forEach(q => {
     const card = form.querySelector(`[data-qid="${q.id}"]`);
-    const src = current.questions.find(x => x.id === q.showIf?.q);
-    if (!card || !src) return;
-    const sc = form.querySelector(`[data-qid="${src.id}"]`);
-    card.hidden = !condHolds(q.showIf, src, sc && !sc.hidden ? readAnswer(src, sc) : '');
+    const L = logicOf(q);
+    if (!card) return;
+    if (L.hide) return card.hidden = true;
+    if (!live(L)) return;
+    card.hidden = holds(L) === (L.when === 'hide');
   });
 }
 function collect(scope) {
@@ -1868,8 +2098,8 @@ function collect(scope) {
     const qe = wrap.querySelector('.q-error');
     if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
     const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
-      || (q.type === 'date' && v && !validDate(v)) || !!rule
-      || (q.type === 'multi' && q.cols.some((c, k) => fieldType(q, k) === 'date' && v[c] && !validDate(v[c])));
+      || (['date', 'time'].includes(q.type) && v && !okStamp(q.type, v, q.fmt)) || !!rule
+      || (q.type === 'multi' && q.cols.some((c, k) => ['date', 'time'].includes(fieldType(q, k)) && v[c] && !okStamp(fieldType(q, k), v[c])));
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;

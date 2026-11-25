@@ -417,6 +417,9 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .date-text.dvf{font-family:Faruma,system-ui,sans-serif}
 .cal-grid button.on{background:var(--teal-700);color:#fff}
 .choice.other{align-items:center}
+.choices{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:16px}
+.choices > .other{grid-column:1/-1} /* room for the typed answer */
+@media (max-width:600px){.choices{grid-template-columns:repeat(min(var(--n),2),minmax(0,1fr))}}
 .link.add-other{margin-inline-start:16px}
 .choice.other .other-text,.answer > .other-text{flex:1;min-width:0;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:4px 2px;margin-top:-4px}
 .answer > .other-text{display:block;width:100%;margin-top:10px}
@@ -564,6 +567,7 @@ const TYPES = {
 const FIELD_TYPES = ['short', 'paragraph', 'dropdown', 'date', 'time'];
 const MAX_FIELDS = 3;
 const fieldType = (q, k) => FIELD_TYPES.includes(q.fieldTypes?.[k]) ? q.fieldTypes[k] : 'short';
+const fieldFmt = (q, k) => q.fieldFmts?.[k] || DEF_FMT[fieldType(q, k)];
 const fieldChoices = (q, k) => (q.fieldOptions?.[k] ?? '').split('\n').map(o => o.trim()).filter(Boolean);
 // The type menu, split into groups by dividers.
 const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file', 'multi'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
@@ -778,11 +782,12 @@ function mask(v, fmt) {
 }
 const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${esc(label)}</option>`;
 // Format choice: presets with an example, or Custom with a text box. Stored in q[field].
-const fmtPicker = (field, cur, type) => {
+const fmtPicker = (field, cur, type, idx) => {
+  const ix = idx == null ? '' : ` data-idx="${idx}"`;
   const custom = !FMTS[type].includes(cur);
   const sample = p => type === 'date' ? fmtDate(new Date(2026, 11, 31), p) : fmtTime(13 * 60 + 30, p);
-  return `<select data-field="${field}" data-fmtsel aria-label="Format">${FMTS[type].map(p => opt(p, `${p}  (${sample(p)})`, custom ? '' : cur)).join('')}${opt('custom', 'Custom…', custom ? 'custom' : '')}</select>
-    ${custom ? `<input data-field="${field}" value="${esc(cur)}" placeholder="e.g. ${type === 'date' ? 'dd mmm yyyy' : 'h:mm a'}" aria-label="Custom format">` : ''}`;
+  return `<select data-field="${field}"${ix} data-fmtsel aria-label="Format">${FMTS[type].map(p => opt(p, `${p}  (${sample(p)})`, custom ? '' : cur)).join('')}${opt('custom', 'Custom…', custom ? 'custom' : '')}</select>
+    ${custom ? `<input data-field="${field}"${ix} value="${esc(cur)}" placeholder="e.g. ${type === 'date' ? 'dd mmm yyyy' : 'h:mm a'}" aria-label="Custom format">` : ''}`;
 };
 // Month calendar under a date field; weeks start on `start` (0 Sunday, 1 Monday, 6 Saturday).
 function calHTML(y, m, start, sel) {
@@ -1131,7 +1136,7 @@ const paletteHTML = () => `
 function propsHTML() {
   const q = current.questions.find(x => x.id === focusQ);
   if (!q) return '<p class="empty">Select a field on the form to see its properties.</p>';
-  const sec = (title, body, open = true) => body ? `<details ${open ? 'open' : ''}><summary>${title}</summary><div class="pbody">${body}</div></details>` : '';
+  const sec = (title, body, open = true) => body ? `<details data-sec="${title}" ${(secOpen[`${q.id}:${title}`] ?? open) ? 'open' : ''}><summary>${title}</summary><div class="pbody">${body}</div></details>` : '';
   const head = `<div class="props-head"><span>${TYPES[q.type] ?? BLOCKS[q.type]}</span>${btn('dup-q', 'Duplicate', ICONS.copy)}${btn('del-q', 'Delete', ICONS.del)}</div>`;
   if (!isQuestion(q)) return `<div data-qid="${q.id}">${head}</div>`;
   const f = withPlaceholders(current);
@@ -1151,13 +1156,24 @@ function propsHTML() {
       <button type="button" class="icon" data-act="del-opt" data-list="options" data-idx="${j}" title="Remove">×</button></div>`).join('')}
     ${q.other ? `<div class="prow"><input value="${otherLabel(current)}…" disabled aria-label="Other"><button type="button" class="icon" data-act="other" title="Remove">×</button></div>` : ''}
     <div class="prow"><button type="button" class="link" data-act="add-opt" data-list="options">+ Add choice</button>${q.other ? '' : '<button type="button" class="link" data-act="other">+ Add "Other"</button>'}</div></div>` : '';
+  // Multi-type: each field on its own, with its label, type, dropdown choices or date/time format.
+  const multiFields = q.type === 'multi' ? q.cols.map((c, k) => `<div class="plist"><span class="plabel">Field ${k + 1}</span>
+    <label>Label<input ${pc} data-field="option" data-list="cols" data-idx="${k}" value="${esc(c)}" placeholder="${dvText('Field')} ${k + 1}"></label>
+    <label>Type<select data-field="fieldType" data-idx="${k}">${FIELD_TYPES.map(t => opt(t, TYPES[t], fieldType(q, k))).join('')}</select></label>
+    ${fieldType(q, k) === 'dropdown' ? `<label>Choices<textarea ${pc} data-field="fieldOptions" data-idx="${k}" rows="3" placeholder="One per line">${esc(q.fieldOptions?.[k])}</textarea></label>` : ''}
+    ${['date', 'time'].includes(fieldType(q, k)) ? `<label>Format${fmtPicker('fieldFmt', fieldFmt(q, k), fieldType(q, k), k)}</label>` : ''}
+  </div>`).join('') : '';
+  // Multiple choice and checkboxes: choices laid out in 1 to 5 columns.
+  const colsPick = ['radio', 'checkbox'].includes(q.type) ? `<label>Columns<select data-field="choiceCols">${[1, 2, 3, 4, 5].map(n => opt(n, n, q.choiceCols || 1)).join('')}</select></label>` : '';
   // Logic: Hide always, or show / hide when the conditions hold. Conditions use earlier fields only.
   const L = logicOf(q);
   const cond = (c, path) => {
-    const src = before.find(x => x.id === c.q), choice = src && HIDEABLE.includes(src.type);
+    const src = before.find(x => x.id === c.q), choice = src && HIDEABLE.includes(src.type) && c.k == null;
     const a = `data-field="lc" data-path="${path}"`;
     return `<div class="lc-row">
-      <select ${a} data-key="q" aria-label="Field">${opt('', 'Select field')}${before.map(x => opt(x.id, qLabel(x), c.q)).join('')}</select>
+      <select ${a} data-key="q" aria-label="Field">${opt('', 'Select field')}${before.map(x => x.type === 'multi'
+        ? x.cols.map((_, k) => opt(`${x.id}:${k}`, `${qLabel(x)} › ${optLabel(x, k, 'cols')}`, c.k == null ? c.q : `${c.q}:${c.k}`)).join('')
+        : opt(x.id, qLabel(x), c.q)).join('')}</select>
       ${src ? `<select ${a} data-key="op" aria-label="Condition">${Object.entries(choice ? COND_CHOICE : COND_TEXT).map(([v, l]) => opt(v, l, c.op)).join('')}</select>
         ${c.op === 'answered' ? '' : choice ? `<select ${a} data-key="v" aria-label="Answer">${src.options.map((o, j) => opt(j, optLabel(src, j), c.v)).join('')}</select>`
         : `<input ${a} data-key="v" placeholder="Value" value="${esc(c.v)}" aria-label="Value">`}` : ''}
@@ -1190,7 +1206,7 @@ function propsHTML() {
     ${head}
     ${sec('Basic', `
       <label>Field type<select data-field="type">${TYPE_GROUPS.flat().map(v => opt(v, TYPES[v], q.type)).join('')}</select></label>
-      ${ph}${def}${choiceList}
+      ${ph}${def}${choiceList}${colsPick}${multiFields}
       <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>
       <label class="switch">Half width <input type="checkbox" data-field="half" ${q.half ? 'checked' : ''}></label>`)}
     ${sec('Logic', logic, !!n || !!L.hide || logicOpen === q.id)}
@@ -1200,6 +1216,12 @@ function propsHTML() {
   </div>`;
 }
 let logicOpen = null; // the field whose condition list is open in the panel
+// Sections the user opened or closed, by "field id:section", so re-rendering the panel keeps them as left.
+const secOpen = {};
+app.addEventListener('toggle', e => {
+  const d = e.target, qid = d.closest?.('.props [data-qid]')?.dataset.qid;
+  if (d.dataset?.sec && qid) secOpen[`${qid}:${d.dataset.sec}`] = d.open;
+}, true);
 const otherLabel = f => ({ dv: 'އެހެނިހެން', dual: 'Other / އެހެނިހެން' })[f.lang] ?? 'Other';
 const COND_CHOICE = { is: 'Is', not: 'Is not', answered: 'Is answered' };
 const COND_TEXT = { is: 'Is', not: 'Is not', contains: 'Contains', answered: 'Is answered' };
@@ -1536,6 +1558,8 @@ function onFieldEdit(el) {
     else if (field === 'optionDv') (q[`${key}Dv`] ||= [])[idx] = val;
     else if (field === 'fieldType') (q.fieldTypes ||= [])[idx] = val;
     else if (field === 'fieldOptions') (q.fieldOptions ||= [])[idx] = val;
+    else if (field === 'fieldFmt') (q.fieldFmts ||= [])[idx] = el.hasAttribute('data-fmtsel') && val === 'custom' ? '' : val;
+    else if (field === 'choiceCols') q.choiceCols = +val;
     else if (field === 'type') setType(q, val);
     else if (el.hasAttribute('data-fmtsel')) q[field] = val === 'custom' ? '' : val;
     else if (field === 'picker') q.noPicker = !val;
@@ -1543,7 +1567,7 @@ function onFieldEdit(el) {
       const L = editLogic(q);
       if (field === 'lHide') L.hide = val;
       else if (field === 'lcJoin') nodeAt(L, el.dataset.path).join = val;
-      else Object.assign(nodeAt(L, el.dataset.path), el.dataset.key === 'q' ? { q: val, op: 'is', v: '' } : { [el.dataset.key]: val });
+      else Object.assign(nodeAt(L, el.dataset.path), el.dataset.key === 'q' ? { q: val.split(':')[0], k: val.includes(':') ? +val.split(':')[1] : undefined, op: 'is', v: '' } : { [el.dataset.key]: val });
     } else q[field] = val;
   }
   saveForms();
@@ -1925,14 +1949,15 @@ function answerHTML(q, pre = '') {
       <div class="dd-list">${labels.map((l, j) => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}" ${j === def ? 'checked' : ''}>${esc(l)}</label>`).join('')}${other
         ? `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${OTHER}">${otherLabel(f)}</label>` : ''}</div></details>${other
         ? `<input type="text" class="other-text"${dvAttr} hidden aria-label="${otherLabel(f)}">` : ''}`;
+  const cols = html => q.choiceCols > 1 ? `<div class="choices" style="--n:${q.choiceCols}">${html}</div>` : html;
   const inputs = {
     short: `<input type="text"${dvAttr} placeholder="${esc(q.placeholder)}" value="${esc(q.def)}">`,
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr} placeholder="${esc(q.placeholder)}">${esc(q.def)}</textarea>`,
     date: stampField('date', q.type === 'date' ? q : {}),
     dropdown: dd(q.id, q.options.map((o, j) => q.hidden?.includes(j) ? null : optLabel(q, j)), q.def === '' || q.def == null ? -1 : +q.def, q.other),
-    radio: q.options.map((o, j) => choice(f, q, 'radio', o, j)).join('') + otherChoice(f, q, 'radio'),
-    checkbox: q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join('') + otherChoice(f, q, 'checkbox'),
+    radio: cols(q.options.map((o, j) => choice(f, q, 'radio', o, j)).join('') + otherChoice(f, q, 'radio')),
+    checkbox: cols(q.options.map((o, j) => choice(f, q, 'checkbox', o, j)).join('') + otherChoice(f, q, 'checkbox')),
     scale: `<div class="scale">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${q.id}" value="${n}">${n}</label>`).join('')}</div>`,
     time: stampField('time', q.type === 'time' ? q : {}),
     file: `<label class="file-field"><input type="file"><span class="btn ghost small file-btn ${dvAttr ? 'dv' : ''}">${ICONS.upload}${dvAttr ? 'ފައިލް ނަންގަވާ' : 'Choose file'}</span>
@@ -1945,7 +1970,7 @@ function answerHTML(q, pre = '') {
       <tbody><tr>${(q.cols ?? []).map(c => `<td><input type="text" aria-label="${esc(c)}"></td>`).join('')}</tr></tbody></table></div>
       <button type="button" class="link${dvAttr ? ' dv' : ''}" data-act="add-row">+ ${dvAttr ? 'ރޯއެއް އިތުރުކުރޭ' : 'Add row'}</button>`,
   };
-  inputs.multi = '<div class="multi">' + (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${fieldType(q, k) === 'dropdown' ? dd(`${q.id}:${k}`, fieldChoices(q, k)) : inputs[fieldType(q, k)]}</div>`).join('') + '</div>';
+  inputs.multi = '<div class="multi">' + (q.cols ?? []).map((c, k) => `<div class="mf"><span class="mf-label${dvAttr ? ' dv' : ''}">${esc(optLabel(q, k, 'cols'))}</span>${fieldType(q, k) === 'dropdown' ? dd(`${q.id}:${k}`, fieldChoices(q, k)) : ['date', 'time'].includes(fieldType(q, k)) ? stampField(fieldType(q, k), { fmt: fieldFmt(q, k) }) : inputs[fieldType(q, k)]}</div>`).join('') + '</div>';
   const field = inputs[q.type];
   // Optional questions are marked instead of required ones.
   const tag = q.required ? '' : `<span class="opt-tag">${f.lang === 'dv' ? '(އިޚްތިޔާރީ)' : '(Optional)'}</span>`;
@@ -2078,6 +2103,7 @@ function readAnswer(q, wrap) {
 }
 // Logic: does condition c hold for answer v of its source question src?
 function condHolds(c, src, v) {
+  if (src.type === 'multi' && c.k != null) { v = v?.[src.cols[c.k]]; src = { type: fieldType(src, c.k) }; } // one field of a multi-type
   if (c.op === 'answered') return !blank(v ?? '');
   const hit = HIDEABLE.includes(src.type)
     ? [v ?? []].flat().some(x => optIndex(src, x) === +c.v)
@@ -2119,7 +2145,7 @@ function collect(scope) {
     if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
     const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
       || (['date', 'time'].includes(q.type) && v && !okStamp(q.type, v, q.fmt)) || !!rule
-      || (q.type === 'multi' && q.cols.some((c, k) => ['date', 'time'].includes(fieldType(q, k)) && v[c] && !okStamp(fieldType(q, k), v[c])));
+      || (q.type === 'multi' && q.cols.some((c, k) => ['date', 'time'].includes(fieldType(q, k)) && v[c] && !okStamp(fieldType(q, k), v[c], fieldFmt(q, k))));
     big ||= tooBig;
     wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;

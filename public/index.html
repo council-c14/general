@@ -712,23 +712,26 @@ function ruleError(q, v) {
     email: 'Enter a valid email address',
   }[q.vType];
 }
-// Dates and times typed in a format. Date tokens: yyyy yy dd d mm m. Time tokens: HH H (24-hour), hh h (12-hour), mm, a (am/pm).
+// Dates and times typed in a format. Date tokens: yyyy yy dd d mmmm (January) mmm (Jan) mm m. Time tokens: HH H (24-hour), hh h (12-hour), mm, a (am/pm).
 // Anything else in the format is literal. Answers are stored as typed.
 const DEF_FMT = { date: 'dd/mm/yyyy', time: 'HH:mm' };
-const FMTS = { date: ['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd.mm.yyyy', 'dd-mm-yyyy'], time: ['HH:mm', 'hh:mm a'] };
-const DATE_TOK = /yyyy|yy|dd|d|mm|m/g, TIME_TOK = /HH|H|hh|h|mm|a|A/g;
+const FMTS = { date: ['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd.mm.yyyy', 'dd-mm-yyyy', 'd mmm yyyy', 'd mmmm yyyy'], time: ['HH:mm', 'hh:mm a'] };
+const DATE_TOK = /yyyy|yy|dd|d|mmmm|mmm|mm|m/g, TIME_TOK = /HH|H|hh|h|mm|a|A/g;
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// Month typed as a name: full or its first three letters, any case (1-12, or 0 when it isn't one).
+const monthNo = x => 1 + MONTHS.findIndex(n => [n, n.slice(0, 3)].some(y => y.toLowerCase() === x.toLowerCase()));
 const pad = n => String(n).padStart(2, '0');
 function readFmt(v, fmt, tok) {
   const keys = [];
   const src = fmt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    .replace(tok, k => { keys.push(k); return /a/i.test(k) ? '([ap]m)' : k.length === 1 ? '(\\d{1,2})' : `(\\d{${k.length}})`; });
+    .replace(tok, k => { keys.push(k); return /^mmm/.test(k) ? '([a-z]+)' : /a/i.test(k) ? '([ap]m)' : k.length === 1 ? '(\\d{1,2})' : `(\\d{${k.length}})`; });
   const m = new RegExp(`^${src}$`, 'i').exec(String(v ?? '').trim());
   return m && Object.fromEntries(keys.map((k, i) => [k, m[i + 1]]));
 }
 function parseDate(v, fmt = DEF_FMT.date) {
   const g = readFmt(v, fmt, DATE_TOK);
   if (!g) return null;
-  const y = g.yyyy ? +g.yyyy : g.yy ? 2000 + +g.yy : 2000, m = +(g.mm ?? g.m ?? 1), d = +(g.dd ?? g.d ?? 1);
+  const y = g.yyyy ? +g.yyyy : g.yy ? 2000 + +g.yy : 2000, m = g.mmmm || g.mmm ? monthNo(g.mmmm || g.mmm) : +(g.mm ?? g.m ?? 1), d = +(g.dd ?? g.d ?? 1);
   const t = new Date(y, m - 1, d);
   return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d ? t : null;
 }
@@ -741,7 +744,7 @@ function parseTime(v, fmt = DEF_FMT.time) {
   if (min > 59 || (twelve ? h < 1 || h > 12 : h > 23)) return null;
   return (twelve ? h % 12 + (pm ? 12 : 0) : h) * 60 + min;
 }
-const fmtDate = (t, fmt) => fmt.replace(DATE_TOK, k => ({ yyyy: t.getFullYear(), yy: pad(t.getFullYear() % 100), dd: pad(t.getDate()), d: t.getDate(), mm: pad(t.getMonth() + 1), m: t.getMonth() + 1 })[k]);
+const fmtDate = (t, fmt) => fmt.replace(DATE_TOK, k => ({ yyyy: t.getFullYear(), yy: pad(t.getFullYear() % 100), dd: pad(t.getDate()), d: t.getDate(), mmmm: MONTHS[t.getMonth()], mmm: MONTHS[t.getMonth()].slice(0, 3), mm: pad(t.getMonth() + 1), m: t.getMonth() + 1 })[k]);
 const fmtTime = (n, fmt) => {
   const h = Math.floor(n / 60), h12 = h % 12 || 12;
   return fmt.replace(TIME_TOK, k => ({ HH: pad(h), H: h, hh: pad(h12), h: h12, mm: pad(n % 60), a: h < 12 ? 'am' : 'pm', A: h < 12 ? 'AM' : 'PM' })[k]);
@@ -763,7 +766,7 @@ const fmtPicker = (field, cur, type) => {
   const custom = !FMTS[type].includes(cur);
   const sample = p => type === 'date' ? fmtDate(new Date(2026, 11, 31), p) : fmtTime(13 * 60 + 30, p);
   return `<select data-field="${field}" data-fmtsel aria-label="Format">${FMTS[type].map(p => opt(p, `${p}  (${sample(p)})`, custom ? '' : cur)).join('')}${opt('custom', 'Custom…', custom ? 'custom' : '')}</select>
-    ${custom ? `<input data-field="${field}" value="${esc(cur)}" placeholder="e.g. ${type === 'date' ? 'd.m.yyyy' : 'h:mm a'}" aria-label="Custom format">` : ''}`;
+    ${custom ? `<input data-field="${field}" value="${esc(cur)}" placeholder="e.g. ${type === 'date' ? 'dd mmm yyyy' : 'h:mm a'}" aria-label="Custom format">` : ''}`;
 };
 // Month calendar under a date field; weeks start on `start` (0 Sunday, 1 Monday, 6 Saturday).
 function calHTML(y, m, start, sel) {

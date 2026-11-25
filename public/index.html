@@ -417,6 +417,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .date-text.dvf{font-family:Faruma,system-ui,sans-serif}
 .cal-grid button.on{background:var(--teal-700);color:#fff}
 .choice.other{align-items:center}
+.lc-choice{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:6px}
+.lc-name{font-weight:600}
 .choices{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:16px}
 .choices > .other{grid-column:1/-1} /* room for the typed answer */
 @media (max-width:600px){.choices{grid-template-columns:repeat(min(var(--n),2),minmax(0,1fr))}}
@@ -681,6 +683,7 @@ const NO_ARG = ['isnum', 'whole', 'email', 'url', 'dvalid', 'evalid'];
 const TWO_ARGS = ['between', 'nbetween', 'dbetween'];
 // Error text for an answer that breaks the question's rule, or '' when it passes (empty answers are left to Required).
 function ruleError(q, v) {
+  if (q.type === 'multi') return q.cols.map((c, k) => { const e = ruleError(fieldRule(q, k), v?.[c] ?? ''); return e && `${optLabel(q, k, 'cols')}: ${e}`; }).filter(Boolean).join(' · ');
   if (!q.validate || !RULE_TYPES[q.type]?.includes(q.vType) || !RULES[q.vType][q.vOp] || blank(v)) return '';
   const a = String(q.vA ?? ''), b = String(q.vB ?? ''), A = Number(a), B = Number(b), n = Number(v);
   const num = typeof v === 'string' && v.trim() !== '' && !isNaN(n);
@@ -818,6 +821,13 @@ function stampField(type, q = {}) {
 // A condition is { q, op, v }; a group is { join, items: [conditions] }. Older forms kept one condition in q.showIf.
 const logicOf = q => q.logic ?? (q.showIf?.q ? { when: 'show', join: 'and', items: [q.showIf] } : {});
 const editLogic = q => { q.logic = { when: 'show', join: 'and', items: [], ...logicOf(q) }; delete q.showIf; return q.logic; };
+// Choices can carry their own show / hide conditions, in q.optLogic[j]; editor controls for one sit inside [data-lk="j"].
+const logicFor = (q, el) => {
+  const j = el.closest('[data-lk]')?.dataset.lk;
+  if (j == null) return editLogic(q);
+  const a = q.optLogic ||= [];
+  return a[j] = { when: 'show', join: 'and', items: [], ...a[j] };
+};
 const nodeAt = (L, path) => path === '' ? L : path.split('.').reduce((n, i) => n.items[+i], L);
 // Editor row for a question's rule.
 function ruleRow(q) {
@@ -840,6 +850,8 @@ function ruleRow(q) {
       <input class="msg" data-field="vMsg" placeholder="Custom error text" value="${esc(q.vMsg)}">
     </div>`;
 }
+// A multi-type field's rule (kept in q.fieldRules[k]) as a question of the field's type, so ruleRow and ruleError work on it.
+const fieldRule = (q, k) => { const r = { type: fieldType(q, k), fmt: fieldFmt(q, k), ...q.fieldRules?.[k] }; setRuleDefaults(r); return r; };
 const setRuleDefaults = q => {
   if (!RULE_TYPES[q.type]) return;
   if (!RULE_TYPES[q.type].includes(q.vType)) q.vType = RULE_TYPES[q.type][0];
@@ -1189,16 +1201,20 @@ function propsHTML() {
         ? `<div class="lc-group">${list(c, p)}<div class="lc-foot"><button type="button" class="link" data-act="lc-add" data-path="${p}">+ Add condition</button><button type="button" class="link" data-act="lc-del" data-path="${p}">Remove group</button></div></div>`
         : cond(c, p); }).join('')}`;
   };
+  // Show / hide when, and the condition list when open (key: q.id, or q.id#j for choice j).
+  const when = (L, key) => { const n = (L.items ?? []).length; return `
+    <div class="seg" role="group" aria-label="Mode">${['show', 'hide'].map(w => `<button type="button" data-act="lc-when" data-when="${w}" aria-pressed="${(L.when ?? 'show') === w}">${w === 'show' ? 'Show' : 'Hide'} when</button>`).join('')}</div>
+    <button type="button" class="btn ghost small lc-open" data-act="lc-open">${ICONS.branch ?? ''}${n ? `Edit conditional logic (${n})` : 'Set conditional logic'}</button>
+    ${logicOpen === key ? `<div class="lc-pop">
+      ${n ? list(L, '') : '<p class="meta">No conditions specified yet</p>'}
+      <div class="lc-foot"><button type="button" class="link" data-act="lc-add" data-path="">+ Add condition</button><button type="button" class="link" data-act="lc-group">+ Add condition group</button><button type="button" class="link done" data-act="lc-done">Done</button></div>
+    </div>` : ''}`; };
   const n = (L.items ?? []).length;
   const logic = `
     <label class="switch">Hide always <input type="checkbox" data-field="lHide" ${L.hide ? 'checked' : ''}></label>
-    ${L.hide ? '' : `<span class="plabel">Hide conditionally <span class="hint" title="Show or hide this field depending on answers to earlier fields.">?</span></span>
-    <div class="seg" role="group" aria-label="Mode">${['show', 'hide'].map(w => `<button type="button" data-act="lc-when" data-when="${w}" aria-pressed="${(L.when ?? 'show') === w}">${w === 'show' ? 'Show' : 'Hide'} when</button>`).join('')}</div>
-    <button type="button" class="btn ghost small lc-open" data-act="lc-open">${ICONS.branch ?? ''}${n ? `Edit conditional logic (${n})` : 'Set conditional logic'}</button>
-    ${logicOpen === q.id ? `<div class="lc-pop">
-      ${n ? list(L, '') : '<p class="meta">No conditions specified yet</p>'}
-      <div class="lc-foot"><button type="button" class="link" data-act="lc-add" data-path="">+ Add condition</button><button type="button" class="link" data-act="lc-group">+ Add condition group</button><button type="button" class="link done" data-act="lc-done">Done</button></div>
-    </div>` : ''}`}`;
+    ${L.hide ? '' : `<span class="plabel">Hide conditionally <span class="hint" title="Show or hide this field depending on answers to earlier fields.">?</span></span>${when(L, q.id)}`}
+    ${choices && before.length ? `<span class="plabel">Choice logic <span class="hint" title="Show or hide single choices depending on answers to earlier fields.">?</span></span>
+    ${fq.options.map((o, j) => `<div class="lc-choice" data-lk="${j}"><span class="lc-name">${esc(optLabel(fq, j))}</span>${when(q.optLogic?.[j] ?? {}, `${q.id}#${j}`)}</div>`).join('')}` : ''}`;
   // Format: dates and times.
   const format = stamp ? `
     <label>Format${fmtPicker('fmt', q.fmt ?? DEF_FMT[q.type], q.type)}</label>
@@ -1211,8 +1227,11 @@ function propsHTML() {
       ${ph}${def}${choiceList}${colsPick}${multiFields}
       <label class="switch">Required <input type="checkbox" data-field="required" ${q.required ? 'checked' : ''}></label>
       <label class="switch">Half width <input type="checkbox" data-field="half" ${q.half ? 'checked' : ''}></label>`)}
-    ${sec('Logic', logic, !!n || !!L.hide || logicOpen === q.id)}
+    ${sec('Logic', logic, !!n || !!L.hide || !!logicOpen?.startsWith(q.id) || !!q.optLogic?.some(x => x?.items?.length))}
     ${sec('Format', format)}
+    ${q.type === 'multi' && q.cols.some((c, k) => RULE_TYPES[fieldType(q, k)]) ? sec('Validation', q.cols.map((c, k) => { const R = fieldRule(q, k); return RULE_TYPES[R.type] ? `<div class="plist" data-frule="${k}">
+      <span class="plabel">Field ${k + 1}${plain(c) ? `: ${esc(c)}` : ''}</span>
+      <label class="switch">Response validation <input type="checkbox" data-field="validate" ${R.validate ? 'checked' : ''}></label>${ruleRow(R)}</div>` : ''; }).join(''), !!q.fieldRules?.some(R => R?.validate)) : ''}
     ${types ? sec('Validation', `<label class="switch">Response validation <input type="checkbox" data-field="validate" ${q.validate ? 'checked' : ''}></label>${ruleRow(q)}`, !!q.validate) : ''}
     ${opts(current).quiz && GRADED.includes(q.type) ? sec('Advanced', `<label>Points<input type="number" min="0" data-field="points" value="${esc(q.points ?? 1)}"></label>`, false) : ''}
   </div>`;
@@ -1555,6 +1574,13 @@ function onFieldEdit(el) {
     if (field.startsWith('title')) app.querySelector('.eb-title').textContent = barTitle(current);
   } else {
     const q = current.questions.find(x => x.id === qEl.dataset.qid);
+    const fr = el.closest('[data-frule]');
+    if (fr) { // a multi-type field's validation rule
+      const R = (q.fieldRules ||= [])[+fr.dataset.frule] ||= {};
+      if (field === 'vType') Object.assign(R, { vType: val, vOp: Object.keys(RULES[val])[0] });
+      else R[field] = el.hasAttribute('data-fmtsel') && val === 'custom' ? '' : val;
+      return saveForms();
+    }
     const idx = +el.dataset.idx;
     const key = el.dataset.list;
     if (field === 'vType') { q.vType = val; q.vOp = Object.keys(RULES[val])[0]; }
@@ -1568,7 +1594,7 @@ function onFieldEdit(el) {
     else if (el.hasAttribute('data-fmtsel')) q[field] = val === 'custom' ? '' : val;
     else if (field === 'picker') q.noPicker = !val;
     else if (['lc', 'lcJoin', 'lHide'].includes(field)) { // Logic, kept in q.logic
-      const L = editLogic(q);
+      const L = logicFor(q, el);
       if (field === 'lHide') L.hide = val;
       else if (field === 'lcJoin') nodeAt(L, el.dataset.path).join = val;
       else Object.assign(nodeAt(L, el.dataset.path), el.dataset.key === 'q' ? { q: val.split(':')[0], k: val.includes(':') ? +val.split(':')[1] : undefined, op: 'is', v: '' } : { [el.dataset.key]: val });
@@ -1676,7 +1702,8 @@ app.addEventListener('click', e => {
       const j = +btn.dataset.idx;
       q[btn.dataset.list].splice(j, 1);
       q[`${btn.dataset.list}Dv`]?.splice(j, 1);
-      if (btn.dataset.list === 'cols') { q.fieldTypes?.splice(j, 1); q.fieldOptions?.splice(j, 1); }
+      if (btn.dataset.list === 'cols') ['fieldTypes', 'fieldOptions', 'fieldFmts', 'fieldRules'].forEach(k => q[k]?.splice(j, 1));
+      else q.optLogic?.splice(j, 1);
       const shift = a => a?.filter(k => k !== j).map(k => k > j ? k - 1 : k);
       if (btn.dataset.list === 'options') Object.assign(q, q.key && { key: shift(q.key) }, q.hidden && { hidden: shift(q.hidden) });
       return refresh();
@@ -1696,16 +1723,18 @@ app.addEventListener('click', e => {
     case 'other': // "Other" choice with a text box
       q.other = !q.other;
       return refresh();
-    case 'lc-open': case 'lc-done':
-      logicOpen = btn.dataset.act === 'lc-open' && logicOpen !== q.id ? q.id : null;
+    case 'lc-open': case 'lc-done': {
+      const lk = btn.closest('[data-lk]')?.dataset.lk, key = lk == null ? q.id : `${q.id}#${lk}`;
+      logicOpen = btn.dataset.act === 'lc-open' && logicOpen !== key ? key : null;
       return renderProps();
-    case 'lc-when': editLogic(q).when = btn.dataset.when; return refresh();
-    case 'lc-add': nodeAt(editLogic(q), btn.dataset.path).items.push({ q: '', op: 'is', v: '' }); return refresh();
-    case 'lc-group': editLogic(q).items.push({ join: 'and', items: [{ q: '', op: 'is', v: '' }] }); return refresh();
+    }
+    case 'lc-when': logicFor(q, btn).when = btn.dataset.when; return refresh();
+    case 'lc-add': nodeAt(logicFor(q, btn), btn.dataset.path).items.push({ q: '', op: 'is', v: '' }); return refresh();
+    case 'lc-group': logicFor(q, btn).items.push({ join: 'and', items: [{ q: '', op: 'is', v: '' }] }); return refresh();
     case 'lc-del': {
       const path = btn.dataset.path.split('.');
       const j = +path.pop();
-      nodeAt(editLogic(q), path.join('.')).items.splice(j, 1);
+      nodeAt(logicFor(q, btn), path.join('.')).items.splice(j, 1);
       return refresh();
     }
     case 'pick-date': {
@@ -1888,7 +1917,7 @@ async function copyLink(view = 'fill', msg = 'Responder link copied') {
 const HIDEABLE = ['radio', 'checkbox', 'dropdown'];
 const OTHER = '__other'; // value of the "Other" choice; the answer is the text typed next to it
 const choice = (f, q, type, o, j) => q.hidden?.includes(j) ? '' :
-  `<label class="choice"><input type="${type}" name="${q.id}" value="${esc(o)}" ${String(q.def ?? '') === String(j) ? 'checked' : ''}><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
+  `<label class="choice" data-j="${j}"><input type="${type}" name="${q.id}" value="${esc(o)}" ${String(q.def ?? '') === String(j) ? 'checked' : ''}><span>${localized(f, 'div', o, q.optionsDv?.[j])}</span></label>`;
 const otherChoice = (f, q, type) => q.other ? `<label class="choice other"><input type="${type}" name="${q.id}" value="${OTHER}"><span>${otherLabel(f)}:</span>
   <input type="text" class="other-text${f.lang === 'dv' ? ' dv" dir="rtl' : ''}" aria-label="${otherLabel(f)}"></label>` : '';
 
@@ -1951,7 +1980,7 @@ function answerHTML(q, pre = '') {
   const choose = esc(q.placeholder) || (f.lang === 'dv' ? 'ނަންގަވާ' : 'Choose');
   // A dropdown named `name` with these choices (null ones are hidden), `def` picked at the start.
   const dd = (name, labels, def = -1, other = false) => `<details class="dd"><summary class="${def < 0 || labels[def] === null ? 'ph' : ''}${dvAttr ? ' dv' : ''}" data-ph="${choose}">${labels[def] == null ? choose : esc(labels[def])}</summary>
-      <div class="dd-list">${labels.map((l, j) => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${esc(l)}" ${j === def ? 'checked' : ''}>${esc(l)}</label>`).join('')}${other
+      <div class="dd-list">${labels.map((l, j) => l === null ? '' : `<label class="dd-opt${dvAttr ? ' dv' : ''}" data-j="${j}"><input type="radio" name="${name}" value="${esc(l)}" ${j === def ? 'checked' : ''}>${esc(l)}</label>`).join('')}${other
         ? `<label class="dd-opt${dvAttr ? ' dv' : ''}"><input type="radio" name="${name}" value="${OTHER}">${otherLabel(f)}</label>` : ''}</div></details>${other
         ? `<input type="text" class="other-text"${dvAttr} hidden aria-label="${otherLabel(f)}">` : ''}`;
   const cols = html => q.choiceCols > 1 ? `<div class="choices" style="--n:${q.choiceCols}">${html}</div>` : html;
@@ -2131,6 +2160,18 @@ function applyLogic(form) {
     const card = form.querySelector(`[data-qid="${q.id}"]`);
     const L = logicOf(q);
     if (!card) return;
+    q.optLogic?.forEach((CL, j) => { // single choices; a choice that goes away loses its tick
+      if (!CL || !live(CL)) return;
+      const off = holds(CL) === (CL.when === 'hide');
+      card.querySelectorAll(`[data-j="${j}"]`).forEach(el => {
+        el.hidden = off;
+        const i = el.querySelector('input');
+        if (!off || !i.checked) return;
+        i.checked = false;
+        const sum = el.closest('.dd')?.querySelector('summary');
+        if (sum) { sum.textContent = sum.dataset.ph; sum.classList.add('ph'); }
+      });
+    });
     if (L.hide) return card.hidden = true;
     if (!live(L)) return;
     card.hidden = holds(L) === (L.when === 'hide');

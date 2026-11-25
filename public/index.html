@@ -413,6 +413,8 @@ input[type=radio]:focus-visible,input[type=checkbox]:focus-visible{outline:3px s
 .cal-grid i{font-style:normal;font-size:12px;color:var(--muted);padding:4px 0}
 .cal-grid button{aspect-ratio:1}
 .cal :is(button:hover,button:focus-visible){background:var(--teal-100)}
+.cal.dv .cal-grid i{font-size:11px}
+.date-text.dvf{font-family:Faruma,system-ui,sans-serif}
 .cal-grid button.on{background:var(--teal-700);color:#fff}
 .choice.other{align-items:center}
 .link.add-other{margin-inline-start:16px}
@@ -719,15 +721,20 @@ const FMTS = { date: ['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd.mm.yyyy', 'd
 const DATE_TOK = /yyyy|yy|dddd|ddd|dd|d|mmmm|mmm|mm|m/g, TIME_TOK = /HH|H|hh|h|mm|a|A/g;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 // Month typed as a name: full or its first three letters, any case (1-12, or 0 when it isn't one).
-const monthNo = x => 1 + MONTHS.findIndex(n => isName(x, n));
+const monthNo = x => 1 + MONTHS.findIndex((n, i) => isName(x, n) || x === MONTHS_DV[i]);
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Dhivehi forms show Dhivehi names (no short forms, so mmm and ddd are full names too); English names are read on any form.
+const MONTHS_DV = ['ޖަނަވަރީ', 'ފެބުރުވަރީ', 'މާރިޗު', 'އޭޕްރީލް', 'މެއި', 'ޖޫން', 'ޖުލައި', 'އޯގަސްޓު', 'ސެޕްޓެމްބަރު', 'އޮކްޓޫބަރު', 'ނޮވެމްބަރު', 'ޑިސެމްބަރު'];
+const DAYS_DV = ['އާދިއްތަ', 'ހޯމަ', 'އަންގާރަ', 'ބުދަ', 'ބުރާސްފަތި', 'ހުކުރު', 'ހޮނިހިރު'];
+const DAYS_DV_CAL = ['އާދި', 'ހޯމަ', 'އަން', 'ބުދަ', 'ބުރާ', 'ހުކު', 'ހޮނި']; // calendar column heads
+const dvNames = () => current?.lang === 'dv';
 // Full name or first three letters, any case.
 const isName = (x, n) => [n, n.slice(0, 3)].some(y => y.toLowerCase() === x.toLowerCase());
 const pad = n => String(n).padStart(2, '0');
 function readFmt(v, fmt, tok) {
   const keys = [];
   const src = fmt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    .replace(tok, k => { keys.push(k); return /^(mmm|ddd)/.test(k) ? '([a-z]+)' : /a/i.test(k) ? '([ap]m)' : k.length === 1 ? '(\\d{1,2})' : `(\\d{${k.length}})`; });
+    .replace(tok, k => { keys.push(k); return /^(mmm|ddd)/.test(k) ? '([^\\s\\d]+)' : /a/i.test(k) ? '([ap]m)' : k.length === 1 ? '(\\d{1,2})' : `(\\d{${k.length}})`; });
   const m = new RegExp(`^${src}$`, 'i').exec(String(v ?? '').trim());
   return m && Object.fromEntries(keys.map((k, i) => [k, m[i + 1]]));
 }
@@ -737,7 +744,7 @@ function parseDate(v, fmt = DEF_FMT.date) {
   const y = g.yyyy ? +g.yyyy : g.yy ? 2000 + +g.yy : 2000, m = g.mmmm || g.mmm ? monthNo(g.mmmm || g.mmm) : +(g.mm ?? g.m ?? 1), d = +(g.dd ?? g.d ?? 1);
   const t = new Date(y, m - 1, d);
   const wd = g.dddd || g.ddd; // a day name, when the format has one, must be that date's
-  return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d && (!wd || isName(wd, DAYS[t.getDay()])) ? t : null;
+  return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d && (!wd || isName(wd, DAYS[t.getDay()]) || wd === DAYS_DV[t.getDay()]) ? t : null;
 }
 // Minutes after midnight, or null.
 function parseTime(v, fmt = DEF_FMT.time) {
@@ -748,7 +755,12 @@ function parseTime(v, fmt = DEF_FMT.time) {
   if (min > 59 || (twelve ? h < 1 || h > 12 : h > 23)) return null;
   return (twelve ? h % 12 + (pm ? 12 : 0) : h) * 60 + min;
 }
-const fmtDate = (t, fmt) => fmt.replace(DATE_TOK, k => ({ yyyy: t.getFullYear(), yy: pad(t.getFullYear() % 100), dddd: DAYS[t.getDay()], ddd: DAYS[t.getDay()].slice(0, 3), dd: pad(t.getDate()), d: t.getDate(), mmmm: MONTHS[t.getMonth()], mmm: MONTHS[t.getMonth()].slice(0, 3), mm: pad(t.getMonth() + 1), m: t.getMonth() + 1 })[k]);
+const fmtDate = (t, fmt) => {
+  const dv = dvNames(), day = DAYS[t.getDay()], mon = MONTHS[t.getMonth()];
+  return fmt.replace(DATE_TOK, k => ({ yyyy: t.getFullYear(), yy: pad(t.getFullYear() % 100),
+    dddd: dv ? DAYS_DV[t.getDay()] : day, ddd: dv ? DAYS_DV[t.getDay()] : day.slice(0, 3), dd: pad(t.getDate()), d: t.getDate(),
+    mmmm: dv ? MONTHS_DV[t.getMonth()] : mon, mmm: dv ? MONTHS_DV[t.getMonth()] : mon.slice(0, 3), mm: pad(t.getMonth() + 1), m: t.getMonth() + 1 })[k]);
+};
 const fmtTime = (n, fmt) => {
   const h = Math.floor(n / 60), h12 = h % 12 || 12;
   return fmt.replace(TIME_TOK, k => ({ HH: pad(h), H: h, hh: pad(h12), h: h12, mm: pad(n % 60), a: h < 12 ? 'am' : 'pm', A: h < 12 ? 'AM' : 'PM' })[k]);
@@ -775,11 +787,12 @@ const fmtPicker = (field, cur, type) => {
 // Month calendar under a date field; weeks start on `start` (0 Sunday, 1 Monday, 6 Saturday).
 function calHTML(y, m, start, sel) {
   const first = new Date(y, m, 1), lead = (first.getDay() - start + 7) % 7, days = new Date(y, m + 1, 0).getDate();
-  const names = [...Array(7)].map((_, i) => 'SuMoTuWeThFrSa'.substr((i + start) % 7 * 2, 2));
+  const dv = dvNames();
+  const names = [...Array(7)].map((_, i) => dv ? DAYS_DV_CAL[(i + start) % 7] : 'SuMoTuWeThFrSa'.substr((i + start) % 7 * 2, 2));
   const on = d => sel && sel.getFullYear() === y && sel.getMonth() === m && sel.getDate() === d;
-  return `<div class="cal" data-y="${y}" data-m="${m}">
+  return `<div class="cal${dv ? ' dv' : ''}" data-y="${y}" data-m="${m}">
     <div class="cal-head"><button type="button" data-act="cal-nav" data-step="-1" aria-label="Previous month">‹</button>
-      <b>${first.toLocaleString('en', { month: 'long', year: 'numeric' })}</b>
+      <b>${dv ? `${MONTHS_DV[m]} ${y}` : first.toLocaleString('en', { month: 'long', year: 'numeric' })}</b>
       <button type="button" data-act="cal-nav" data-step="1" aria-label="Next month">›</button></div>
     <div class="cal-grid">${names.map(n => `<i>${n}</i>`).join('')}${'<span></span>'.repeat(lead)}${[...Array(days)].map((_, i) =>
       `<button type="button" data-act="cal-day" data-d="${i + 1}" class="${on(i + 1) ? 'on' : ''}">${i + 1}</button>`).join('')}</div>
@@ -790,7 +803,7 @@ function stampField(type, q = {}) {
   const fmt = q.fmt || DEF_FMT[type];
   const date = type === 'date';
   return `<div class="date-field ${date ? '' : 'time-field'}" data-fmt="${esc(fmt)}" data-type="${type}" data-week="${+q.weekStart || 0}">
-    <input type="text" class="date-text" ${masked(fmt) ? `inputmode="numeric" maxlength="${maskTpl(fmt).length}"` : ''} placeholder="${esc(q.placeholder || fmt)}" value="${esc(q.def)}" autocomplete="off">
+    <input type="text" class="date-text${dvNames() && /mmm|ddd/.test(fmt) ? ' dvf' : ''}" ${masked(fmt) ? `inputmode="numeric" maxlength="${maskTpl(fmt).length}"` : ''} placeholder="${esc(q.placeholder || fmt)}" value="${esc(q.def)}" autocomplete="off">
     ${q.noPicker ? '' : `${date ? '' : '<input type="time" class="time-pick" tabindex="-1" aria-hidden="true">'}<button type="button" class="date-btn" data-act="pick-${type}" title="Choose ${type}"></button>`}
   </div>`;
 }

@@ -548,6 +548,7 @@ th{color:var(--teal-800)}
 <script>
 const TYPES = {
   short: 'Short answer',
+  number: 'Number',
   paragraph: 'Paragraph',
   radio: 'Multiple choice',
   checkbox: 'Checkboxes',
@@ -564,14 +565,14 @@ const TYPES = {
 };
 // Multi-type: 2 to 3 labelled inputs in one question (house name, atoll, island). Labels in q.cols, input types in q.fieldTypes,
 // a dropdown field's choices in q.fieldOptions[k] as text, one per line.
-const FIELD_TYPES = ['short', 'paragraph', 'dropdown', 'date', 'time'];
+const FIELD_TYPES = ['short', 'number', 'paragraph', 'dropdown', 'date', 'time'];
 const MAX_FIELDS = 3;
 const fieldType = (q, k) => FIELD_TYPES.includes(q.fieldTypes?.[k]) ? q.fieldTypes[k] : 'short';
 const fieldFmt = (q, k) => q.fieldFmts?.[k] || DEF_FMT[fieldType(q, k)];
 const fieldChoices = (q, k) => (q.fieldOptions?.[k] ?? '').split('\n').map(o => o.trim()).filter(Boolean);
 // The type menu, split into groups by dividers.
-const TYPE_GROUPS = [['short', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file', 'multi'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
-const FAUX = { short: 'Short answer text', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
+const TYPE_GROUPS = [['short', 'number', 'paragraph'], ['radio', 'checkbox', 'dropdown'], ['file', 'multi'], ['scale', 'rating', 'mcgrid', 'cbgrid', 'table'], ['date', 'time']];
+const FAUX = { short: 'Short answer text', number: 'Number', paragraph: 'Long answer text', date: 'Date', time: 'Time', scale: '1 to 5', rating: '★★★★★', file: 'File upload (up to 1.5 MB)' };
 // Placeholder text on Dhivehi forms. dvText() picks the Dhivehi wording when the open form is Dhivehi.
 const DV = {
   'Untitled form': 'ފޯމުގެ ސުރުޙީ',
@@ -588,6 +589,7 @@ const DV = {
   '1 to 5': '1 އިން 5 އަށް',
   Date: 'ތާރީޚް',
   Time: 'ގަޑި',
+  Number: 'ނަންބަރު',
   Section: 'ސެކްޝަން',
   'Untitled section': 'ސެކްޝަން ސުރުޙީ',
   'Description (optional)': 'އިތުރު ތަފްޞީލް (އިޚްތިޔާރީ)',
@@ -673,7 +675,7 @@ const RULES = {
   date: { dvalid: 'Is a valid date', dafter: 'After', dbefore: 'Before', dbetween: 'Between' },
   email: { evalid: 'Is a valid email' },
 };
-const RULE_TYPES = { short: ['number', 'text', 'length', 'regex', 'date', 'email'], paragraph: ['length', 'regex'], checkbox: ['select'], date: ['date'] };
+const RULE_TYPES = { number: ['number'], short: ['number', 'text', 'length', 'regex', 'date', 'email'], paragraph: ['length', 'regex'], checkbox: ['select'], date: ['date'] };
 const RULE_NAMES = { number: 'Number', text: 'Text', length: 'Length', regex: 'Regular expression', select: 'Selection', date: 'Date', email: 'Email' };
 const NO_ARG = ['isnum', 'whole', 'email', 'url', 'dvalid', 'evalid'];
 const TWO_ARGS = ['between', 'nbetween', 'dbetween'];
@@ -1108,7 +1110,7 @@ async function renderEditor(tab) {
 // Field sidebar: grouped tiles that add an item after the selected one. Search filters by name.
 const P = d => svg(d);
 const FIELD_GROUPS = () => [ // a function: ICONS is defined further down
-  ['Text', '#16a34a', [['short', P('M4 9h16v2H4zm0 4h10v2H4z')], ['paragraph', P('M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z')]]],
+  ['Text', '#16a34a', [['short', P('M4 9h16v2H4zm0 4h10v2H4z')], ['number', P('M8 3 6 21h2l2-18H8zm7 0-2 18h2l2-18h-2zM4 8v2h17V8H4zm-1 6v2h17v-2H3z')], ['paragraph', P('M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z')]]],
   ['Choices', '#e8a33d', [['radio', P('M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z')],
     ['checkbox', P('M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z')],
     ['dropdown', P('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 12l-4-4h8l-4 4z')]]],
@@ -1146,11 +1148,11 @@ function propsHTML() {
   const choices = HIDEABLE.includes(q.type);
   const stamp = ['date', 'time'].includes(q.type);
   // Basic: placeholder, default value and the choices themselves.
-  const ph = ['short', 'paragraph', 'dropdown', 'date', 'time'].includes(q.type)
+  const ph = ['short', 'number', 'paragraph', 'dropdown', 'date', 'time'].includes(q.type)
     ? `<label>Placeholder<input ${pc} data-field="placeholder" value="${esc(q.placeholder)}" placeholder="${stamp ? esc(q.fmt || DEF_FMT[q.type]) : q.type === 'dropdown' ? 'Choose' : ''}"></label>` : '';
   const fq = f.questions.find(x => x.id === q.id); // options with "Option 1" placeholders filled in
   const def = choices ? `<label>Default value<select data-field="def">${opt('', 'None')}${fq.options.map((o, j) => opt(j, optLabel(fq, j), q.def)).join('')}</select></label>`
-    : ['short', 'paragraph'].includes(q.type) || stamp ? `<label>Default value<input ${stamp ? '' : pc} data-field="def" value="${esc(q.def)}" placeholder="${stamp ? esc(q.fmt || DEF_FMT[q.type]) : ''}"></label>` : '';
+    : ['short', 'number', 'paragraph'].includes(q.type) || stamp ? `<label>Default value<input ${stamp ? '' : q.type === 'number' ? 'class="num" inputmode="decimal"' : pc} data-field="def" value="${esc(q.def)}" placeholder="${stamp ? esc(q.fmt || DEF_FMT[q.type]) : ''}"></label>` : '';
   const choiceList = choices ? `<div class="plist"><span class="plabel">Choices</span>
     ${q.options.map((o, j) => `<div class="prow"><input ${pc} data-field="option" data-list="options" data-idx="${j}" value="${esc(o)}" placeholder="Option ${j + 1}" aria-label="Choice ${j + 1}">
       <button type="button" class="icon" data-act="del-opt" data-list="options" data-idx="${j}" title="Remove">×</button></div>`).join('')}
@@ -1540,6 +1542,8 @@ function setType(q, val) {
   if (val === 'multi') q.cols = (q.cols.length >= 2 ? q.cols : ['', '']).slice(0, MAX_FIELDS);
   setRuleDefaults(q);
 }
+// Number answers: digits, a minus sign at the start and one decimal point.
+const numOnly = v => v.replace(/[^\d.-]/g, '').replace(/(?!^)-/g, '').replace(/(\..*)\./g, '$1');
 function onFieldEdit(el) {
   const field = el.dataset.field;
   // Emptied editors keep a stray <br>; clear it so the placeholder shows again.
@@ -1579,6 +1583,7 @@ app.addEventListener('input', e => {
     app.querySelectorAll('.pal-tile').forEach(t => { t.hidden = !t.textContent.toLowerCase().includes(term); });
     return app.querySelectorAll('.pal-sec').forEach(s => { s.hidden = !s.querySelector('.pal-tile:not([hidden])'); });
   }
+  if (e.target.matches('input.num')) e.target.value = numOnly(e.target.value);
   if (e.target.closest('.fill')) applyLogic(e.target.closest('.fill'));
   if (e.target.matches('[data-setting]')) {
     const key = e.target.dataset.setting;
@@ -1952,6 +1957,7 @@ function answerHTML(q, pre = '') {
   const cols = html => q.choiceCols > 1 ? `<div class="choices" style="--n:${q.choiceCols}">${html}</div>` : html;
   const inputs = {
     short: `<input type="text"${dvAttr} placeholder="${esc(q.placeholder)}" value="${esc(q.def)}">`,
+    number: `<input type="text" class="num" inputmode="decimal" placeholder="${esc(q.placeholder)}" value="${esc(q.def)}">`,
     email: '<input type="email" autocomplete="email">',
     paragraph: `<textarea rows="3"${dvAttr} placeholder="${esc(q.placeholder)}">${esc(q.def)}</textarea>`,
     date: stampField('date', q.type === 'date' ? q : {}),

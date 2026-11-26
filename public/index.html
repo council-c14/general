@@ -2177,6 +2177,33 @@ function applyLogic(form) {
     card.hidden = holds(L) === (L.when === 'hide');
   });
 }
+// One question's checks: marks its card and shows its rule's message.
+// Live checks (as you type or leave a field) leave an empty required question alone; Next and Submit flag it, and it stays marked until answered.
+function checkQ(q, wrap, live = false) {
+  const v = readAnswer(q, wrap);
+  const tooBig = v instanceof File && v.size > MAX_FILE;
+  const rule = ruleError(q, v);
+  const qe = wrap.querySelector('.q-error');
+  if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
+  const bad = (q.required && blank(v) && !(live && !wrap.classList.contains('invalid'))) || tooBig || (q.type === 'email' && v && !/^\S+@\S+\.\S+$/.test(v))
+    || (['date', 'time'].includes(q.type) && v && !okStamp(q.type, v, q.fmt)) || !!rule
+    || (q.type === 'multi' && q.cols.some((c, k) => ['date', 'time'].includes(fieldType(q, k)) && v[c] && !okStamp(fieldType(q, k), v[c], fieldFmt(q, k))));
+  wrap.classList.toggle('invalid', bad);
+  return { v, bad, tooBig };
+}
+// Checked as you go: when you leave a question or pick an answer, then on every keystroke while it is marked wrong, so the mark goes as soon as it is fixed.
+function liveCheck(e, always) {
+  const wrap = e.target.closest?.('.fill [data-qid]');
+  if (!wrap || wrap.hidden || !(always || wrap.classList.contains('invalid'))) return;
+  const q = [EMAIL_Q, ...current.questions].find(x => x.id === wrap.dataset.qid);
+  if (!q || !isQuestion(q)) return;
+  checkQ(q, wrap, true);
+  const err = app.querySelector('.field-error');
+  if (err && !app.querySelector('.fill [data-qid].invalid:not([hidden])')) err.hidden = true;
+}
+app.addEventListener('input', e => liveCheck(e));
+app.addEventListener('change', e => liveCheck(e, true));
+app.addEventListener('focusout', e => { if (!e.target.closest?.('[data-qid]')?.contains(e.relatedTarget)) liveCheck(e, true); });
 function collect(scope) {
   const answers = {};
   let firstBad = null;
@@ -2185,16 +2212,8 @@ function collect(scope) {
     const wrap = scope.querySelector(`[data-qid="${q.id}"]`);
     if (!wrap || wrap.closest('.page:not([data-seen])')) return; // skipped by a section jump
     if (wrap.hidden) return; // hidden by logic: not checked, not sent
-    const v = readAnswer(q, wrap);
-    const tooBig = v instanceof File && v.size > MAX_FILE;
-    const rule = ruleError(q, v);
-    const qe = wrap.querySelector('.q-error');
-    if (qe) Object.assign(qe, { textContent: rule, hidden: !rule });
-    const bad = (q.required && blank(v)) || tooBig || (q.type === 'email' && !/^\S+@\S+\.\S+$/.test(v))
-      || (['date', 'time'].includes(q.type) && v && !okStamp(q.type, v, q.fmt)) || !!rule
-      || (q.type === 'multi' && q.cols.some((c, k) => ['date', 'time'].includes(fieldType(q, k)) && v[c] && !okStamp(fieldType(q, k), v[c], fieldFmt(q, k))));
+    const { v, bad, tooBig } = checkQ(q, wrap);
     big ||= tooBig;
-    wrap.classList.toggle('invalid', bad);
     if (bad && !firstBad) firstBad = wrap;
     answers[q.id] = v;
   });
